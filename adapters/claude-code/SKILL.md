@@ -28,7 +28,6 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 | Complexity Management | `knowledge/fpv/complexity-management.md` | Dealing with proof complexity, capacity issues |
 | TCL Commands | `knowledge/fpv/tcl-commands.md` | Writing TCL scripts for JasperGold/formal tools |
 | Workflow | `knowledge/fpv/workflow.md` | End-to-end FPV setup, execution, debug cycle |
-| Examples | `knowledge/fpv/examples/` | Reference designs and property examples |
 
 #### Shared Knowledge
 | Module | Path | Use When |
