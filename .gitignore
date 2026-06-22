@@ -2,8 +2,8 @@
 # Entire tree excluded (binaries AND _index.md, which name the source files).
 raw-docs/
 
-# Pipeline intermediates — contain near-verbatim transcriptions of Cadence docs
-# (incl. a "DO NOT DISTRIBUTE" deck). Build-time only; knowledge/ is fully
+# Pipeline intermediates 
+# Build-time only; knowledge/ is fully
 # self-contained and never references these at runtime. LOCAL ONLY.
 extractions/
 
