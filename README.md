@@ -16,29 +16,32 @@ This project packages deep formal verification expertise into structured "skills
 
 ## Quick Start
 
-### Claude Code
-```bash
-# Option 1: Install as a skill
-cp -r adapters/claude-code/SKILL.md /path/to/your/project/.claude/skills/
+Clone the repo, then run the installer once:
 
-# Option 2: Reference in CLAUDE.md
-echo "Read and follow /path/to/awesome-formal-verification-skill/adapters/claude-code/SKILL.md" >> CLAUDE.md
+```bash
+git clone <this-repo-url>
+cd awesome-formal-verification-skill
+bash scripts/install.sh
 ```
 
-### Codex (OpenAI)
-```bash
-cp adapters/codex/AGENTS.md /path/to/your/project/
-```
+That's it. The installer auto-detects the AI agents on your machine and registers
+the skill for each:
 
-### Gemini CLI
-```bash
-cp adapters/gemini-cli/GEMINI.md /path/to/your/project/
-```
+- **Claude Code** and **Codex** — both use the global skills directory
+  (`~/.claude/skills/`, `~/.codex/skills/`). The installer creates one canonical
+  skill directory (symlinked back to this repo) and points both agents at it.
+  Restart the agent and the skill auto-triggers on any FPV task
+  (formal / property / assertion / prove / CEX / JasperGold / VC Formal / FPV).
+- **Cursor** and **Gemini CLI** — these use *project-level* rule/context files,
+  not a global skills directory. If detected, the installer prints exactly how to
+  wire them into a project.
 
-### Cursor
-```bash
-cp adapters/cursor/.cursorrules /path/to/your/project/
-```
+Because the skill directory is symlinked to this checkout, updating the repo
+(`git pull`) updates every agent instantly — no reinstall. Re-run the installer
+after moving the repo; use `bash scripts/install.sh --uninstall` to remove the links.
+
+> The per-agent wrapper files under `adapters/` are the source-of-truth manifests
+> the installer wires up — you normally don't touch them directly.
 
 ## Project Structure
 

@@ -12,7 +12,9 @@ extractions/
 HANDOFF.md
 
 # Pipeline tooling — produces the knowledge but is NOT the skill itself. LOCAL ONLY.
-scripts/
+# Exception: scripts/install.sh is the user-facing installer and ships with the repo.
+scripts/*
+!scripts/install.sh
 prompts/
 
 # Local agent/session state
