@@ -1,0 +1,37 @@
+{
+  "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
+  "scenarios": [
+    {
+      "id": "counter-abstraction-timeout",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "My JasperGold proof is too deep because the DUT has a 32-bit timeout counter that counts to a large value before interesting behavior. How do I abstract it?",
+      "expect_concept": ["counter abstract", "milestone"],
+      "expect_exact": ["abstract -counter"]
+    },
+    {
+      "id": "proof-decomposition-ag",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A single assertion in JasperGold won't converge. I need to break the proof into smaller pieces and prove them separately. How does assume-guarantee work and how do I keep it sound?",
+      "expect_concept": ["assume.?guarantee", "helper", "sound"],
+      "expect_exact": []
+    },
+    {
+      "id": "config-logic-cutpoint",
+      "type": "loss-probe",
+      "module": "complexity-management",
+      "prompt": "In JasperGold my proof blows up because the design's configuration logic dominates the cone of influence. The configuration is written once at init and then held stable. How do I cut this complexity without producing false failures?",
+      "expect_concept": ["cutpoint", "legal", "assum"],
+      "expect_exact": ["setup_ndc"]
+    },
+    {
+      "id": "per-property-simplification",
+      "type": "loss-probe",
+      "module": "complexity-management",
+      "prompt": "One specific property in my JasperGold task is far harder than the rest and is dragging the whole run down. Is there a way to apply heavier simplification just to that property without changing the others?",
+      "expect_concept": ["per.?property", "simplif"],
+      "expect_exact": ["set_per_property_simplification"]
+    }
+  ]
+}
