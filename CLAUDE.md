@@ -53,6 +53,10 @@ A module is one of two shapes:
 
 SKILL.md routing always points at the index `<module>.md`; the index routes onward to leaves, so adapters need no change when a module is split. Do not force a split prematurely — only split a module that has genuinely outgrown a flat file.
 
+### Source ingestion — figures in PDF and Office docs (build-time)
+
+Source documents carry their highest-value content (SVA/RTL/Tcl snippets, waveforms, state/block diagrams) *inside raster figures*, which markitdown/pdfminer drop 100% of. `scripts/pdf_prep.py` (build-time, local — needs `raw-docs/`, does not ship) recovers them before extraction for **PDF and Office DOCX/PPTX/XLSX**: prose via markitdown, PDF figures via page-render, Office figures via embedded media unzipped from `word|ppt|xl/media/*` and normalized to PNG — then each figure is transcribed to structured Markdown by the vision model configured in `scripts/providers.json` (`roles.figure_transcription`; override with `--provider`). For Office docs the transcriptions are **inlined at each image's original position** in the body (count-matched, else appended); legacy binary `.doc`/`.ppt` aren't zip-based — convert to `.docx`/`.pptx` first. Output lands in `extractions/fpv/<module>/prepared/`.
+
 ### Measuring distillation loss (when to split, and what to keep)
 
 The pipeline compresses many sources into the knowledge file — a lossy step. Two local tools measure where that loss actually hurts (build-time only; both need `extractions/`, so neither ships):
