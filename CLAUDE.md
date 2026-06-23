@@ -38,11 +38,30 @@ When writing or editing a `knowledge/fpv/<module>.md`:
 
 - Imperative voice — "Use X", not "You should use X".
 - Decision tree near the top; preserve exact Tcl/SVA syntax and JasperGold flag names; keep all numeric thresholds (cycles, ratios).
-- Include an Anti-Patterns section. Keep total under 500 lines.
+- Include an Anti-Patterns section. **Keep every file under 500 lines** (the cap is per file — see Module Structure below).
+- **Preserve tool-specific atoms; compress general prose.** When distilling sources, exact command names, flags, and numeric thresholds are the high-value content — a capable model recovers general methodology on its own but cannot derive `setup_ndc` or `set_per_property_simplification`. When something has to be cut to fit, cut the prose, never the atoms.
 - Tag tool-specific content `[JG-specific]` / `[VC-Formal-specific]`; keep general FV knowledge portable.
 - Flag uncertainty inline: `⚠️ NEEDS VALIDATION` (sources contradict), `📝 GAP` (not in sources), `🔧 VERSION-SENSITIVE` (differs across JasperGold versions).
 - Keep each module self-contained — link to sibling modules by name (e.g. `engine-tuning.md`), but do not depend on any non-`knowledge/` file.
 
+## Module Structure: Flat vs. Progressive Disclosure
+
+A module is one of two shapes:
+
+- **Flat** — a single `knowledge/fpv/<module>.md` under 500 lines. Use this when the distilled content fits comfortably (most modules).
+- **Progressive disclosure** — when a rich module would exceed 500 lines, split it into a lean **index** (`<module>.md`) plus **sub-topic leaves** (`<module>/<topic>.md`). The index holds the overview, decision tree, core rules, a sub-topic routing table, the cross-cutting anti-patterns, and the consolidated command reference; each leaf holds the full pattern bodies (templates, examples, gotchas) for one technique family. Every file — index and leaves — stays under 500 lines, so the module as a whole can hold far more than 500 lines without any single file blowing the cap. `complexity-management` is the reference example.
+
+SKILL.md routing always points at the index `<module>.md`; the index routes onward to leaves, so adapters need no change when a module is split. Do not force a split prematurely — only split a module that has genuinely outgrown a flat file.
+
+### Measuring distillation loss (when to split, and what to keep)
+
+The pipeline compresses many sources into the knowledge file — a lossy step. Two local tools measure where that loss actually hurts (build-time only; both need `extractions/`, so neither ships):
+
+- `scripts/loss_probe.py` — content-coverage screen: command/technique tokens present in the extractions but absent from the knowledge file (and from every sibling module). A fast screen that *over-counts* loss.
+- `benchmarks/run_scenarios.sh` + `benchmarks/fpv/scenarios.{md,json}` — task-level eval: runs scenarios through a headless agent and grades CONCEPT vs EXACT (tool-specific) tokens separately. This *calibrates* the screen — a dropped token only matters if the model can't supply it itself.
+
+The empirical rule these produced: **loss bites on tool-specific atoms, not general methodology.** When `loss_probe` flags a real on-topic atom and the task eval confirms the miss, restore it — splitting the module into progressive disclosure if the flat file is already at the cap.
+
 ## Project State
 
-All five `knowledge/fpv/` modules are synthesized. `complexity-management` is the most mature; the other four are at 🔬 from-docs and need field validation. `knowledge/shared/sva-reference.md` and `tcl-common.md` are still placeholders.
+All five `knowledge/fpv/` modules are synthesized, plus the two `knowledge/shared/` references (`sva-reference.md`, `tcl-common.md`). `complexity-management` is the most mature and is structured as progressive disclosure (index + `complexity-management/` leaves); the other modules are flat and at 🔬 from-docs, needing field validation.
