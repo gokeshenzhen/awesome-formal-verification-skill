@@ -161,49 +161,12 @@ NO_OVRLAP_GO: assert property ( GO_SEEN |-> !GO );
 | Assuming `disable iff` follows the clock | It acts asynchronously, independent of the clock | Treat disable as taking precedence; use `sync_accept_on`/`sync_reject_on` if synchronous abort is needed |
 | Over-tight `assume property` | Removes legal stimulus → vacuous pass, masked bugs | Keep assumptions minimal; review for vacuity |
 
-## Implication & Delay Semantics
+## SVA Syntax Reference
 
-- `A |-> B` (overlapped): if `A` completes, `B` starts the **same** cycle and must complete; also holds if `A` never completes.
-- `A |=> B` (non-overlapped): if `A` completes, `B` starts the **next** cycle; equivalent to `A ##1 B |-> ...`.
-- `##N` fixed delay; `##[N:M]` range; `M` may be `$` (infinity); requires `M >= N`; both may be 0.
-```systemverilog
-P8_NXTCYC: assert property( A |=> B ##[0:$] C );
-P8_SMECYC: assert property( A |=> ##3 C );
-```
-
-## Sampled-Value & System Functions
-
-"Cycle" = the property's clock — not ns/ps, timescale, or hardware clock.
-
-| Function | Returns |
-|---|---|
-| `$past(expr, N)` | value of `expr` N cycles ago (N defaults to 1) |
-| `$rose(expr)` | TRUE if expr is TRUE now and was FALSE last cycle |
-| `$fell(expr)` | TRUE if expr is FALSE now and was TRUE last cycle |
-| `$stable(expr)` | TRUE if expr unchanged from last cycle |
-| `$onehot(expr)` | TRUE if exactly one bit is 1 |
-| `$onehot0(expr)` | TRUE if at most one bit is 1 |
-| `$isunknown(expr)` | TRUE if any bit is X or Z |
-| `$countones(expr)` | integer count of 1-bits |
-
-```systemverilog
-P12 : assert property(req && !gnt |=> $stable(addr));
-P13 : assert property( $onehot(GNT_VEC) );
-P14 : assert property( ACCEPT_RX |-> $countones(ID_TAGS) != 10 );
-P14A: assert property(!RDY |=> DAT == $past(DAT));
-```
-
-## Clocking Rules
-
-- Sources of a property's clock, in precedence order: explicit clock at instantiation **or** declaration (explicit always wins) > `default clocking` for the scope.
-- A sequence with no explicit clock inherits the clock of its parent property.
-- Only one `default clocking` per scope; it applies to that scope only.
-```systemverilog
-default clocking MYCLK @(posedge clk2); endclocking
-property P15; A |=> B; endproperty                  // no clock → uses default/instantiation
-P15_I_A   : assert property (@(posedge clk8) (P15)); // explicit clk8 overrides default
-P15_INS_B : assert property (P15);                   // uses default clk2
-```
+Operator semantics (`|->` / `|=>`, cycle delays `##N`/`##[N:M]`), declaration forms,
+clocking precedence, and the sampled-value/system functions (`$past`, `$rose`, `$stable`,
+`$onehot`, `$countones`, …) live in the tool-agnostic reference: **`knowledge/shared/sva-reference.md`**.
+This module covers the *formal-friendly methodology* for using them.
 
 ## Tool-Specific Notes
 
@@ -216,18 +179,15 @@ P15_INS_B : assert property (P15);                   // uses default clk2
 
 ## Command Reference
 
+Directives used in this module (full operator/function/clocking syntax is in `knowledge/shared/sva-reference.md`):
+
 | Command / Syntax | Purpose | Tool |
 |---|---|---|
 | `assert property (expr)` | require the property holds under all circumstances | Both |
 | `assume property (expr)` | constrain DUT inputs to specified behavior | Both |
 | `cover sequence (seq)` / `cover property (expr)` | demonstrate a witness of how a sequence completes | Both |
-| `\|->` / `\|=>` | overlapped / non-overlapped implication | Both |
-| `##N`, `##[N:M]`, `##[0:$]` | cycle delay / range / unbounded | Both |
-| `seq[*N]` | consecutive repetition (keep N small) | Both |
-| `disable iff (bool)` / `default disable iff (bool)` | drop outstanding obligations | Both |
-| `default clocking C @(posedge clk); endclocking` | scope default clock | Both |
+| `disable iff` / `default disable iff` | drop outstanding obligations (reset) | Both |
 | `s_eventually` | unbounded liveness | Both |
-| `sync_accept_on` / `sync_reject_on` | synchronous abort variants (LRM) | Both |
 | `-enable_sva_isunknown` | enable `$isunknown` support | JG |
 
 > 📝 GAP — The single source is a 2-page quick-reference. Topics planned for this module but **not yet covered by any extraction**: safety vs liveness classification methodology, fairness properties, multi-clock/CDC property patterns, property libraries / reuse strategy, vacuity detection workflow, and design-intent-driven property development. Add sources (user guides, app notes, training) to fill these.
@@ -236,4 +196,4 @@ P15_INS_B : assert property (P15);                   // uses default clk2
 
 - For complexity reduction (auxiliary code, keeping N small, abstraction): see `complexity-management.md`
 - For proof engine selection, especially liveness: see `engine-tuning.md`
-- For SVA operator/syntax reference shared across tools: see `knowledge/shared/`
+- For SVA operator/function/clocking syntax reference: see `knowledge/shared/sva-reference.md`
