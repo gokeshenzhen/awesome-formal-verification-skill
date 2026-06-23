@@ -27,18 +27,22 @@ bash scripts/install.sh
 That's it. The installer auto-detects the AI agents on your machine and registers
 the skill for each:
 
-- **Claude Code** and **Codex** — both use the global skills directory
-  (`~/.claude/skills/`, `~/.codex/skills/`). The installer creates one canonical
-  skill directory (symlinked back to this repo) and points both agents at it.
+- **Claude Code** and **Codex** — both use global skills directories. The
+  installer points them at this repo's canonical skill directory
+  (`adapters/claude-code/`) via directory symlinks:
+  `~/.claude/skills/`, `~/.agents/skills/` for current Codex, and
+  `~/.codex/skills/` for legacy Codex installs.
   Restart the agent and the skill auto-triggers on any FPV task
   (formal / property / assertion / prove / CEX / JasperGold / VC Formal / FPV).
 - **Cursor** and **Gemini CLI** — these use *project-level* rule/context files,
   not a global skills directory. If detected, the installer prints exactly how to
   wire them into a project.
 
-Because the skill directory is symlinked to this checkout, updating the repo
-(`git pull`) updates every agent instantly — no reinstall. Re-run the installer
-after moving the repo; use `bash scripts/install.sh --uninstall` to remove the links.
+Because each agent's skill entry is a directory symlink to this checkout,
+updating the repo (`git pull`) updates every agent instantly — no reinstall.
+`SKILL.md` itself stays a normal tracked file inside the repo, which avoids
+scanner issues with file-level `SKILL.md` symlinks. Re-run the installer after
+moving the repo; use `bash scripts/install.sh --uninstall` to remove the links.
 
 > The per-agent wrapper files under `adapters/` are the source-of-truth manifests
 > the installer wires up — you normally don't touch them directly.
