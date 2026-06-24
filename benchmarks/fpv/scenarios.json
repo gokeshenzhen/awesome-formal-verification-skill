@@ -32,6 +32,14 @@
       "prompt": "One specific property in my JasperGold task is far harder than the rest and is dragging the whole run down. Is there a way to apply heavier simplification just to that property without changing the others?",
       "expect_concept": ["per.?property", "simplif"],
       "expect_exact": ["set_per_property_simplification"]
+    },
+    {
+      "id": "mem-abstraction-stall",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "In JasperGold my prove -all proves the top controller assertion and covers every cover, but one embedded assertion is stuck: it is an arbitrary symbolic-address write-then-read property over a real 512x32 memory array, and it stays undetermined — multiple engines hit their per-property time limits with no counterexample. The RTL must stay unchanged. What should I do, and how do I report the result honestly?",
+      "expect_concept": ["memory abstract", "symbolic|single.?slot|one.?(word|slot)|slot", "disclos|trusted|contract"],
+      "expect_exact": ["bbox_i"]
     }
   ]
 }

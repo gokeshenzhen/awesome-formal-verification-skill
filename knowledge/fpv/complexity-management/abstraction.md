@@ -108,6 +108,48 @@ for {set idx 0} {$idx < $SIZE} {incr idx} {
 
 **When to use**: Large SRAM/memory arrays dominate the proof cone; only a few addresses are proof-relevant.
 
+**Trigger checklist — raw memory proof has stalled.** Escalate to abstraction (stop re-racing engines and looping `prove -all`) when *all* of these hold:
+- reset/`get_design_info` analysis shows **thousands of memory flops** dominating the flop count (e.g. a 512-entry × 32-bit array ≈ 16 K flops)
+- the target is an **arbitrary-address write→read** assertion — a symbolic/`$stable` address that must hold for *all* addresses
+- the property's precondition **cover is reachable** (non-vacuous) but the assertion stays `undetermined`
+- **no CEX** appears after multiple engine scans / per-property time limits expire
+→ black-box the array and reconnect a symbolic-slot model. Confirm the array first with `get_design_info -list array -no_aggregate -silent` or `complexity_manager -property <prop>`. A controller/wrapper property closing fast does **not** imply the inner array property will — they have different cones; an arbitrary-address array assertion is itself the canonical memory-abstraction trigger.
+
+**Concrete recipe — black-box one inner array instance, reconnect a single symbolic slot.**
+Use when an *internal* arbitrary-address property (inside the memory wrapper) reads a concrete array instance and the original hierarchy must be preserved (no DUT rewrite). Keep the original top elaborated; box only the array *instance*; track only the property's own symbolic address `<ndc_addr>` (the `$stable` address the assertion is written against).
+
+```tcl
+# 1. Keep the real top; black-box ONLY the array instance by PATH (-bbox_i),
+#    not by module (-bbox_m) — sibling instances stay concrete.
+elaborate -top <top> -bbox_i <top>.<wrap>.<array_inst>
+
+# 2. Bind a one-word abstract model into the wrapper, keyed to the property's
+#    own symbolic NDC address. Added via a SEPARATE file — original RTL unedited.
+analyze -sv09 mem_slot_abs.sv     ;# contains: bind <wrap_module> mem_slot_abs u_abs (...)
+
+# 3. Reconnect the boxed read output to the slot — the disclosed memory contract.
+#    Registered read: dout at T+1 == value last written to <ndc_addr>.
+clock clk ; reset rst
+assume -name mem_contract { \
+  ($past(<wrap>.op)==OP_RD && $past(<wrap>.addr)==<wrap>.<ndc_addr>) \
+   |-> <top>.<wrap>.<array_inst>.dout == $past(<top>.<wrap>.u_abs.tracked) }
+
+prove -property {<arbitrary_addr_assertion>}
+```
+where `mem_slot_abs` tracks one word (the RAM contract projected onto `<ndc_addr>`):
+```systemverilog
+// mem_slot_abs.sv — NOT original RTL; a disclosed abstraction bound into the wrapper
+always_ff @(posedge clk or posedge rst)
+  if (rst) tracked <= '0;
+  else if (op==OP_WR && addr==ndc_addr) tracked <= din;
+```
+This collapses the ~16 K-flop array to one data-width `tracked` register; the proof then closes in seconds. Reads of addresses other than `<ndc_addr>` are left free — sound for this property because its read antecedent only fires on `addr==<ndc_addr>`. (To dodge `$past`/enum quoting in the Tcl `assume`, register `rd_ndc_q` and `tracked_q` *inside* `mem_slot_abs` and reconnect with the plain equality `<...>.u_abs.rd_ndc_q |-> <array_inst>.dout == <...>.u_abs.tracked_q`.)
+
+**Signoff discipline — disclosed trusted abstraction vs. raw-RTL signoff.**
+- The black-box + reconnect `assume` is a **trusted memory contract**: it *assumes* the array reads back what was written at `ndc_addr`. Report it as a **disclosed trusted-abstraction proof**, never as an unqualified raw-RTL proof.
+- To upgrade to full signoff, discharge the contract separately — prove the reconnect `assume` as an assertion against the real `mem_imp`, or supply an equivalence argument — then claim the embedded assertion proven on the original RTL.
+- **Never rewrite the DUT module and report it as original-RTL signoff.** Replacing `simple_mem`/`mem_imp` with a smaller model proves the *replacement*, not the design. If you abstract, preserve and *reconnect* the original hierarchy (`-bbox_i <path>` + reconnect), and disclose every added `assume`/contract, the precondition covers proving non-vacuity, and which embedded assertions remain raw-unproven.
+
 **Template** (black-box + abstract reconnect):
 ```tcl
 # Black-box the memory instance
@@ -147,6 +189,8 @@ ASM_symbol_on_rd0: assume property (
 - `garbage_val` is intentionally free; guard assertions with `!garbage_op`
 - Coordinate `symbol_ndc` between abstract memory and scoreboard: `assume {abs.symbol_ndc == sb.symbol}`
 - `-disable_auto_bbox` + `-bbox_i inst`: disable global auto-boxing, then box one explicit instance
+- Prefer `-bbox_i <instance-path>` over `-bbox_m <module>` when only one array instance must be cut — `-bbox_m` boxes *every* instance of that module
+- Disclose the reconnect `assume` as a trusted contract; do not call the resulting proof an unqualified raw-RTL proof (see Signoff discipline above)
 
 ## Synchronizer Abstraction
 

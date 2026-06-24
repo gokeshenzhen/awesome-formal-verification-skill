@@ -13,6 +13,8 @@ Property not converging?
 ├─ Have you profiled? ......... No → formal_profiler → cone-reduction.md "Profiler-Guided Stopat Mining"
 ├─ Large counters in cone? .... Yes → abstraction.md "Counter Abstraction"
 ├─ Large memories in cone? .... Yes → abstraction.md "Memory Abstraction"
+├─ Raw mem proof stalled? ..... Yes → abstraction.md "Memory Abstraction" trigger checklist
+│     (big array flops + arbitrary-address assertion + precond cover hits + no CEX → abstract, don't re-race engines)
 ├─ X-state / reset issues? .... Yes → abstraction.md "Initial Value Abstraction (IVA)"
 ├─ Synchronizers in path? ..... Yes → abstraction.md "Synchronizer Abstraction"
 ├─ Config logic dominates? .... Yes → cone-reduction.md "Configuration Cutpoints with Legality Assumptions"
@@ -63,6 +65,8 @@ Property not converging?
 | Overconstraints on baseline task | Masks real bugs | Clone: `task -create oc -source_task baseline -copy_all` |
 | Proving all IDs simultaneously | State explosion | One stable symbolic `chosen_id` |
 | `-bbox_i` without abstract reconnect | Outputs unconstrained | Add `assume` tying outputs |
+| Rewriting the DUT module, reporting as raw signoff | Proves the replacement, not the design | `-bbox_i <path>` + reconnect; disclose contract as trusted abstraction |
+| Re-racing engines on a stalled arbitrary-address memory assertion | State explosion never converges | Apply memory-abstraction trigger checklist (`abstraction.md`) |
 | Wide clock ranges by default | Exponential complexity | Fixed-factor first; ranges last |
 | Profiling without isolating property | Misleading effort scores | `assert -disable *; assert -enable <target>` |
 

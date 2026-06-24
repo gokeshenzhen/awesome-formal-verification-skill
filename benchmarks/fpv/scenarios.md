@@ -138,3 +138,37 @@ complexity
 ### Anti-Patterns to Avoid
 - Treating a helper that is only assumed (not proven) as a sound result
 - Circular assume-guarantee where a helper assumes the very thing it helps prove
+
+---
+
+## Scenario: mem-abstraction-stall  [control]
+
+### Category
+complexity
+
+### User Prompt
+"In JasperGold my `prove -all` proves the top controller assertion and covers every cover, but one embedded assertion is stuck: it is an arbitrary symbolic-address write-then-read property over a real 512x32 memory array, and it stays undetermined — multiple engines hit their per-property time limits with no counterexample. The RTL must stay unchanged. What should I do, and how do I report the result honestly?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/abstraction.md
+
+### Expected Key Points
+- [ ] Recognize the stall signature (big array flops + arbitrary-address assertion + precondition cover reachable + no CEX) as the **memory-abstraction trigger** — stop re-racing engines
+- [ ] Black-box only the array **instance** by path (`-bbox_i <path>`, not `-bbox_m`) so the original hierarchy is preserved
+- [ ] Reconnect a **single symbolic slot** keyed to the property's own `$stable`/NDC address (e.g. a `bind`-ed one-word tracker + a reconnect `assume`)
+- [ ] Prove the precondition cover for **non-vacuity**
+- [ ] Report it as a **disclosed trusted-abstraction** result, NOT an unqualified raw-RTL signoff; to upgrade, discharge the reconnect contract against the real array
+
+### Anti-Patterns to Avoid
+- Continuing to re-race / re-tune engines on the full concrete array instead of abstracting
+- Rewriting / replacing the memory module and reporting it as original-RTL signoff
+- Black-boxing the array **without** reconnecting an abstract model → outputs fully unconstrained
+- Assuming the controller property closing fast means the inner array property will
+
+> Ground truth: this was a real skill gap (the memory-abstraction atoms existed only as a
+> static reference, with no stall trigger and no signoff-discipline note). Fixed 2026-06-24 in
+> `complexity-management/abstraction.md` (trigger checklist + symbolic-slot recipe + signoff
+> discipline) and the index decision tree. A blind agent given only the updated skill then
+> independently proved the stalled `mem_works_ndc` (test/mem_ctrl_orig). Now a **control**:
+> this scenario guards against regressing that trigger+recipe back into a dropped gap.
