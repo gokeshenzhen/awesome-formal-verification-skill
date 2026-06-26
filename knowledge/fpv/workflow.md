@@ -12,13 +12,16 @@ The chronological command sequence of a JasperGold FPV run: from `clear -all` th
 Setting up an FPV run?
 └─ Follow the fixed stage order:
    clear → analyze → elaborate → inspect → clock/reset → constrain → properties
-         → proof settings → sanity → (ProofMaster) → prove → report
+         → proof settings → sanity → (ProofMaster) → prove → review status
+         → escalate proof shape if needed → report
    │
    ├─ Source language? .... -sv | -vhdl -lib L | -v2k -lib current | -verilog -f list
    ├─ Cut a sub-block? ..... elaborate ... -bbox_m {mods} / -bbox_i {insts}
    ├─ On a cluster? ........ set_proofgrid_mode / _shell / _per_engine_max_jobs  (before prove)
    ├─ Repeat runs? ......... set_proofmaster on  (before prove)
-   └─ Prove scope? ......... prove -property {name}  |  prove -all
+   ├─ Prove scope? ......... prove -property {name}  |  prove -all
+   └─ Many undetermined? .... read complexity-management.md; for global peer
+                              invariants read decomposition.md before re-racing engines
 ```
 
 ## Core Rules
@@ -30,7 +33,10 @@ Setting up an FPV run?
 5. **Sanity-check before proving**: `sanity_check` (clock/reset), `visualize -reset` (reset phase), `check_assumptions` (assumption conflicts). Proving against a broken or over-constrained setup yields vacuous or false results.
 6. **Black-box heavy sub-blocks at elaboration** (`-bbox_m`/`-bbox_i`) to keep the proof tractable.
 7. **Configure ProofGrid before proving** when running on a cluster; enable **ProofMaster** for repeated runs on the same/evolving design.
-8. **A run file is a template** — fill `<placeholders>` with real design files/config and your proof strategy.
+8. **After direct prove, review status before reporting success.** If more than 10% of assertions or more than 20 assertions remain `undetermined` with no counterexample, treat this as a complexity/proof-shape problem.
+9. **Do not use ProofMaster as proof decomposition.** ProofMaster reuses proof cache and strategies; it does not create AG/CAG obligations or a propagated `ROOT` signoff node.
+10. **Escalate global peer invariants to decomposition.** For no-duplicate, uniqueness, conservation, mutual exclusion, placement, token ownership, or many generated queue/FIFO/bank/tile/arbitration assertions, read `complexity-management/decomposition.md` and consider `proof_structure -create compositional_assume_guarantee`.
+11. **A run file is a template** — fill `<placeholders>` with real design files/config and your proof strategy.
 
 ## The Canonical FPV Run File
 
@@ -101,6 +107,26 @@ report -file <file_name> -detailed   ;# or -summary
 | Prove | `prove -property {n}` / `prove -all` | one property vs everything |
 | Report | `report -file <f> -detailed\|-summary` | detailed vs summary output |
 
+## Post-Prove Escalation Gate
+
+Always inspect the first direct proof result before spending more time on the
+same proof shape:
+
+```
+Direct prove result?
+├─ CEX found? ................ Debug RTL/property/constraints
+├─ Mostly proven? ............ Tune engines or isolate the remaining properties
+├─ Many undetermined? ........ Read complexity-management.md
+│   ├─ Local datapath lemmas?  Use proven helper assertions
+│   └─ Global peer invariant? Read decomposition.md; build proof_structure AG/CAG
+└─ Repeated similar run? ..... ProofMaster may help, but does not replace AG/CAG
+```
+
+For global invariants over many peer assertions, the next run file should create
+a `SETUP` task, initialize a `ROOT` proof tree, build the relevant AG/CAG or
+partition operation, and report the propagated `ROOT` status. Local node results
+inside a proof structure are intermediate evidence, not the signoff result.
+
 ## Anti-Pattern Reference
 
 | Anti-Pattern | Why It Fails | Correct Alternative |
@@ -110,6 +136,8 @@ report -file <file_name> -detailed   ;# or -summary
 | `prove` before `assume`/`assert`/`cover` | Nothing constrained or declared | Constrain + declare properties first |
 | Proving without sanity/assumption checks | Broken or over-constrained setup → vacuous/false results | Run `sanity_check` + `visualize -reset` + `check_assumptions` first |
 | Proving a huge design with no black-boxing/stopat | State-space explosion | Black-box (`-bbox_*`) or `stopat` heavy sub-blocks at setup |
+| Re-running direct `prove -all` after many `undetermined` results | Same proof shape keeps hitting capacity | Switch to complexity management; use AG/CAG for global peer invariants |
+| Treating ProofMaster as AG/CAG | Cache reuse does not decompose obligations | Use `proof_structure` and check propagated `ROOT` |
 
 ## Tool-Specific Notes
 

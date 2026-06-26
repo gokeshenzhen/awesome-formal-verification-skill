@@ -25,7 +25,7 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 |--------|------|----------|
 | Property Writing | `knowledge/fpv/property-writing.md` | Writing or reviewing SVA properties/assertions |
 | Engine Tuning | `knowledge/fpv/engine-tuning.md` | Selecting or configuring proof engines |
-| Complexity Management | `knowledge/fpv/complexity-management.md` | Dealing with proof complexity, capacity issues |
+| Complexity Management | `knowledge/fpv/complexity-management.md` | Dealing with proof complexity, capacity issues, many `undetermined` properties, global invariants, helper lemmas, AG/CAG, or `proof_structure` |
 | TCL Commands | `knowledge/fpv/tcl-commands.md` | Writing TCL scripts for JasperGold/formal tools |
 | Workflow | `knowledge/fpv/workflow.md` | End-to-end FPV setup, execution, debug cycle |
 
@@ -48,11 +48,26 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 3. **Check tool-specific notes** if the user is working with a specific EDA tool
 4. **Apply the knowledge** following the module's decision trees and patterns
 
+### Mandatory Escalation Routing
+
+When a JasperGold/formal run leaves many properties `undetermined` after a sane
+direct `prove`, do not continue only with longer time limits, engine racing,
+ProofMaster, or ad-hoc local helpers. Read `knowledge/fpv/complexity-management.md`.
+
+If the hard assertions are global invariants over many peers or generated
+instances — especially no-duplicate, uniqueness, conservation, mutual exclusion,
+placement, token ownership, queues/FIFOs/banks/tiles/arbiters — also read
+`knowledge/fpv/complexity-management/decomposition.md` before choosing the next
+proof shape. These patterns usually require `proof_structure` AG/CAG or partition
+with a propagated `ROOT` result.
+
 ### Routing Examples
 
 - "Help me write an assertion for FIFO overflow" → Read `property-writing.md` + `sva-reference.md`
 - "My proof is running forever" → Read `complexity-management.md` + `engine-tuning.md`
 - "Set up a JasperGold FPV run" → Read `workflow.md` + `tcl-commands.md` + `jaspergold/`
+- "414 assertions, 412 undetermined, no CEX" → Read `workflow.md` + `complexity-management.md` + `complexity-management/decomposition.md`
+- "Prove no duplicates across many FIFOs" → Read `complexity-management.md` + `complexity-management/decomposition.md`
 - "Convert this JasperGold script to VC Formal" → Read `tcl-commands.md` + both tool-specific dirs
 
 ## Key Principles

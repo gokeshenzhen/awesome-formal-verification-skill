@@ -6,6 +6,60 @@
 
 **When to use**: Single property too complex; can be decomposed via helper lemmas or compositional reasoning.
 
+## Helper vs. Proof Structure Decision
+
+Use the lightest sound decomposition first, then escalate when signoff or scale
+requires structure:
+
+```
+Direct proof stalls?
+├─ Can you state a few local invariants? .... Yes → proven helper assertions
+│    prove helper → assert -set_helper → prove target -with_helpers
+├─ Helper graph has multiple stages? ........ Yes → proof_structure AG
+├─ Helpers are as hard as the target? ....... Yes → proof_structure CAG/AG
+├─ Many peer/global invariants? ............. Yes → proof_structure CAG
+├─ Need auditable signoff? .................. Yes → proof_structure ROOT result
+├─ Local helper proof could be mistaken
+│  for top proof? ........................... Yes → proof_structure ROOT result
+└─ Many peer properties / components? ....... Yes → CAG / partition
+```
+
+**Proven helpers are a proof method, not a modeling assumption**, when each
+helper is proven from the same RTL before use. They are ideal for local lemmas
+such as arithmetic identities, FIFO invariants, and shallow protocol facts.
+
+**Proof structure is a signoff framework** for multi-stage dependencies,
+long-lived reviews, and decomposition experiments. It makes assume-side and
+guarantee-side obligations explicit and gives a propagated ROOT result. Prefer
+it when a benchmark or project asks for decomposition signoff, not just "target
+eventually says proven".
+
+**Do not confuse ProofMaster with proof structure.** ProofMaster is a cache and
+strategy-reuse mechanism; it does not create assume-guarantee obligations or a
+ROOT signoff node. If direct proof plus ProofMaster leaves most assertions
+undetermined, change the proof shape instead of only extending time limits.
+
+**CAG trigger pattern**: use `proof_structure -create
+compositional_assume_guarantee` when the proof is a global invariant distributed
+over many symmetric peers, such as uniqueness, conservation, mutual exclusion,
+or no-duplicate properties across many queues, FIFOs, arbiters, banks, or tiles.
+In these cases local helpers are often just as hard as the target because every
+helper still depends on the same global invariant. Build a CAG property set from
+the peer invariants and prove the propagated ROOT result.
+
+**Arithmetic datapath pattern**: for compressor trees, reductions, encoders, and
+other word-level datapaths, first look for local algebraic identities:
+```tcl
+assert -helper -name h_leaf {leaf.sum_in == leaf.sum_out}
+prove -property h_leaf
+assert -set_helper h_leaf
+assert -helper -name h_top {top_sum == rtl_sum}
+prove -property h_top -with_helpers
+prove -property target_prop -with_helpers
+```
+Escalate this helper chain into `proof_structure` when there are multiple
+helper layers or the report must prove the propagated ROOT node.
+
 **Template** (Assume-Guarantee):
 ```tcl
 task -create SETUP -copy_assert -set
@@ -27,6 +81,20 @@ proof_structure -create compositional_assume_guarantee \
 prove -task {CAG.0} -assert -engine {N} -time_limit 100s
 prove -task {CAG.1} -assert -engine {N} -time_limit 100s
 # Check ROOT status — that is the sound result
+```
+
+**Template** (CAG for generated peer invariants):
+```tcl
+set peer_props {}
+for {set i 0} {$i < $N} {incr i} {
+  lappend peer_props "top.gen[$i].local_invariant"
+}
+proof_structure -init ROOT -from SETUP -copy_all
+proof_structure -create compositional_assume_guarantee \
+  -from ROOT -op_name CAG_peers -property $peer_props
+prove -task {CAG_peers.0} -assert -engine {N AM H} -time_limit 10m
+::jasper::psu::prove_all ROOT
+report
 ```
 
 **Template** (Multi-Stage AG for scaling):
@@ -67,6 +135,19 @@ assert -set_helper helper1
 prove -property target_prop -with_helpers
 ```
 
+**Multi-stage helper template**:
+```tcl
+assert -helper -name h1 {<local invariant>}
+prove -property h1
+assert -set_helper h1
+
+assert -helper -name h2 {<higher-level invariant>}
+prove -property h2 -with_helpers
+assert -set_helper h2
+
+prove -property target_prop -with_helpers
+```
+
 **Example** (loop-generated FIFO tag helpers):
 ```tcl
 for {set i 0} {$i < 16} {incr i} {
@@ -81,6 +162,8 @@ prove -property {top.v_top.ast_has_same_id_on_ID} -time_limit 2m -with_helpers
 - `-with_helpers` is **required** — omitting it ignores declared helpers
 - `assert -mark_proven helper`: injects externally verified result (soundness depends on external proof)
 - Loop-generated helpers must escape `[` and `]` in Tcl strings
+- If helper dependencies become hard to audit, move the same obligations into
+  `proof_structure` and require the propagated ROOT result.
 
 ## State Space Tunneling (SST)
 

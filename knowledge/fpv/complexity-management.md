@@ -21,6 +21,7 @@ Property not converging?
 ├─ Multi-instance / symmetric?  Yes → cone-reduction.md "Free Variables / NDC"
 ├─ Many irrelevant signals? ... Yes → cone-reduction.md "Profiler-Guided Stopat Mining"
 ├─ Design too large overall? .. Yes → cone-reduction.md "Parameter Reduction"
+├─ Many peer/global invariants? Yes → decomposition.md "Proof Decomposition (AG/CAG)"
 ├─ Single property too hard? .. Yes → decomposition.md "Proof Decomposition (AG/CAG)"
 ├─ Need lemma scaffolding? .... Yes → decomposition.md "Helper Assertions"
 ├─ Stuck in init cycles? ...... Yes → decomposition.md "State Space Tunneling (SST)"
@@ -46,10 +47,11 @@ Property not converging?
 4. **Include reset value `0` in counter abstraction values.** Omitting it breaks the reset-to-milestone path.
 5. **`stopat`/cutpoints alone are never sufficient.** Always add legality assumptions (`assume -constant`, `assume -bound 1`, `setup_ndc`, or transition constraints) after cutting a signal.
 6. **Prove helpers before using them.** `assert -set_helper` on an unproven assertion is unsound; always `prove -property helper` first.
-7. **Separate model setup from proof decomposition.** Create a `SETUP` task first, then derive `ROOT` from it.
-8. **Sound results live on ROOT, not on local AG/CAG nodes.** Only the propagated ROOT status is the verified result.
-9. **Detect overconstraint actively.** Use `check_assumptions -dead_end` and reachability covers to ensure assumptions don't block real behavior.
-10. **Persist reductions to files.** Write generated `stopat` decks to `.tcl` files via `eju_list_to_file` so they survive across sessions.
+7. **Use helpers first only for local lemmas.** Proven helpers are lightweight; switch to `proof_structure` when helper dependencies are multi-stage, reviewer-audited, require a propagated ROOT result, or the hard proof is a global invariant over many peer properties.
+8. **Separate model setup from proof decomposition.** Create a `SETUP` task first, then derive `ROOT` from it.
+9. **Sound results live on ROOT, not on local AG/CAG nodes.** Only the propagated ROOT status is the verified result.
+10. **Detect overconstraint actively.** Use `check_assumptions -dead_end` and reachability covers to ensure assumptions don't block real behavior.
+11. **Persist reductions to files.** Write generated `stopat` decks to `.tcl` files via `eju_list_to_file` so they survive across sessions.
 
 ## Anti-Pattern Reference
 
