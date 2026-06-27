@@ -141,6 +141,55 @@ complexity
 
 ---
 
+## Scenario: compact-global-helper  [control]
+
+### Category
+complexity
+
+### User Prompt
+"After a sane direct JasperGold prove, 412 generated no-duplicate assertions remain undetermined with no counterexample. I can state one global uniqueness invariant that may summarize the missing fact. How should I choose between a helper assertion and CAG, what gates make the result sound, and what are the exact key JasperGold Tcl commands for activating and using the helper?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+- [ ] Treat the property labels as a complexity trigger, not a mandatory CAG choice
+- [ ] Try one bounded compact helper because one global invariant may summarize the dependency
+- [ ] Prove the helper from the same RTL/setup without helper-specific assumptions before `assert -set_helper`
+- [ ] Abort or escalate if the helper is not `proven`; use `-with_helpers` only after the gate
+- [ ] Escalate to AG/CAG if the helper remains undetermined or is as hard as the targets
+
+### Anti-Patterns to Avoid
+- Selecting CAG solely because the properties are global, uniqueness, or no-duplicate
+- Activating an undetermined helper
+
+---
+
+## Scenario: distributed-peer-cag  [control]
+
+### Category
+complexity
+
+### User Prompt
+"A JasperGold proof has hundreds of symmetric peer no-duplicate obligations. A compact helper was tried in isolation but remains undetermined and has essentially the same cone as the targets. What proof shape should I use next, which result is valid for signoff, and what is the exact key JasperGold Tcl command that creates this decomposition?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+- [ ] Stop extending the failed helper trial
+- [ ] Use compositional assume-guarantee with `proof_structure -create compositional_assume_guarantee`
+- [ ] Build the CAG property set from the symmetric peer obligations
+- [ ] Propagate/unify the result and use only the propagated `ROOT` status for signoff
+
+### Anti-Patterns to Avoid
+- Continuing to increase the helper time limit despite an unchanged proof cone
+- Reporting a local CAG node as the sound top-level result
+
+---
+
 ## Scenario: mem-abstraction-stall  [control]
 
 ### Category

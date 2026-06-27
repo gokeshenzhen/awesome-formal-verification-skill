@@ -52,8 +52,8 @@ RUNTIME="${RUNTIME:-$(detect_runtime)}"
 # Invoke the detected runtime headlessly; print the agent's answer to stdout.
 run_agent() { # prompt
   case "$RUNTIME" in
-    claude) claude -p "$1 Be concise." ;;
-    codex)  codex exec "$1 Be concise." ;;
+    claude) timeout "$TIMEOUT" claude -p "$1 Answer in English. Be concise." </dev/null ;;
+    codex)  timeout "$TIMEOUT" codex exec --ephemeral -s read-only "$1 Answer in English. Be concise." </dev/null ;;
     *) echo "ERROR: no supported agent runtime (claude/codex) detected." >&2; return 1 ;;
   esac
 }
@@ -97,7 +97,14 @@ printf "%-30s %-11s %-10s %-10s\n" "scenario" "type" "concept" "exact(JG)"
 printf "%-30s %-11s %-10s %-10s\n" "------------------------------" "-----------" "--------" "---------"
 while IFS=$'\t' read -r id type prompt concept exact; do
   f="$OUT/$id.txt"
-  timeout "$TIMEOUT" run_agent "$prompt" > "$f" 2>/dev/null || true
+  err="$OUT/$id.stderr"
+  rc=0
+  run_agent "$prompt" > "$f" 2>"$err" || rc=$?
+  if [ "$rc" -ne 0 ] || [ ! -s "$f" ]; then
+    printf "%-30s %-11s %-10s %-10s  \u2190 agent ERROR (rc=%s; see %s)\n" \
+      "$id" "$type" "ERROR" "ERROR" "$rc" "$err"
+    continue
+  fi
   c=$(grade "$f" "$concept")
   e=$(grade "$f" "$exact")
   flag=""

@@ -58,8 +58,9 @@ If the hard assertions are global invariants over many peers or generated
 instances — especially no-duplicate, uniqueness, conservation, mutual exclusion,
 placement, token ownership, queues/FIFOs/banks/tiles/arbiters — also read
 `knowledge/fpv/complexity-management/decomposition.md` before choosing the next
-proof shape. These patterns usually require `proof_structure` AG/CAG or partition
-with a propagated `ROOT` result.
+proof shape. Treat these labels as routing triggers, not as a mandatory CAG
+choice; the decomposition decision tree selects a proven compact helper or
+`proof_structure` AG/CAG/partition and defines the required signoff gate.
 
 ### Routing Examples
 

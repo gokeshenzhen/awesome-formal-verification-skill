@@ -13,11 +13,15 @@ requires structure:
 
 ```
 Direct proof stalls?
-├─ Can you state a few local invariants? .... Yes → proven helper assertions
-│    prove helper → assert -set_helper → prove target -with_helpers
+├─ Can one/few inductive invariants summarize
+│  the missing local or global fact? ........ Yes → bounded helper trial
+│    prove alone → gate on proven → assert -set_helper → prove -with_helpers
+├─ Helper independently proven from the
+│  same setup, without new assumptions? ..... No  → do not set helper; use AG/CAG
 ├─ Helper graph has multiple stages? ........ Yes → proof_structure AG
 ├─ Helpers are as hard as the target? ....... Yes → proof_structure CAG/AG
-├─ Many peer/global invariants? ............. Yes → proof_structure CAG
+├─ Many symmetric peer obligations with no
+│  compact inductive summary? ................ Yes → proof_structure CAG
 ├─ Need auditable signoff? .................. Yes → proof_structure ROOT result
 ├─ Local helper proof could be mistaken
 │  for top proof? ........................... Yes → proof_structure ROOT result
@@ -25,8 +29,38 @@ Direct proof stalls?
 ```
 
 **Proven helpers are a proof method, not a modeling assumption**, when each
-helper is proven from the same RTL before use. They are ideal for local lemmas
-such as arithmetic identities, FIFO invariants, and shallow protocol facts.
+helper is proven from the same RTL and legal environment setup before use. They
+are ideal for local lemmas and for compact global summaries such as one
+inductive uniqueness or conservation invariant whose proof converges in
+isolation. The words `global`, `uniqueness`, `conservation`, or `peer` identify a
+complexity risk; they do not by themselves require CAG.
+
+### Compact Helper Trial
+
+Use one bounded trial before building a proof structure when a small invariant
+can summarize the missing fact:
+
+```tcl
+set helper [lindex [get_property_list -include {name *uniqueness_inv*}] 0]
+assert -disable *
+assert -enable $helper
+prove -property $helper
+
+if {[llength [get_property_list \
+        -include {name *uniqueness_inv* status proven}]] != 1} {
+  error "helper was not proven; do not activate it"
+}
+
+assert -set_helper $helper
+assert -enable *
+prove -property $targets -with_helpers
+```
+
+Keep the RTL, reset, and legal environment assumptions identical to the target
+task. Do not add an assumption merely to make the helper prove. Report helper
+and original-target status separately. Escalate instead of extending the helper
+trial when the candidate remains undetermined, requires many pairwise lemmas,
+or reproduces the original target cone and difficulty.
 
 **Proof structure is a signoff framework** for multi-stage dependencies,
 long-lived reviews, and decomposition experiments. It makes assume-side and
@@ -40,12 +74,14 @@ ROOT signoff node. If direct proof plus ProofMaster leaves most assertions
 undetermined, change the proof shape instead of only extending time limits.
 
 **CAG trigger pattern**: use `proof_structure -create
-compositional_assume_guarantee` when the proof is a global invariant distributed
-over many symmetric peers, such as uniqueness, conservation, mutual exclusion,
-or no-duplicate properties across many queues, FIFOs, arbiters, banks, or tiles.
-In these cases local helpers are often just as hard as the target because every
-helper still depends on the same global invariant. Build a CAG property set from
-the peer invariants and prove the propagated ROOT result.
+compositional_assume_guarantee` when a global invariant is distributed over many
+symmetric peers and no compact helper converges, such as pairwise uniqueness,
+mutual exclusion, or no-duplicate properties across many queues, FIFOs,
+arbiters, banks, or tiles. CAG is also preferred when the helper graph itself is
+the peer dependency graph or signoff requires explicit assume/guarantee
+obligations. Build a CAG property set from the peer invariants and prove the
+propagated ROOT result. Do not choose CAG solely because the property is named
+uniqueness or conservation.
 
 **Arithmetic datapath pattern**: for compressor trees, reductions, encoders, and
 other word-level datapaths, first look for local algebraic identities:

@@ -18,6 +18,22 @@
       "expect_exact": []
     },
     {
+      "id": "compact-global-helper",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "After a sane direct JasperGold prove, 412 generated no-duplicate assertions remain undetermined with no counterexample. I can state one global uniqueness invariant that may summarize the missing fact. How should I choose between a helper assertion and CAG, what gates make the result sound, and what are the exact key JasperGold Tcl commands for activating and using the helper?",
+      "expect_concept": ["helper", "proven", "CAG", "(same|identical) (RTL|setup)|no assumptions solely|without (new|extra) assumptions"],
+      "expect_exact": ["assert -set_helper", "with_helpers"]
+    },
+    {
+      "id": "distributed-peer-cag",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A JasperGold proof has hundreds of symmetric peer no-duplicate obligations. A compact helper was tried in isolation but remains undetermined and has essentially the same cone as the targets. What proof shape should I use next, which result is valid for signoff, and what is the exact key JasperGold Tcl command that creates this decomposition?",
+      "expect_concept": ["CAG|compositional assume.?guarantee", "ROOT", "propagat"],
+      "expect_exact": ["proof_structure", "compositional_assume_guarantee"]
+    },
+    {
       "id": "config-logic-cutpoint",
       "type": "loss-probe",
       "module": "complexity-management",

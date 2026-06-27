@@ -35,7 +35,7 @@ Setting up an FPV run?
 7. **Configure ProofGrid before proving** when running on a cluster; enable **ProofMaster** for repeated runs on the same/evolving design.
 8. **After direct prove, review status before reporting success.** If more than 10% of assertions or more than 20 assertions remain `undetermined` with no counterexample, treat this as a complexity/proof-shape problem.
 9. **Do not use ProofMaster as proof decomposition.** ProofMaster reuses proof cache and strategies; it does not create AG/CAG obligations or a propagated `ROOT` signoff node.
-10. **Escalate global peer invariants to decomposition.** For no-duplicate, uniqueness, conservation, mutual exclusion, placement, token ownership, or many generated queue/FIFO/bank/tile/arbitration assertions, read `complexity-management/decomposition.md` and consider `proof_structure -create compositional_assume_guarantee`.
+10. **Escalate global peer invariants to a decomposition decision.** For no-duplicate, uniqueness, conservation, mutual exclusion, placement, token ownership, or many generated queue/FIFO/bank/tile/arbitration assertions, read `complexity-management/decomposition.md`. Try a compact independently proven helper when one invariant summarizes the missing fact; use AG/CAG or partition when it does not, and require propagated `ROOT` status for proof-structure signoff.
 11. **A run file is a template** — fill `<placeholders>` with real design files/config and your proof strategy.
 
 ## The Canonical FPV Run File
@@ -117,15 +117,19 @@ Direct prove result?
 ├─ CEX found? ................ Debug RTL/property/constraints
 ├─ Mostly proven? ............ Tune engines or isolate the remaining properties
 ├─ Many undetermined? ........ Read complexity-management.md
-│   ├─ Local datapath lemmas?  Use proven helper assertions
-│   └─ Global peer invariant? Read decomposition.md; build proof_structure AG/CAG
+│   ├─ Compact local/global
+│   │  inductive summary? ...... Prove; gate; assert -set_helper; use -with_helpers
+│   └─ Distributed peer graph? Read decomposition.md; build proof_structure AG/CAG
 └─ Repeated similar run? ..... ProofMaster may help, but does not replace AG/CAG
 ```
 
-For global invariants over many peer assertions, the next run file should create
-a `SETUP` task, initialize a `ROOT` proof tree, build the relevant AG/CAG or
-partition operation, and report the propagated `ROOT` status. Local node results
-inside a proof structure are intermediate evidence, not the signoff result.
+For global invariants over many peer assertions, first determine whether one or
+a few global inductive helpers collapse the dependency. Prove each helper in
+isolation and abort unless its status is `proven`; only then activate it and
+prove the original targets with `-with_helpers`. If no compact helper converges,
+create a `SETUP` task, initialize a `ROOT` proof tree, build the relevant AG/CAG
+or partition operation, and report the propagated `ROOT` status. Local node
+results inside a proof structure are intermediate evidence, not signoff.
 
 ## Anti-Pattern Reference
 
@@ -136,7 +140,8 @@ inside a proof structure are intermediate evidence, not the signoff result.
 | `prove` before `assume`/`assert`/`cover` | Nothing constrained or declared | Constrain + declare properties first |
 | Proving without sanity/assumption checks | Broken or over-constrained setup → vacuous/false results | Run `sanity_check` + `visualize -reset` + `check_assumptions` first |
 | Proving a huge design with no black-boxing/stopat | State-space explosion | Black-box (`-bbox_*`) or `stopat` heavy sub-blocks at setup |
-| Re-running direct `prove -all` after many `undetermined` results | Same proof shape keeps hitting capacity | Switch to complexity management; use AG/CAG for global peer invariants |
+| Re-running direct `prove -all` after many `undetermined` results | Same proof shape keeps hitting capacity | Switch to complexity management; try one gated compact helper or use AG/CAG for a distributed peer graph |
+| Activating a helper without a proven-status gate | An undetermined helper can be mistaken for a valid lemma | Prove it in isolation; abort unless status is `proven`; then use `assert -set_helper` |
 | Treating ProofMaster as AG/CAG | Cache reuse does not decompose obligations | Use `proof_structure` and check propagated `ROOT` |
 
 ## Tool-Specific Notes
