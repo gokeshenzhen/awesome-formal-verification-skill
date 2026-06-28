@@ -32,6 +32,8 @@ When adding FPV content, edit the `knowledge/` file. Do not duplicate content in
 
 "Validation" is field feedback that moves a module's maturity badge: 🔬 from-docs → ⚠️ needs-validation → ✅ battle-tested.
 
+**Before running any blind skill-validation / double-blind A/B (no_skill vs skill):** read `test/BLIND_TEST_PROTOCOL.md` (Part I neutrality + Part II enforcement) and drive the run through `benchmarks/blind_ab.sh` rather than hand-rolling it — this guarantees per-arm skill isolation, leak scan, auditable artifacts, Option-A cold replay, and write-back to the case's `EXPERIMENT_REPORT.md`. The `blind-ab` skill encapsulates this.
+
 ## Conventions for Knowledge Files
 
 When writing or editing a `knowledge/fpv/<module>.md`:
