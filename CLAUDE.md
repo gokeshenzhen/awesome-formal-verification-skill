@@ -68,6 +68,19 @@ The pipeline compresses many sources into the knowledge file — a lossy step. T
 
 The empirical rule these produced: **loss bites on tool-specific atoms, not general methodology.** When `loss_probe` flags a real on-topic atom and the task eval confirms the miss, restore it — splitting the module into progressive disclosure if the flat file is already at the cap.
 
+## Iterating a Module: Development → Validation Workflow
+
+After adding or editing a `knowledge/fpv/<module>.md`, validate it before trusting it.
+
+**Design priority — what to optimize for.** Lead with the *durable core*: tool-specific atoms (exact commands, flags, `🔧 VERSION-SENSITIVE` syntax, numeric thresholds) **+ trigger timing** — the symptom→technique mapping (*when* to abstract a counter, *when* to add a helper lemma, *when* to escalate). This core is valuable across all model tiers and is precisely what a model cannot re-derive. Keep methodology **lean but present** — compress the general-FV prose a strong model already has, but do not delete the compact technique flow that helps weaker/cheaper models. (Atoms are the floor that holds across tiers; methodology is the weak-tier top-up. This is the `Conventions` rule "preserve atoms, compress prose" applied as a strategy.)
+
+**Validation ladder (cheap → expensive):**
+1. **Loss screen** — `scripts/loss_probe.py`: atoms present in the extractions but missing from the module. Fast; over-counts.
+2. **Task eval / benchmark** — `benchmarks/run_scenarios.sh` + `benchmarks/fpv/scenarios.{md,json}`: grades CONCEPT vs EXACT (tool-specific) tokens separately; calibrates the screen (a dropped atom only matters if the model can't supply it itself). Add a scenario for any new technique/trigger you introduce.
+3. **Manual blind A/B (recommended for any non-trivial change)** — no_skill vs skill on a neutral task, run as two separate sessions per the manual-validation note above (neutral prompt, no technique names, no cross-reading; cite every number to a raw artifact). **Run it on a WEAK model** (e.g. a small/mini tier). A frontier model re-derives the methodology and ties, so frontier A/B *under-measures* skill value — the same cases that look like ties on a frontier model flip to clean skill wins on a weak model (no_skill fails, skill solves). `test/weak_model_ab/` is the worked example.
+
+The empirical rule behind all three: **loss bites on tool-specific atoms + missing triggers, not general methodology.**
+
 ## Project State
 
 All five `knowledge/fpv/` modules are synthesized, plus the two `knowledge/shared/` references (`sva-reference.md`, `tcl-common.md`). `complexity-management` is the most mature and is structured as progressive disclosure (index + `complexity-management/` leaves); the other modules are flat and at 🔬 from-docs, needing field validation.
