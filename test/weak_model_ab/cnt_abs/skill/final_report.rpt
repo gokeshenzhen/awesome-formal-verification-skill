@@ -1,0 +1,57 @@
+
+==============================================================
+    Jasper Verification Results
+==============================================================
+    2025.12p002 64 bits for Linux64 4.18.0-372.26.1.el8_6.x86_64
+    Host Name: workstation.tail38c6e8.ts.net
+    User Name: robin
+    Printed on: Monday, Jun29, 2026 02:40:10 PM CST
+    Working Directory: /home/robin/Projects/awesome-formal-verification-skill/test/weak_model_ab/cnt_abs
+
+
+==============================================================
+SUMMARY
+==============================================================
+    Total Tasks           : 1
+    Total Properties      : 13
+          assumptions     : 0                   
+           - approved     : 0                   
+           - temporary    : 0                   
+          assertions      : 7                   
+           - proven       : 7                   ( 100.0% )
+           - marked_proven: 0                   ( 0.0% )
+           - cex          : 0                   ( 0.0% )
+           - ar_cex       : 0                   ( 0.0% )
+           - undetermined : 0                   ( 0.0% )
+           - unprocessed  : 0                   ( 0.0% )
+           - error        : 0                   ( 0.0% )
+          covers          : 6                   
+           - unreachable  : 0                   ( 0.0% )
+           - covered      : 6                   ( 100.0% )
+           - ar_covered   : 0                   ( 0.0% )
+           - undetermined : 0                   ( 0.0% )
+           - unprocessed  : 0                   ( 0.0% )
+           - error        : 0                   ( 0.0% )
+
+==============================================================
+RESULTS
+==============================================================
+
+-----------------------------------------------------------------------------------------------------------------------------
+       Name                                                                 |    Result    |  Engine  |  Bound  |  Time    
+-----------------------------------------------------------------------------------------------------------------------------
+
+---[ <embedded> ]------------------------------------------------------------------------------------------------------------
+[1]   :noConflict                                                                proven          PRE    Infinite    0.000 s      
+[2]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_set                            proven          PRE    Infinite    0.000 s      
+[3]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_set:precondition1              covered         Hp            3    0.022 s      
+[4]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_set                            proven          PRE    Infinite    0.000 s      
+[5]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_set:precondition1              covered         Hp            5    0.063 s      
+[6]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_sticky                         proven          PRE    Infinite    0.000 s      
+[7]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_sticky:precondition1           covered         Hp            4    0.042 s      
+[8]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_sticky                         proven          PRE    Infinite    0.000 s      
+[9]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_sticky:precondition1           covered         Hp            6    0.074 s      
+[10]  cnt_abstract_eg.u_cnt_abstract_eg_checker.C_low                            proven          PRE    Infinite    0.000 s      
+[11]  cnt_abstract_eg.u_cnt_abstract_eg_checker.D_low                            proven          PRE    Infinite    0.000 s      
+[12]  cnt_abstract_eg.u_cnt_abstract_eg_checker.reach_A                          covered         Hp            3    0.022 s      
+[13]  cnt_abstract_eg.u_cnt_abstract_eg_checker.reach_B                          covered         Hp            5    0.063 s      

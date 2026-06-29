@@ -1,0 +1,25 @@
+You are solving a JasperGold formal-verification benchmark.
+Work ONLY in /home/robin/Projects/awesome-formal-verification-skill/test/weak_model_ab/helper_counters
+and write ALL scripts/logs/reports ONLY under that directory's no_skill/ subfolder.
+First read ./README.md and ./two_counters.v in that directory.
+
+Constraints:
+- Do NOT use any formal-verification skill or external knowledge base.
+- Do NOT read /home/robin/Projects/awesome-formal-verification-skill/knowledge,
+  /adapters, /tool-specific, /raw-docs, /extractions, or any other testcase or prior report.
+- Use ONLY your own general JasperGold knowledge.
+- Do NOT edit two_counters.v.
+- Every JasperGold project directory MUST live under no_skill/ : pass
+  `-proj no_skill/proj_<timestamp>` on EVERY jg call. Never run a bare
+  `jg -batch` (it creates ./jgproject at the case root, outside your arm dir).
+
+Task: full-prove the embedded assertion `@(posedge clk) &counter1 |-> &counter2`
+with batch JasperGold (jg -batch, timestamped -proj dirs). If a direct proof
+does not converge, diagnose why and reach a full (unbounded) proof another way,
+or clearly show you cannot. Demonstrate the assertion is non-vacuous.
+
+When finished, write no_skill/report.md containing: exactly how you reached the
+proof, the exact jg commands, any added properties/assumptions (disclose them and
+state whether they are themselves proven), final proven/cex/undetermined counts,
+whether the result is an unqualified raw-RTL proof, the wall-clock time from
+start to first full proof, and paths to the jg logs.
