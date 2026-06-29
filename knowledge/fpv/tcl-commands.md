@@ -43,6 +43,26 @@ foreach m [get_design_info -silent -list module] {
 ```
 **Gotchas**: without `-silent` these print and return verbose values — unusable in a pipeline. COI queries feed abstraction/cutpoint decisions (see `complexity-management.md`).
 
+### Reporting & per-property status queries
+**When to use**: dump a run summary to a file, or read each property's status back in a script. These are non-derivable [JG-specific] syntax atoms — get them exactly. 🔧 VERSION-SENSITIVE (switch names verified on 2025.12).
+**Template**:
+```tcl
+# Summary to a file — `report -file` ABORTS if the file exists (ERROR EFL012).
+# Always pass -force (or `rm -f` the file first). There is NO `report -details`
+# switch (ERROR ESW087: No such switch "-details").
+report -summary -force -result -file proof_summary.rpt
+
+# Per-property status in a script: query field "status", NOT a `-status` switch
+# (`-status` → ERROR ESW087). General form: get_property_info -list <field> <prop>.
+foreach p [get_property_list -silent] {
+  puts "PROP_STATUS: [get_property_info -list status $p] :: $p"
+}
+```
+**Gotchas**:
+- `report -file f` without `-force` → `ERROR (EFL012): ... file already exists`.
+- `report -details` and `get_property_info -status` do **not** exist → `ERROR (ESW087): No such switch`. Use `report -summary -result` and `get_property_info -list status`.
+- **Reading an `<assert>:precondition1` auto witness cover as a bug.** JG auto-generates an anti-vacuity witness cover (`<assertion>:precondition1`) on each assertion's antecedent. Under default reset modeling `!rst_n` is held deasserted after the initial reset, so an antecedent guarded by reset never recurs in-trace → the assertion is *vacuously* proven and its witness cover comes back `unreachable` / `unprocessed`. This is a **benign artifact**, not a defect; it does not affect the soundness of the proven assertions or your real functional covers.
+
 ## Anti-Pattern Reference
 
 | Anti-Pattern | Why It Fails | Correct Alternative |
@@ -50,6 +70,9 @@ foreach m [get_design_info -silent -list module] {
 | Omitting `-silent` in scripts | Command prints instead of returning a clean value | add `-silent` |
 | Assuming `clock`/`pid` behave as standard Tcl | Jasper renames `clock`→`tcl_clock`; `pid`=analysis-session PID | use `tcl_clock`; know `pid` semantics |
 | `package require Thread`/`tdbc*` in Jasper | Those standard packages aren't shipped | install/import another way or avoid; see `tcl-common.md` |
+| `report -file f` without `-force` (file exists) | `ERROR (EFL012)` aborts the run | `report ... -force -file f` (or `rm -f f` first) |
+| `report -details` / `get_property_info -status` | No such switch → `ERROR (ESW087)` | `report -summary -result`; `get_property_info -list status <prop>` |
+| Treating `<assert>:precondition1 unreachable` as a defect | It's JG's auto anti-vacuity witness cover on a reset-guarded antecedent | benign — see Reporting subsection |
 
 > For general Tcl anti-patterns (HDL escaping, `catch`, proc return, bare array names) see `knowledge/shared/tcl-common.md`.
 
@@ -70,6 +93,8 @@ foreach m [get_design_info -silent -list module] {
 | `<cmd> -silent` | return results instead of printing | JG |
 | `get_design_info [-list module\|instance\|input\|flop\|register] [-module M] [-property P] -silent` | design / COI queries | JG |
 | `get_signal_info -indexes\|-width <sig> -silent` | signal bit range / width | JG |
+| `report -summary -result -force -file <f>` | dump run summary to file (`-force` mandatory if file exists; no `-details` switch) | JG |
+| `get_property_list -silent` / `get_property_info -list status <prop>` | enumerate properties / read one property's status (field name, not `-status`) | JG |
 | `tcl_clock` (vs std `clock`); `pid` | Jasper Tcl differences | JG |
 
 For core Tcl commands (`set`, `expr`, `catch`, `proc`, list/string ops, `package require`, …) see `knowledge/shared/tcl-common.md`. For the full FPV run-file command sequence (`clear`, `analyze`, `elaborate`, `clock`, `reset`, `assume`, `assert`, `cover`, `prove`, `report`) see `workflow.md`.

@@ -29,6 +29,7 @@ prove -all   ;# converges quickly vs. timeout on direct proof
 - Values come directly from RTL compare expressions — compute carefully
 - Abstraction is only valid when properties observe milestone-driven events, not intermediate counts
 - `complexity_manager` may miss rare threshold values; verify with explicit `-values`
+- **Sound for safety + the enumerated covers; NOT sound for liveness.** Counter abstraction over-approximates (it frees the counter's progress), so it can introduce spurious infinite paths that never reach a goal → **spurious `s_eventually` / liveness counterexamples**. Keep liveness targets on the *concrete* counter, or add a progress/fairness assumption. Safety assertions stay sound (proven-in-abstract ⇒ holds-concrete), and a `cover` on an *enumerated* `-values` milestone is meaningful when that value is genuinely reachable concretely (a free-running `+1` counter does hit every value — abstraction just witnesses it shallowly).
 
 ## Counter Abstraction (Manual 4-Step)
 
