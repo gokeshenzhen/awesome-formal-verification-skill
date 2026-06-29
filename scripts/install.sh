@@ -43,8 +43,8 @@ install_skill_link() {
 
 if [ "${1:-}" = "--uninstall" ]; then
   for skills_root in "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.agents/skills"; do
-    rm -rf "$skills_root/$NAME" "$skills_root/blind-ab" 2>/dev/null || true
-    [ -d "$skills_root" ] && echo "  removed $skills_root/$NAME (+ blind-ab if present)"
+    rm -rf "$skills_root/$NAME" 2>/dev/null || true
+    [ -d "$skills_root" ] && echo "  removed $skills_root/$NAME"
   done
   echo "Uninstalled '$NAME'."
   exit 0
@@ -70,16 +70,6 @@ fi
 if [ "$INSTALLED" -eq 0 ]; then
   echo "No ~/.claude, ~/.codex, or ~/.agents directory found."
   echo "Install Claude Code or Codex first, then re-run — or wire Cursor/Gemini manually (see below)."
-fi
-
-# --- 1b. companion skill: blind-ab (double-blind A/B test runner) ---
-BLIND_AB_DIR="$REPO/benchmarks/blind_ab_skill"
-if [ -f "$BLIND_AB_DIR/SKILL.md" ]; then
-  for skills_root in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
-    [ -d "$(dirname "$skills_root")" ] || continue
-    mkdir -p "$skills_root"; link "$BLIND_AB_DIR" "$skills_root/blind-ab"
-    echo "  ✅ blind-ab  → $skills_root/blind-ab  ⇒  $BLIND_AB_DIR"
-  done
 fi
 
 # --- 2. project-scoped agents (NOT a global skills dir) ---

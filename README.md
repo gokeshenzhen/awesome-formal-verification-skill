@@ -55,10 +55,10 @@ awesome-formal-verification-skill/
 │   ├── fpv/                    # Formal Property Verification
 │   │   ├── property-writing.md
 │   │   ├── engine-tuning.md
-│   │   ├── complexity-management.md
+│   │   ├── complexity-management.md     # index (progressive disclosure)
+│   │   ├── complexity-management/       # sub-topic leaves
 │   │   ├── tcl-commands.md
-│   │   ├── workflow.md
-│   │   └── examples/
+│   │   └── workflow.md
 │   ├── shared/                 # Cross-app shared knowledge
 │   │   ├── sva-reference.md
 │   │   └── tcl-common.md

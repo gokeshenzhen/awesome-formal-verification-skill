@@ -32,7 +32,7 @@ When adding FPV content, edit the `knowledge/` file. Do not duplicate content in
 
 "Validation" is field feedback that moves a module's maturity badge: 🔬 from-docs → ⚠️ needs-validation → ✅ battle-tested.
 
-**Before running any blind skill-validation / double-blind A/B (no_skill vs skill):** read `test/BLIND_TEST_PROTOCOL.md` (Part I neutrality + Part II enforcement) and drive the run through `benchmarks/blind_ab.sh` rather than hand-rolling it — this guarantees per-arm skill isolation, leak scan, auditable artifacts, Option-A cold replay, and write-back to the case's `EXPERIMENT_REPORT.md`. The `blind-ab` skill encapsulates this.
+**Skill-validation (no_skill vs skill) is done manually, not through a harness.** The automated double-blind runner was removed (too token/quota-heavy and unreliable under session limits). To compare: the user starts two separate sessions on the same neutral task — one without the formal-verification skill, one with it — and each session writes its own report. Bring both reports back here and summarize the difference. Keep the neutral-task and no-leak principles in mind (same prompt, no technique names, no cross-reading), but the orchestration is the user's, not a script's.
 
 ## Conventions for Knowledge Files
 
