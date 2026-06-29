@@ -2,8 +2,7 @@
 ==============================================================
     Jasper Verification Results
 ==============================================================
-    2025.12p002 64 bits for Linux64 4.18.0-372.26.1.el8_6.x86_64
-    Host Name: workstation.tail38c6e8.ts.net
+    Host Name: workstation
     User Name: robin
     Printed on: Wednesday, Jun24, 2026 10:56:14 PM CST
     Working Directory: /home/robin/Projects/awesome-formal-verification-skill/test/mem_ctrl_orig/blind/skill_abstraction_experiment/runs/20260624_225609

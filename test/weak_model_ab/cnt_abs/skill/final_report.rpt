@@ -2,8 +2,7 @@
 ==============================================================
     Jasper Verification Results
 ==============================================================
-    2025.12p002 64 bits for Linux64 4.18.0-372.26.1.el8_6.x86_64
-    Host Name: workstation.tail38c6e8.ts.net
+    Host Name: workstation
     User Name: robin
     Printed on: Monday, Jun29, 2026 02:40:10 PM CST
     Working Directory: /home/robin/Projects/awesome-formal-verification-skill/test/weak_model_ab/cnt_abs
