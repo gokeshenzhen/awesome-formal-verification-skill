@@ -14,6 +14,10 @@ This project packages deep formal verification expertise into structured "skills
 - **Tool-aware**: JasperGold and VC Formal have different quirks. Shared verification knowledge is separated from tool-specific details.
 - **Community-driven**: Each module has a maturity badge. Battle-tested by real engineers, not just extracted from docs.
 
+## Project Introduction
+
+- [微信公众号文章：Awesome Formal Verification Skill 项目介绍](https://mp.weixin.qq.com/s/utIrVrACSNOdHx_XbMbazQ)
+
 ## Quick Start
 
 Clone the repo, then run the installer once:
