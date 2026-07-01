@@ -105,12 +105,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 ## Roadmap
 
 - [x] Project skeleton & adapter framework
-- [ ] FPV property writing module
-- [ ] FPV engine tuning module
-- [ ] FPV complexity management module
-- [ ] FPV TCL commands module
-- [ ] FPV end-to-end workflow module
-- [ ] Benchmark test cases for FPV
+- [x] FPV property writing module
+- [x] FPV engine tuning module
+- [x] FPV complexity management module
+- [x] FPV TCL commands module
+- [x] FPV end-to-end workflow module
+- [x] Benchmark test cases for FPV
 - [ ] CDC/RDC verification modules
 - [ ] Superlint automation modules
 - [ ] VC Formal tool-specific layer
