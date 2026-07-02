@@ -27,4 +27,5 @@ export TCL_PATH="$tcl_path"
 
 cd "$run_dir"
 
-jg -no_gui -proj "$proj_dir" -tcl "$tcl_path" 2>&1 | tee "$run_dir/jg_console.log"
+#jg -no_gui -proj "$proj_dir" -tcl "$tcl_path" 2>&1 | tee "$run_dir/jg_console.log"
+jg -proj "$proj_dir" -tcl "$tcl_path" 2>&1 | tee "$run_dir/jg_console.log"

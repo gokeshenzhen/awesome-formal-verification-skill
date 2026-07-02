@@ -2,9 +2,10 @@
 ==============================================================
     Jasper Verification Results
 ==============================================================
-    Host Name: workstation
+    2025.12p002 64 bits for Linux64 4.18.0-372.26.1.el8_6.x86_64
+    Host Name: workstation.tail38c6e8.ts.net
     User Name: robin
-    Printed on: Monday, Jun29, 2026 02:40:10 PM CST
+    Printed on: Tuesday, Jun30, 2026 04:08:54 PM PDT
     Working Directory: /home/robin/Projects/awesome-formal-verification-skill/test/weak_model_ab/cnt_abs
 
 
@@ -43,14 +44,14 @@ RESULTS
 ---[ <embedded> ]------------------------------------------------------------------------------------------------------------
 [1]   :noConflict                                                                proven          PRE    Infinite    0.000 s      
 [2]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_set                            proven          PRE    Infinite    0.000 s      
-[3]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_set:precondition1              covered         Hp            3    0.022 s      
+[3]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_set:precondition1              covered         AM            3    0.003 s      
 [4]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_set                            proven          PRE    Infinite    0.000 s      
-[5]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_set:precondition1              covered         Hp            5    0.063 s      
+[5]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_set:precondition1              covered         AM            5    0.003 s      
 [6]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_sticky                         proven          PRE    Infinite    0.000 s      
-[7]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_sticky:precondition1           covered         Hp            4    0.042 s      
+[7]   cnt_abstract_eg.u_cnt_abstract_eg_checker.A_sticky:precondition1           covered         AM        3 - 4    0.003 s      
 [8]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_sticky                         proven          PRE    Infinite    0.000 s      
-[9]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_sticky:precondition1           covered         Hp            6    0.074 s      
+[9]   cnt_abstract_eg.u_cnt_abstract_eg_checker.B_sticky:precondition1           covered         AM            6    0.005 s      
 [10]  cnt_abstract_eg.u_cnt_abstract_eg_checker.C_low                            proven          PRE    Infinite    0.000 s      
 [11]  cnt_abstract_eg.u_cnt_abstract_eg_checker.D_low                            proven          PRE    Infinite    0.000 s      
-[12]  cnt_abstract_eg.u_cnt_abstract_eg_checker.reach_A                          covered         Hp            3    0.022 s      
-[13]  cnt_abstract_eg.u_cnt_abstract_eg_checker.reach_B                          covered         Hp            5    0.063 s      
+[12]  cnt_abstract_eg.u_cnt_abstract_eg_checker.reach_A                          covered         AM            3    0.003 s      
+[13]  cnt_abstract_eg.u_cnt_abstract_eg_checker.reach_B                          covered         AM            5    0.003 s      
