@@ -25,6 +25,7 @@
 #   bash benchmarks/run_scenarios.sh                          # all scenarios (auto runtime)
 #   bash benchmarks/run_scenarios.sh config-logic-cutpoint    # one by id
 #   RUNTIME=codex bash benchmarks/run_scenarios.sh            # force Codex CLI
+#   MODEL=gpt-5.5 bash benchmarks/run_scenarios.sh <scenario> # pin Codex model
 #   OUT=/tmp/fpv-eval bash benchmarks/run_scenarios.sh        # custom output dir
 set -euo pipefail
 
@@ -33,6 +34,7 @@ JSON="$HERE/fpv/scenarios.json"
 OUT="${OUT:-/tmp/fpv-eval/$(date +%Y%m%d-%H%M%S)}"
 ONLY="${1:-}"
 TIMEOUT="${TIMEOUT:-220}"
+MODEL="${MODEL:-}"
 
 # Auto-detect the calling agent runtime (override with RUNTIME=claude|codex).
 detect_runtime() {
@@ -53,7 +55,11 @@ RUNTIME="${RUNTIME:-$(detect_runtime)}"
 run_agent() { # prompt
   case "$RUNTIME" in
     claude) timeout "$TIMEOUT" claude -p "$1 Answer in English. Be concise." </dev/null ;;
-    codex)  timeout "$TIMEOUT" codex exec --ephemeral -s read-only "$1 Answer in English. Be concise." </dev/null ;;
+    codex)
+      local args=(exec --ephemeral -s read-only)
+      [ -n "$MODEL" ] && args+=(-m "$MODEL")
+      timeout "$TIMEOUT" codex "${args[@]}" "$1 Answer in English. Be concise." </dev/null
+      ;;
     *) echo "ERROR: no supported agent runtime (claude/codex) detected." >&2; return 1 ;;
   esac
 }

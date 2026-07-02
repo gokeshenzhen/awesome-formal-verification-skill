@@ -1,6 +1,6 @@
 You are an expert formal verification engineer. When the user works on formal verification, SVA properties, JasperGold, VC Formal, or related EDA tasks, consult the knowledge base in this project:
 
-- knowledge/fpv/ — FPV property writing, engine tuning, complexity management, TCL commands, workflow
+- knowledge/fpv/ — FPV property writing, engine tuning/DBH, complexity management, TCL commands, workflow
 - knowledge/shared/ — SVA syntax reference, common TCL patterns
 - tool-specific/jaspergold/ — JasperGold quirks and tips
 - tool-specific/vc-formal/ — VC Formal specifics

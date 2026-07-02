@@ -56,6 +56,30 @@
       "prompt": "In JasperGold my prove -all proves the top controller assertion and covers every cover, but one embedded assertion is stuck: it is an arbitrary symbolic-address write-then-read property over a real 512x32 memory array, and it stays undetermined — multiple engines hit their per-property time limits with no counterexample. The RTL must stay unchanged. What should I do, and how do I report the result honestly?",
       "expect_concept": ["memory abstract", "symbolic|single.?slot|one.?(word|slot)|slot", "disclos|trusted|contract"],
       "expect_exact": ["bbox_i"]
+    },
+    {
+      "id": "dbh-stalled-bound",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "A meaningful JasperGold prove is still undetermined at a finite bound. I need to search deeper for bugs now, but I must not misreport the result as signoff. Which DBH modes should I start with, what Tcl shape configures them, and what does a no-hit run mean?",
+      "expect_concept": ["cycle[_ ]swarm", "bound[_ ]swarm", "(?:hunt[ -])?auto", "non.?exhaustive|not.*(proof|signoff)|no.?hit.*not|neither.*(proof|signoff)"],
+      "expect_exact": ["hunt -config", "hunt -run", "first_trace_attempt", "max_trace_length"]
+    },
+    {
+      "id": "dbh-known-bug-reproduction",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "I have an external failing trace for a JasperGold target. I want to reproduce the bug, preserve useful steering states, then challenge the RTL fix with diverse paths. What DBH flow and exact commands should I use?",
+      "expect_concept": ["qualif|confirm", "helper", "divers", "not.*proof|search confidence"],
+      "expect_exact": ["visualize -confirm", "set_store_trace unlimited", "hunt -run -auto", "auto_helper_num", "force"]
+    },
+    {
+      "id": "dbh-regression-coverage",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "In a JasperGold regression, previously proven properties are now slow, an old CEX has not reappeared, and several critical coverage items remain uncovered. How should I carry history into DBH and close reachable coverage without claiming unreachability? Include the exact key Tcl commands.",
+      "expect_concept": ["previous|prior|history|old", "cycle[_ ]swarm", "bound[_ ]swarm", "coverage|cover", "not.*unreachable|cannot.*unreachable|unreachable.*only.*exhaustive|only.*exhaustive.*unreachable"],
+      "expect_exact": ["report -csv", "check_cov -create_cover_item_property", "check_cov -measure"]
     }
   ]
 }

@@ -221,3 +221,79 @@ complexity
 > discipline) and the index decision tree. A blind agent given only the updated skill then
 > independently proved the stalled `mem_works_ndc` (test/mem_ctrl_orig). Now a **control**:
 > this scenario guards against regressing that trigger+recipe back into a dropped gap.
+
+---
+
+## Scenario: dbh-stalled-bound  [control]
+
+### Category
+engine-tuning
+
+### User Prompt
+"A meaningful JasperGold prove is still undetermined at a finite bound. I need to search deeper for bugs now, but I must not misreport the result as signoff. Which DBH modes should I start with, what Tcl shape configures them, and what does a no-hit run mean?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+
+### Expected Key Points
+- [ ] Start with Cycle Swarm for a hard frontier cycle, Bound Swarm for a bounded range, and AUTO for state/path diversity
+- [ ] Configure a named strategy with `hunt -config -strategy ... -mode ...`, then execute it with `hunt -run -strategy ...`
+- [ ] Use `-first_trace_attempt`; bound a Bound Swarm range with `-max_trace_length`
+- [ ] Treat CEX/covered traces as useful results, but preserve `undetermined` after a no-hit run
+- [ ] Return to exhaustive `prove` plus complexity reduction for proven/unreachable signoff
+
+### Anti-Patterns to Avoid
+- Reporting a no-hit DBH run as proof that no bug exists
+- Only increasing the global proof timeout without matching the Hunt mode to the complexity shape
+
+---
+
+## Scenario: dbh-known-bug-reproduction  [control]
+
+### Category
+engine-tuning
+
+### User Prompt
+"I have an external failing trace for a JasperGold target. I want to reproduce the bug, preserve useful steering states, then challenge the RTL fix with diverse paths. What DBH flow and exact commands should I use?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+
+### Expected Key Points
+- [ ] Qualify the trace against the current design/environment with `visualize -confirm` and evaluate assumptions/assertions/covers
+- [ ] Ensure an assertion expresses the failure signature; fix assumptions that reject legal trace behavior
+- [ ] Retain multiple high-value traces with `assert -set_store_trace unlimited` / `cover -set_store_trace unlimited`
+- [ ] Reuse hit helpers with `hunt -run -auto`; after the fix add generated helpers via `-auto_helper_num` and preserve prior results with `-force`
+- [ ] Report failure to rediscover as added search confidence, not proof of the fix
+
+### Anti-Patterns to Avoid
+- Loading an incompatible external trace without consistency checking
+- Treating one successful replay path, or one post-fix no-hit seed, as exhaustive validation
+
+---
+
+## Scenario: dbh-regression-coverage  [control]
+
+### Category
+workflow
+
+### User Prompt
+"In a JasperGold regression, previously proven properties are now slow, an old CEX has not reappeared, and several critical coverage items remain uncovered. How should I carry history into DBH and close reachable coverage without claiming unreachability? Include the exact key Tcl commands."
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+- [ ] Persist/compare prior status, bound, and proof time with `report -csv`
+- [ ] Use Cycle Swarm near the old proof effort, and Bound Swarm through the previous CEX depth plus an architecturally chosen margin
+- [ ] Convert selected uncovered COV items to FPV covers with `check_cov -create_cover_item_property`
+- [ ] Hunt the generated covers, rerun `check_cov -measure -refresh`, and track covered/CEX/trace diversity
+- [ ] Keep uncovered items and no-hit hunts separate from exhaustive unreachable/signoff conclusions
+
+### Anti-Patterns to Avoid
+- Copying one lab's `+20` depth or 50%/70% timing as a universal project threshold
+- Calling an uncovered item unreachable because DBH did not cover it

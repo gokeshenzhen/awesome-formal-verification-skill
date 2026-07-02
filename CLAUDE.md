@@ -25,7 +25,7 @@ When adding FPV content, edit the `knowledge/` file. Do not duplicate content in
 | Module | Covers |
 |---|---|
 | `property-writing` | SVA property/assertion writing rules and patterns |
-| `engine-tuning` | Proof engine selection, configuration, and the state-space-explosion playbook |
+| `engine-tuning` | Proof engine selection/configuration, state-space-explosion response, and Deep Bug Hunting (`hunt`, swarm modes, beyond-bound search) |
 | `complexity-management` | Counter abstraction, cutpoints, case splitting, assume-guarantee |
 | `tcl-commands` | Tcl language for Jasper + scripting idioms (`-silent`, design/COI queries) |
 | `workflow` | End-to-end FPV run-file order (analyze → elaborate → … → prove → report) |
@@ -83,4 +83,4 @@ The empirical rule behind all three: **loss bites on tool-specific atoms + missi
 
 ## Project State
 
-All five `knowledge/fpv/` modules are synthesized, plus the two `knowledge/shared/` references (`sva-reference.md`, `tcl-common.md`). `complexity-management` is the most mature and is structured as progressive disclosure (index + `complexity-management/` leaves); the other modules are flat and at 🔬 from-docs, needing field validation.
+All five `knowledge/fpv/` modules are synthesized, plus the two `knowledge/shared/` references (`sva-reference.md`, `tcl-common.md`). `complexity-management` is the most mature and uses progressive disclosure (index + technique leaves). `engine-tuning` also uses progressive disclosure for its DBH leaf (`engine-tuning/bug-hunting.md`) and is at 🔬 from-docs. The remaining modules are flat and need field validation.

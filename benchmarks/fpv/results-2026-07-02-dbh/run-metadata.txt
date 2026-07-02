@@ -1,0 +1,19 @@
+date=2026-07-02
+runtime=codex
+model=gpt-5.5
+command=env RUNTIME=codex MODEL=gpt-5.5 OUT=<output-dir> bash benchmarks/run_scenarios.sh <scenario-id>
+
+dbh-stalled-bound concept=4/4 exact=4/4
+answer_sha256=7509eb60240eb7975a67a1be6e82174d63848813d2f30fb63200a9285e2ac329
+stderr_path=/tmp/fpv-eval/retry2-20260702/dbh-stalled-bound/dbh-stalled-bound.stderr
+stderr_sha256=86403b3d82054b902c35726cb6797ea8617390bae03831bcfdff4b893ddc8290
+
+dbh-known-bug-reproduction concept=4/4 exact=5/5
+answer_sha256=1f175a169a4f0378a5d8113409c76142d9711b75321a39156597299d46792ed0
+stderr_path=/tmp/fpv-eval/retry-20260702/dbh-known-bug-reproduction/dbh-known-bug-reproduction.stderr
+stderr_sha256=67f5827da93ef81260e76e296907dbe072a78f10732c6bbbfb7528b7442163dc
+
+dbh-regression-coverage concept=5/5 exact=3/3
+answer_sha256=5730c667e76a9a783c5d01d2a6c657ae17f214db9189398d483bce3810483810
+stderr_path=/tmp/fpv-eval/retry2-20260702/dbh-regression-coverage/dbh-regression-coverage.stderr
+stderr_sha256=ac922bb9385c22e02c03e83edb2f23847c3ff6bf1740eaace58ee20bb3d6609c

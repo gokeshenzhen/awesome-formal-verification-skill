@@ -58,7 +58,8 @@ awesome-formal-verification-skill/
 ├── knowledge/                  # Core knowledge (agent-agnostic)
 │   ├── fpv/                    # Formal Property Verification
 │   │   ├── property-writing.md
-│   │   ├── engine-tuning.md
+│   │   ├── engine-tuning.md             # index (engines + DBH routing)
+│   │   ├── engine-tuning/               # DBH sub-topic leaf
 │   │   ├── complexity-management.md     # index (progressive disclosure)
 │   │   ├── complexity-management/       # sub-topic leaves
 │   │   ├── tcl-commands.md
@@ -88,7 +89,7 @@ awesome-formal-verification-skill/
 | Module | Status | Description |
 |--------|--------|-------------|
 | `fpv/property-writing` | 🔬 from-docs | SVA property patterns & best practices |
-| `fpv/engine-tuning` | 🔬 from-docs | Proof engine selection & tuning |
+| `fpv/engine-tuning` | 🔬 from-docs | Proof engine selection, tuning & Deep Bug Hunting |
 | `fpv/complexity-management` | 🔬 from-docs | Complexity reduction techniques |
 | `fpv/tcl-commands` | 🔬 from-docs | TCL command reference for FPV |
 | `fpv/workflow` | 🔬 from-docs | End-to-end FPV workflow |

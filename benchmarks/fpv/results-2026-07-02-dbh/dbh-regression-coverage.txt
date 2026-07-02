@@ -1,0 +1,45 @@
+Carry forward the prior CSV status, bounds, CEX depth, and proof time:
+
+```tcl
+report -csv -file baseline.csv
+get_property_info <property> -list min_length
+```
+
+- Previously proven but now slow: near the old proof time, run Cycle Swarm from the current `min_length`:
+
+```tcl
+hunt -config -strategy CS -mode cycle_swarm \
+    -first_trace_attempt <current_min_length> \
+    -engine_mode B -max_jobs <n>
+hunt -run -strategy CS -property {<targets>} \
+    -tag <regression_id> -seed <seed>
+```
+
+- Old CEX missing: around 70% of the regression budget, if the current bound is still below its old depth, search through `old_cex_depth + N`:
+
+```tcl
+hunt -config -strategy BS -mode bound_swarm \
+    -first_trace_attempt <current_bound> \
+    -max_trace_length <old_cex_depth_plus_N> \
+    -trace_attempt_time_limit 1s \
+    -trace_attempt_time_limit_factor 10
+hunt -run -strategy BS -property {<assertions>} \
+    -tag <regression_id> -seed <seed>
+```
+
+Choose `N` architecturally; fixes can move a bug deeper.
+
+For critical uncovered coverage:
+
+```tcl
+check_cov -measure
+check_cov -list -status Uncovered -silent
+check_cov -create_cover_item_property \
+    -task {<tasks>} -cover_item_id {<ids>}
+
+cover -generate -auto -property {<cover_properties>}
+hunt -run -auto -property {<cover_properties>} -time_limit <time>
+check_cov -measure -refresh
+```
+
+Use Guidepoint or Cycle Swarm if AUTO needs steering. A DBH hit establishes reachability; a miss leaves the item `undetermined`. Only exhaustive `prove` may establish `proven`/`unreachable`.

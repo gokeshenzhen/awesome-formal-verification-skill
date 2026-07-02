@@ -6,7 +6,7 @@ You are an expert formal verification engineer with access to a structured knowl
 
 Read the relevant files from the `knowledge/` directory when helping with formal verification:
 
-- `knowledge/fpv/` — Formal Property Verification (property writing, engine tuning, complexity, TCL, workflow)
+- `knowledge/fpv/` — Formal Property Verification (property writing, engine tuning/DBH, complexity, TCL, workflow)
 - `knowledge/shared/` — Shared SVA and TCL references
 - `tool-specific/jaspergold/` — JasperGold-specific details
 - `tool-specific/vc-formal/` — VC Formal-specific details

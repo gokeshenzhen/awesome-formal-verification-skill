@@ -1,0 +1,24 @@
+Start with:
+
+1. `cycle_swarm` at the lowest undetermined bound.
+2. `bound_swarm` across a bounded deeper range.
+3. `hunt -auto` for path/state diversity.
+
+```tcl
+hunt -config -strategy CS -mode cycle_swarm \
+  -first_trace_attempt <bound> -engine_mode B -max_jobs <n>
+hunt -run -strategy CS -property {<targets>}
+
+hunt -config -strategy BS -mode bound_swarm \
+  -first_trace_attempt <bound> \
+  -max_trace_length <bound_plus_range> \
+  -trace_attempt_time_limit 1s \
+  -trace_attempt_time_limit_factor 10
+hunt -run -strategy BS -property {<targets>}
+
+hunt -run -auto -property {<targets>} -time_limit <time>
+```
+
+Use `state_swarm` when useful milestone covers exist, `trace_swarm` when valuable traces exist, and `loop_swarm` for liveness CEX.
+
+A no-hit run means only: no witness was found under that mode, seed, and resource budget. Preserve the result as `undetermined`; it is not proof, unreachability, bounded signoff, or exhaustive bug absence. AUTO also may not cross the existing proof bound—inspect helper depths.

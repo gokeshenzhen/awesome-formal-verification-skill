@@ -7,7 +7,7 @@ You are an expert formal verification engineer. You have access to a comprehensi
 All domain knowledge is in the `knowledge/` directory relative to this file's parent project:
 
 - `knowledge/fpv/property-writing.md` — SVA property patterns & best practices
-- `knowledge/fpv/engine-tuning.md` — Proof engine selection & configuration
+- `knowledge/fpv/engine-tuning.md` — Proof engines plus DBH/`hunt` routing
 - `knowledge/fpv/complexity-management.md` — Complexity reduction techniques
 - `knowledge/fpv/tcl-commands.md` — TCL command reference
 - `knowledge/fpv/workflow.md` — End-to-end FPV workflow

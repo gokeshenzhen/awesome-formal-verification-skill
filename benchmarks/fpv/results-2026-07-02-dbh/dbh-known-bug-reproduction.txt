@@ -1,0 +1,52 @@
+Use this three-stage [JG-specific] flow.
+
+```tcl
+# 1. Qualify the external trace; choose exactly one: -fsdb, -vcd, or -shm.
+visualize -confirm -fsdb <failing_trace.fsdb>
+set_trace_optimization standard
+visualize -check_props -filter {<assumptions> <target_assertions> <helper_covers>}
+```
+
+Fix any assumption rejecting real trace behavior. Ensure `<target_assertions>` captures the failure signature.
+
+```tcl
+# 2. Preserve useful paths and reproduce within the known occurrence window.
+assert -set_store_trace unlimited {<target_assertions>}
+cover  -set_store_trace unlimited {<helper_covers>}
+
+hunt -config -strategy REPRO -mode bound_swarm \
+    -first_trace_attempt <window_lo> \
+    -max_trace_length <window_hi> \
+    -trace_attempt_time_limit 1s \
+    -trace_attempt_time_limit_factor 10
+
+hunt -run -strategy REPRO \
+    -property {<target_assertions>} \
+    -tag pre_fix -seed <seed>
+
+get_trace_info [get_property_info <hit_helper> -list trace_id]
+```
+
+Retain the helper-cover definitions hit by the failing trace and their stored traces.
+
+```tcl
+# 3. After the RTL fix, replay steering states and add path diversity.
+hunt -run -auto \
+    -property {<hit_helpers> <target_assertions>} \
+    -auto_helper_num 0 \
+    -tag replay_fix -seed <seed> -time_limit <time>
+
+hunt -run -auto \
+    -property {<hit_helpers> <target_assertions>} \
+    -auto_helper_num 50 \
+    -trace_swarm_ratio 40 \
+    -force -tag diverse_fix_1 -seed <new_seed> -time_limit <time>
+```
+
+Repeat the last run with different seeds. Inspect queued trace work:
+
+```tcl
+hunt -report -trace_swarm -tag diverse_fix_1 -pending -silent
+```
+
+`-force` preserves existing results while seeking additional traces. A Hunt miss is **not proof**; finish with exhaustive `prove`. Check installed `hunt -show` help because some DBH options are version-sensitive.

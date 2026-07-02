@@ -24,7 +24,7 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 | Module | Path | Use When |
 |--------|------|----------|
 | Property Writing | `knowledge/fpv/property-writing.md` | Writing or reviewing SVA properties/assertions |
-| Engine Tuning | `knowledge/fpv/engine-tuning.md` | Selecting or configuring proof engines |
+| Engine Tuning | `knowledge/fpv/engine-tuning.md` | Selecting/configuring proof engines; deep bug hunting (DBH), `hunt`, swarm, and beyond-bound search route through this index |
 | Complexity Management | `knowledge/fpv/complexity-management.md` | Dealing with proof complexity, capacity issues, many `undetermined` properties, global invariants, helper lemmas, AG/CAG, or `proof_structure` |
 | TCL Commands | `knowledge/fpv/tcl-commands.md` | Writing TCL scripts for JasperGold/formal tools |
 | Workflow | `knowledge/fpv/workflow.md` | End-to-end FPV setup, execution, debug cycle |
@@ -70,6 +70,7 @@ choice; the decomposition decision tree selects a proven compact helper or
 - "414 assertions, 412 undetermined, no CEX" → Read `workflow.md` + `complexity-management.md` + `complexity-management/decomposition.md`
 - "Prove no duplicates across many FIFOs" → Read `complexity-management.md` + `complexity-management/decomposition.md`
 - "Convert this JasperGold script to VC Formal" → Read `tcl-commands.md` + both tool-specific dirs
+- "Run deep bug hunting / DBH beyond this stalled bound" → Read `engine-tuning.md`, then `engine-tuning/bug-hunting.md`
 
 ## Key Principles
 

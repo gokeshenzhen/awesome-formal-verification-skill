@@ -1,10 +1,10 @@
 # FPV: Engine Tuning
 
-> 🔬 **from-docs** — Generated from Cadence JasperGold documentation, 2026-06-14. Needs field validation. Content is [JG-specific] unless noted.
+> 🔬 **from-docs** — JasperGold-specific operational guidance. Validate version-sensitive commands, defaults, and signoff assumptions against the installed tool release and project policy.
 
 ## Overview
 
-How to pick, combine, and tune JasperGold proof engines, and how to react when a proof stalls. Default to Proof Orchestration; reach for manual engine selection and the state-space-explosion playbook when convergence fails. Consult this module when a property won't converge, a proof runs too long or runs out of memory, or you need to choose engines for a specific objective (proof vs trace vs bounds signoff).
+How to pick, combine, and tune JasperGold proof engines, and how to react when a proof stalls. Default to Proof Orchestration; reach for manual engine selection, complexity reduction, or Deep Bug Hunting (DBH) according to the objective. Consult this module when a property will not converge, a proof exhausts time/memory, or you need engines for proof, trace, bounded signoff, or non-exhaustive deep bug search.
 
 ## Quick Decision Tree
 
@@ -27,6 +27,8 @@ Proof not converging / choosing engines?
 │   └─ switch engine mode  OR  reduce complexity (abstract counters/FIFOs, stopats, decompose)
 │
 ├─ Hard case, many cores? ...................... distributed BMC (B/Bm); multi-core proof (M, 2025.03)
+├─ Need CEX/coverage beyond stalled bound? ...... DBH; route to `engine-tuning/bug-hunting.md`
+│  └─ Need proof/signoff, not only bug search? .... reduce complexity, then rerun exhaustive `prove`
 ├─ Repeated regression on evolving RTL? ........ ProofMaster / PPD (consecutive-run learning)
 └─ Bounds signoff? ............................. COV meaningful bounds → push/aggregate → bounded_proven
 ```
@@ -43,6 +45,18 @@ Proof not converging / choosing engines?
 8. **Keep an invariant producer in the mode.** Only Mp/M/N/AM *produce* invariants; Mp/Hp/M/N/AM/Hps can *import* them. Invariant import (on by default under orchestration) speeds convergence but is scoped to the current `prove`.
 9. **Abstract counters/FIFOs in the COI.** High cycle counts with constant inter-attempt runtime ⇒ counters in the analysis region — detect with `get_design_info` / `abstract -counter -find`.
 10. **Use ProofMaster for repeated proofs on an evolving design** — expect partial (never 100%) cache restoration after RTL/env/property changes.
+11. **Use DBH only for non-exhaustive risk reduction.** After meaningful `prove` leaves targets undetermined, use Cycle/Bound/State/Trace/Loop Swarm, Trace Search, Guidepoint, or AUTO to seek CEX/covered traces. A Hunt miss is not proof or signoff.
+
+## Progressive-Disclosure Routing
+
+| Task | Read |
+|---|---|
+| Proof engine selection, orchestration, invariants, bounds, or state-space symptoms | Continue in this index |
+| Deep Bug Hunting, DBH, `hunt`, swarm modes, search beyond a proof bound, known-bug reproduction, regression hunting, or coverage-directed hunting | `engine-tuning/bug-hunting.md` |
+
+### DBH Escalation Boundary
+
+Run a meaningful exhaustive proof first. If the immediate goal is to find bugs or reach covers beyond a stalled frontier, route to DBH. If the goal is `proven`/`unreachable` signoff, apply abstraction, decomposition, assumptions, or helper lemmas through `complexity-management.md`, then rerun `prove`; DBH results do not close that obligation.
 
 ## Pattern Catalog
 
@@ -137,6 +151,7 @@ cover -extend {count3} -precondition {count=='d7} -postcondition {count=='d0}
 | Expecting 100% ProofMaster cache restoration after changes | "Small" changes can be big for engines | Expect partial restoration; PPD applies past-good strategies |
 | Assert bound shallower than the deepest covered item | Coverage unreachable within bound → invalid signoff | Make the bound deep enough; verify the coverage model first |
 | Engines grinding on already bounded-proven properties | Wastes compute past the target | `set_prove_stop_on_target_bound on` |
+| Reporting a no-hit DBH run as proof/signoff | Hunt is stochastic/non-exhaustive and cannot establish absence | Preserve `undetermined`; return to exhaustive proof closure |
 
 ## State-Space Explosion Playbook
 
@@ -202,7 +217,7 @@ For undetermined liveness/infinite covers the bound shows `proof_effort` in pare
 - 🔧 VERSION-SENSITIVE — Multi-core engine M parallel proof (~8X on 48 cores) and Memory-Aware Proofs are roadmap items dated 2025.03 / "Restricted". Verify against the installed version before relying on them.
 
 ### VC Formal
-> 📝 GAP — No VC Formal engine content in the current sources. To be added.
+> 📝 GAP — VC Formal engine coverage is not yet included.
 
 ## Command Reference
 | Command | Purpose | Tool |
@@ -216,7 +231,9 @@ For undetermined liveness/infinite covers the bound shows `proof_effort` in pare
 | `set_proofmaster on\|off` (+`_dir`/`_initial_dir`/`_max_data_age`) | ProofMaster enable & data mgmt | JG |
 | `set_prove_cache_max_jobs` / `set_prove_cache_job_mode` | parallelize/distribute cache jobs | JG |
 | `set_proofgrid_per_engine_max_jobs <n>` (+`_local_jobs`) | spawn engine instances (remote) | JG |
-| `set_proofgrid_max_jobs` / `_max_local_jobs` / `_mode` / `_manager on` | ProofGrid job caps / mode / manager | JG |
+| `set_proofgrid_max_jobs` / `set_proofgrid_max_local_jobs` | ProofGrid total / local job caps | JG |
+| `set_proofgrid_mode` / `set_proofgrid_manager on` | ProofGrid execution mode / manager | JG |
+| `set_parallel_proof_mode on` / `set_proofgrid_shell` / `set_proofgrid_shell_stop` | legacy/custom scheduler integration; verify installed-version syntax | JG |
 | `set_proofgrid_engine*_max_jobs` (J,L,Q3,U,U2) | per-engine job control | JG |
 | `prove -per_engine_max_jobs` | override per-engine jobs (works w/ `prove -bg`) | JG |
 | `set_engine_threads <1-8>` | threads/engine (default 1; helps B/Ht/L) | JG |
@@ -241,9 +258,12 @@ For undetermined liveness/infinite covers the bound shows `proof_effort` in pare
 | `get_design_info -property <p> -list counter` | structure/counters in analysis region | JG |
 | `abstract -counter -find` | list & abstract counters | JG |
 | `set_prove_verbosity 7` | insight into orchestration | JG |
+| `hunt -config -strategy <name> -mode <mode>` / `hunt -run -strategy <name>` | define/run isolated DBH strategy; see DBH leaf | JG |
+| `hunt -run -auto` | automatic helper-guided State/Trace Swarm; see DBH leaf | JG |
 
 ## Further Reading
 - For abstraction, cutpoints, case splitting, helper properties (the responses to state-space explosion): see `complexity-management.md`
 - For property authoring that determines which engines apply (liveness vs safety): see `property-writing.md`
 - For the broader set of Tcl commands: see `tcl-commands.md`
 - For end-to-end signoff (bounds signoff, regression flows): see `workflow.md`
+- For Deep Bug Hunting modes, strategy lifecycle, regression carryover, and coverage-directed search: see `engine-tuning/bug-hunting.md`
