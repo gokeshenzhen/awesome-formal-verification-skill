@@ -1,12 +1,3 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) and other AI coding agents when working with this repository.
-
-## What This Project Is
-
-An open-source, **AI-agent-agnostic knowledge base for formal verification** (currently JasperGold FPV). The deliverable is Markdown knowledge, not code. Engineers point any AI coding agent (Claude Code, Codex, Gemini CLI, Cursor) at this repo and it gains deep FPV expertise — SVA property patterns, engine tuning, complexity reduction, TCL scripting, and end-to-end workflows.
-
-There is no build, no test runner, and no linter — the artifacts are Markdown.
 # Repository Guidance
 
 This file provides guidance to Codex, Claude Code, and other AI coding agents
@@ -41,6 +32,10 @@ Terms in this repository have semiconductor EDA meanings:
 - `Cycle Swarm` is the project name for a local frontier-guided proof-budget
   scheduling heuristic. It distributes JasperGold proof attempts around the
   currently reached cycle frontier.
+- `Deep Bug Hunting` (`DBH`), `hunt`, and the `*_swarm` modes are JasperGold
+  non-exhaustive formal trace-search features over RTL state space. They seek
+  formal counterexamples and covered traces; a no-hit result is not proof or
+  signoff.
 - `state-space explosion`, `abstraction`, `cutpoint`, `helper lemma`,
   `assume-guarantee`, and `proof_structure` are formal-verification techniques
   for managing mathematical proof complexity.
