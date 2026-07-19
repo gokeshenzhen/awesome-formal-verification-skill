@@ -8,17 +8,40 @@ Use Deep Bug Hunting (DBH) after a meaningful exhaustive `prove` run leaves targ
 
 > 🔧 **VERSION-SENSITIVE** — Hunt modes, option availability, built-in defaults, and configuration displays vary across JasperGold releases. Inspect installed-version help and resolved strategy settings before copying a configuration.
 
+## DBH Activation Gate
+
+Classify the previous run before spending Hunt budget:
+
+1. Treat B/Ht/Hts/J/K/L/U-family work stopped by a finite
+   `-max_trace_length` as bounded trace search, not as a meaningful exhaustive
+   proof. Use its `min_length` as a frontier only.
+2. Use one focused B/Hts depth extension when RTL or architecture supplies a
+   credible narrow witness interval and scanning it is cheap. If it hits, keep
+   the CEX and stop; call this **focused bounded deepening**, not DBH.
+3. Activate DBH when the witness depth is unknown or broad, direct deepening has
+   already missed or advances slowly, cycle difficulty is uneven, several
+   targets compete for budget, or state/path/trace diversity is the objective.
+4. Once DBH is selected, execute it rather than merely citing this module:
+   query the frontier, retain valuable traces, run at least one named
+   `hunt -config` + `hunt -run` strategy (or `hunt -run -auto`), and archive its
+   tag, seed, `IHT002` resolved settings, limits, and raw result.
+
+Do not force Hunt when one deterministic bounded extension is demonstrably the
+cheapest decisive experiment. Do not claim skill-provided DBH execution when
+the final flow contains only `prove -max_trace_length`.
+
 ## Use-Case Decision Tree
 
 ```text
 What is the immediate objective?
 ├─ Undetermined after prove
-│  ├─ One expensive frontier cycle ........ cycle_swarm
-│  ├─ Uneven complexity over a cycle range  bound_swarm
-│  ├─ Useful unordered milestones .......... state_swarm or hunt -auto
-│  ├─ Existing valuable traces ............. trace_swarm
-│  ├─ Search around whole traces ........... trace_search
-│  └─ Known ordered milestones ............. guidepoint
+│  ├─ Credible narrow depth; cheap first try  focused B/Hts deepening (not DBH)
+│  ├─ One expensive frontier cycle .......... cycle_swarm
+│  ├─ Unknown/broad or uneven depth range .... bound_swarm
+│  ├─ Useful unordered milestones ............ state_swarm or hunt -auto
+│  ├─ Existing valuable traces ............... trace_swarm
+│  ├─ Search around whole traces .............. trace_search
+│  └─ Known ordered milestones ............... guidepoint
 ├─ Liveness CEX
 │  ├─ Search fixed loop lengths ............ loop_swarm
 │  └─ Start from existing traces ........... trace_swarm with liveness-capable engines
@@ -296,6 +319,7 @@ prove -wait
 | Discard pending Trace Swarm work | AUTO time can expire with queued traces | Report pending traces and run Trace Swarm separately |
 | Keep one trace per valuable property | Loses path diversity | Set selective trace storage to `unlimited` |
 | Copy example numeric values as defaults | Many values are testcase or version choices | Inspect built-ins and budget from bounds/resources |
+| Call a deeper `prove -max_trace_length` run "DBH" | Hides whether Hunt/swarm atoms were actually exercised | Label it focused bounded deepening; show `hunt -config`/`hunt -run` artifacts for DBH |
 | Call uncovered coverage unreachable | Hunt supplies reachability witnesses only | Use exhaustive proof for unreachability |
 
 ## Validation Flags

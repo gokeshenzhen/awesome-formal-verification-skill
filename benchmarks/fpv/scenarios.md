@@ -249,6 +249,35 @@ engine-tuning
 
 ---
 
+## Scenario: dbh-activation-gate  [control]
+
+### Category
+engine-tuning
+
+### User Prompt
+"A bounded trace-only JasperGold Engine B run stopped at its finite maximum trace
+length with the assertion still undetermined. In one design RTL analysis gives a
+credible narrow next-depth interval; in another the depth is unknown and direct
+deepening has already missed. When is one deeper B run appropriate, when must I
+activate DBH, and what artifacts prove that I actually ran DBH?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+
+### Expected Key Points
+- [ ] Classify the finite B run as bounded trace search, not meaningful exhaustive proof
+- [ ] Allow one cheap focused B/Hts extension for a credible narrow interval, but do not call it DBH
+- [ ] Activate DBH for unknown/broad depth, repeated direct misses, uneven cycle complexity, competing targets, or diversity
+- [ ] Execute and preserve a named `hunt -config` + `hunt -run` strategy (or AUTO), including tag/seed/resolved settings
+- [ ] Preserve `undetermined` after a no-hit run; DBH does not provide signoff
+
+### Anti-Patterns to Avoid
+- Claiming that reading DBH guidance followed by only `prove -max_trace_length` constitutes DBH execution
+- Forcing Hunt when one deterministic bounded extension is clearly the cheapest decisive experiment
+
+---
+
 ## Scenario: dbh-known-bug-reproduction  [control]
 
 ### Category

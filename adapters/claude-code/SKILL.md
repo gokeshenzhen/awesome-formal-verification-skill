@@ -50,6 +50,13 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 
 ### Mandatory Escalation Routing
 
+When a JasperGold baseline leaves an assertion `undetermined` and the task asks
+for the strongest conclusion, a falsification witness, deeper reachability, or
+risk investigation, read `knowledge/fpv/engine-tuning.md` and
+`knowledge/fpv/engine-tuning/bug-hunting.md` before writing the next run. Apply
+the leaf's DBH activation gate: distinguish one focused bounded deepening from
+an actual Hunt strategy, and do not label the former as DBH.
+
 When a JasperGold/formal run leaves many properties `undetermined` after a sane
 direct `prove`, do not continue only with longer time limits, engine racing,
 ProofMaster, or ad-hoc local helpers. Read `knowledge/fpv/complexity-management.md`.

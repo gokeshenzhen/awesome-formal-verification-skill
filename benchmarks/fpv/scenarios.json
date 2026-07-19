@@ -66,6 +66,14 @@
       "expect_exact": ["hunt -config", "hunt -run", "first_trace_attempt", "max_trace_length"]
     },
     {
+      "id": "dbh-activation-gate",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "A bounded trace-only JasperGold Engine B run stopped at its finite maximum trace length with the assertion still undetermined. In one design RTL analysis gives a credible narrow next-depth interval; in another the depth is unknown and direct deepening has already missed. When is one deeper B run appropriate, when must I activate DBH, and what artifacts prove that I actually ran DBH?",
+      "expect_concept": ["bounded trace search|trace-only", "focused.*deep|narrow", "not.*DBH|isn.t.*DBH", "unknown|broad|repeated.*miss|uneven|divers", "no.?hit.*not|not.*proof|not.*signoff"],
+      "expect_exact": ["hunt -config", "hunt -run", "IHT002", "tag", "seed"]
+    },
+    {
       "id": "dbh-known-bug-reproduction",
       "type": "control",
       "module": "engine-tuning",
