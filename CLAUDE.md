@@ -29,9 +29,9 @@ Terms in this repository have semiconductor EDA meanings:
   cycle bound.
 - `scan` means locally enumerating numeric proof depths, cycle budgets, engine
   configurations, or benchmark candidates.
-- `Cycle Swarm` is the project name for a local frontier-guided proof-budget
-  scheduling heuristic. It distributes JasperGold proof attempts around the
-  currently reached cycle frontier.
+- `Cycle Swarm` is a JasperGold frontier-guided proof-budget scheduling mode
+  that distributes formal trace-search attempts around the current cycle
+  frontier.
 - `Deep Bug Hunting` (`DBH`), `hunt`, and the `*_swarm` modes are JasperGold
   non-exhaustive formal trace-search features over RTL state space. They seek
   formal counterexamples and covered traces; a no-hit result is not proof or
