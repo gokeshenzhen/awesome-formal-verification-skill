@@ -7,6 +7,47 @@ This file provides guidance to Claude Code (claude.ai/code) and other AI coding 
 An open-source, **AI-agent-agnostic knowledge base for formal verification** (currently JasperGold FPV). The deliverable is Markdown knowledge, not code. Engineers point any AI coding agent (Claude Code, Codex, Gemini CLI, Cursor) at this repo and it gains deep FPV expertise — SVA property patterns, engine tuning, complexity reduction, TCL scripting, and end-to-end workflows.
 
 There is no build, no test runner, and no linter — the artifacts are Markdown.
+# Repository Guidance
+
+This file provides guidance to Codex, Claude Code, and other AI coding agents
+when working with this repository.
+
+## What This Project Is
+
+An open-source, AI-agent-agnostic knowledge base for semiconductor RTL formal
+property verification, currently focused on JasperGold FPV.
+
+The deliverable is Markdown knowledge rather than a production network service.
+Engineers use the repository with local RTL/SystemVerilog designs, SVA
+properties, Tcl scripts, JasperGold runs, and locally generated proof reports.
+
+There is no build, no test runner, and no linter for the knowledge modules
+themselves; the primary artifacts are Markdown.
+
+## Formal Verification Domain Terminology
+
+Terms in this repository have semiconductor EDA meanings:
+
+- `proof`, `prove`, and `proof engine` refer to mathematical model checking of
+  RTL properties.
+- `Engine N` and similar engine names refer to JasperGold proof algorithms.
+- `CEX` means a formal counterexample trace produced for an RTL property.
+- `frontier`, `proof depth`, and `bound` refer to the cycle depth reached by a
+  formal proof attempt.
+- `target` means an RTL assertion, cover property, proof objective, or target
+  cycle bound.
+- `scan` means locally enumerating numeric proof depths, cycle budgets, engine
+  configurations, or benchmark candidates.
+- `Cycle Swarm` is the project name for a local frontier-guided proof-budget
+  scheduling heuristic. It distributes JasperGold proof attempts around the
+  currently reached cycle frontier.
+- `state-space explosion`, `abstraction`, `cutpoint`, `helper lemma`,
+  `assume-guarantee`, and `proof_structure` are formal-verification techniques
+  for managing mathematical proof complexity.
+
+Repository experiments are limited to local source files, local benchmark
+designs, locally installed EDA tools, and locally generated reports. Do not
+access unrelated external systems or resources.
 
 ## Three-Layer Architecture
 
