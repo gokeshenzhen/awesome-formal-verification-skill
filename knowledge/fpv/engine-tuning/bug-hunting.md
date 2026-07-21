@@ -12,25 +12,30 @@ Use Deep Bug Hunting (DBH) after a meaningful exhaustive `prove` run leaves targ
 
 Classify the previous run before spending Hunt budget:
 
-1. Before a reset-based search, inventory stored CEX/covered traces and their
-   `trace_id` values. If a legal trace removes a long deterministic prefix,
-   first evaluate continuing the target with `prove -from`; a found CEX is
-   conclusive, but a no-hit remains non-exhaustive and is not DBH by itself.
-2. Treat B/Ht/Hts/J/K/L/U-family work stopped by a finite
+1. Before reset-based search, inventory baseline CEX/covered status,
+   `trace_length`, and `trace_id`; distinguish a prior report from a trace that
+   is actually available in the current session's property table.
+2. Re-query the current session. If the source property or legal trace is
+   absent, recreate/run that source under the same RTL, reset, environment, and
+   assumptions, then verify `status`, `trace_id`, and `trace_length` again.
+3. If one legal trace removes a long relevant prefix, try target continuation
+   with `prove -from`. A CEX is terminal for that target's bug search; stop
+   without a follow-up Hunt. A no-hit stays `undetermined`; a missing/invalid
+   trace or command failure is setup failure, not a no-hit result.
+4. Treat B/Ht/Hts/J/K/L/U-family work stopped by a finite
    `-max_trace_length` as bounded trace search, not as a meaningful exhaustive
    proof. Use its `min_length` as a frontier only.
-3. Use one focused B/Hts depth extension only when RTL, architecture, a stored
+5. Use one focused B/Hts depth extension only when RTL, architecture, a stored
    legal trace, or a prior result explains both endpoints of a credible narrow
    witness interval and scanning it is cheap. If it hits, keep the CEX and
    stop; call this **focused bounded deepening**, not DBH. Do not call an
    arbitrary frontier-to-round-number range credible.
-4. Activate DBH when the witness depth is unknown or broad, direct deepening has
+6. Activate DBH when the witness depth is unknown or broad, direct deepening has
    already missed or advances slowly, cycle difficulty is uneven, several
    targets compete for budget, or state/path/trace diversity is the objective.
-5. Once DBH is selected, execute it rather than merely citing this module:
-   query the frontier, retain valuable traces, run at least one named
-   `hunt -config` + `hunt -run` strategy (or `hunt -run -auto`), and archive its
-   tag, seed, `IHT002` resolved settings, limits, and raw result.
+7. Only after the decision tree selects Hunt, execute a named `hunt -config` +
+   `hunt -run` strategy (or `hunt -run -auto`) and archive its limits, tag,
+   seed, resolved settings, and raw result.
 
 Do not force Hunt when one deterministic bounded extension is demonstrably the
 cheapest decisive experiment. Do not claim skill-provided DBH execution when
@@ -41,14 +46,14 @@ the final flow contains only `prove -max_trace_length`.
 ```text
 What is the immediate objective?
 ├─ Undetermined after prove
-│  ├─ Stored trace removes a long legal prefix  `prove -from` target continuation
-│  ├─ Credible narrow depth; cheap first try  focused B/Hts deepening (not DBH)
-│  ├─ One expensive frontier cycle .......... cycle_swarm
-│  ├─ Unknown/broad or uneven depth range .... bound_swarm
-│  ├─ Useful unordered milestones ............ state_swarm or hunt -auto
-│  ├─ Existing traces without one useful prefix trace_swarm or trace_search
-│  ├─ Search around whole traces .............. trace_search
-│  └─ Known ordered milestones ............... guidepoint
+│  ├─ One current-session legal trace removes a long relevant prefix
+│  │  └─ `prove -from`: CEX → stop target search; no-hit → remain undetermined
+│  ├─ Several relevant traces, no decisive prefix trace_swarm or trace_search
+│  ├─ Credible narrow depth; cheap first try ... focused B/Hts (not DBH)
+│  ├─ One expensive frontier cycle ............. cycle_swarm
+│  ├─ Unknown/broad or uneven depth range ....... bound_swarm after preflight
+│  ├─ Useful unordered milestones ............... state_swarm or hunt -auto
+│  └─ Known ordered milestones .................. guidepoint
 ├─ Liveness CEX
 │  ├─ Search fixed loop lengths ............ loop_swarm
 │  └─ Start from existing traces ........... trace_swarm with liveness-capable engines
@@ -67,7 +72,7 @@ What is the immediate objective?
 3. Select a mode from the complexity shape. Do not respond to every stall by only raising the global time limit.
 4. Define named strategies with `hunt -config`; execute them with `hunt -run`. Strategy-local settings inherit unspecified task/global settings but do not propagate back.
 5. Keep exploratory over-constraints in a `formal` Hunt strategy. Removed legal behavior invalidates proof/unreachability conclusions even if a local engine reports them.
-6. Use resources for diverse cycles, segments, traces, loop lengths, or seeds. Archive tool version, tag, seed, `IHT002` resolved settings, source traces, limits, and results.
+6. Use resources for diverse cycles, segments, traces, loop lengths, or seeds. Archive the lifecycle evidence defined below; do not use post-run `IHT002` as a pre-run budget gate.
 7. Store multiple traces selectively. `hunt -force` preserves existing results while seeking more traces; `prove -force` clears existing results.
 8. Measure DBH by new CEX/covered traces, trace diversity, coverage movement, and `undetermined` to `covered` transitions. Treat bound movement as mode-dependent supporting data only.
 
@@ -98,6 +103,7 @@ hunt -show -strategy <state_swarm>
 # Define once; run from reset.
 hunt -config -strategy <name> -mode <mode> \
     -engine_mode {<engines>} -max_jobs <n> -time_limit <time>
+hunt -show -strategy <name>
 hunt -run -strategy <name> -property {<targets>} -tag <unique_id>
 # Use "-task <task>" instead of "-property {...}" for a task-wide run.
 
@@ -107,13 +113,24 @@ hunt -run -strategy <name> -property {<targets>} \
     -max_jobs <n> -time_limit <time> -seed <value>
 ```
 
+| Phase | Artifact | Use |
+|---|---|---|
+| Pre-run declaration | `hunt -config` | Define the strategy |
+| Pre-run inspection | `hunt -show -strategy <name>` | Audit declared settings and budget feasibility |
+| Post-run resolved configuration | `IHT002` | Record actual run-time distribution, seed, and settings |
+| Post-run execution | Trace Attempt, `IPF180` | Record attempts, progress, and termination evidence |
+| Final result | Property status and CEX/covered trace | Classify the search outcome |
+
 Use a scalar for every job, a positional list for per-job values, or a weighted distribution:
 
 ```tcl
 {50%:[50..200] 50%:[201..1000]}
 ```
 
-Record the resolved distribution and seed from `IHT002`; source expressions alone do not identify the values assigned at run time. Use `IHT012` to map work to threads/traces and `IPF031` to inspect proof-engine settings. `IPF047`/`IPF055` can identify cover/CEX hits but may not print for every hit.
+`IHT002` is a post-`hunt -run` log message, not a command or pre-launch
+feasibility artifact. Source expressions alone do not identify run-time values.
+Use `IHT012` to map work to threads/traces and `IPF031` to inspect engine
+settings. `IPF047`/`IPF055` can identify hits but may not print for every hit.
 
 > 🔧 **VERSION-SENSITIVE** — One `<state_swarm>` configuration includes `max_jobs 20`, engine `L`, `first_trace_attempt {100%:[3..15]}`, `auto_helper_num 300`, `max_segment_length {100%:[50..300]}`, `auto_cleanup_time_limit 120m`, `segment_time_limit {100%:[100..600]}`, and `tail_length {50%:[1] 30%:[2] 20%:[3..5]}`. Treat these as example values, not portable defaults.
 
@@ -136,51 +153,63 @@ hunt -run -strategy OC -property {<targets>}
 
 ## Stored-Trace Target Continuation
 
-Before reset-based Swarm work, inspect stored CEX and covered traces. Reuse a
-trace only when its design, environment, reset, and assumptions remain current
-and legal. A long reachable prefix can make direct target search cheaper than
-reconstructing it from reset.
+Before reset-based Swarm work, distinguish a trace reported by a prior run from
+one usable in the current Jasper session. If the current property table lacks
+the source or a valid trace, recreate/load the source property and run it under
+the same RTL, reset, environment, and assumptions until covered/CEX, then
+re-query it. A long reachable prefix can make target search much cheaper.
 
 ```tcl
 foreach source [get_property_list -silent] {
-    set status   [get_property_info -list status $source]
-    set trace_id [get_property_info -list trace_id $source]
+    set status       [get_property_info -list status $source]
+    set trace_id     [get_property_info -list trace_id $source]
+    set trace_length [get_property_info -list trace_length $source]
     if {$trace_id ne ""} {
-        puts "STORED_TRACE: $source status=$status trace_id=$trace_id"
+        puts "STORED_TRACE: $source status=$status trace_id=$trace_id length=$trace_length"
     }
 }
 
-set source   <covered_or_cex_property>
-set trace_id [get_property_info -list trace_id $source]
+set source <covered_or_cex_property>
+if {[lsearch -exact [get_property_list -silent] $source] < 0} {
+    error "recreate/load and run the source property in this session"
+}
+set status       [get_property_info -list status $source]
+set trace_id     [get_property_info -list trace_id $source]
+set trace_length [get_property_info -list trace_length $source]
+if {$trace_id eq ""} { error "source trace is unavailable in this session" }
 prove -property <target> \
     -from $source -trace_id $trace_id -cycle -1 \
     -engine_mode Ht -first_trace_attempt <remaining_depth> \
     -time_limit <budget>
 ```
 
-`prove -from` is a bug-hunting feature: a returned CEX is a concrete,
-reset-reachable falsification, but a no-hit cannot prove an assertion or make a
-cover unreachable. If no one trace removes the relevant prefix, select Trace
-Swarm or Trace Search instead.
+With a qualified reset-reachable source, a returned CEX is a concrete
+falsification: stop the target's bug search; no extra Hunt is required. A
+no-hit stays `undetermined` and cannot prove an assertion or make a cover
+unreachable. If no one trace removes the relevant prefix, select Trace Swarm
+or Trace Search; only then consider reset-based Hunt.
 
 ## Hunt Beyond the Proof Bound
 
-After the Bound Swarm capacity check below, start with this low-configuration
-portfolio:
+Only after trace-first and focused-extension branches are inapplicable or have
+missed, select the smallest Hunt portfolio justified by the objective. Do not
+add unrelated auxiliary properties merely because they are `undetermined`:
 
-1. Run Cycle Swarm from the lowest bound among undetermined targets. Its predefined flow uses an unlimited maximum trace length and seed-selected per-cycle effort.
-2. Run Bound Swarm from that bound through `bound + 100`. A practical baseline starts at `trace_attempt_time_limit 1s` and multiplies effort by `10` per scan.
-3. Run `hunt -auto` for state/path diversity. AUTO may remain within the proof bound; inspect helper depths rather than assuming it crossed the frontier.
-4. Run modes in parallel when licenses permit; otherwise run sequentially.
+1. Use Cycle Swarm when one or a few frontier cycles are especially expensive.
+2. Use Bound Swarm after preflight when depth is unknown/broad and traces cannot narrow it. Example: scan through `bound + 100`, start at `1s`, and multiply effort by `10`; these are not defaults.
+3. Use `hunt -auto` when helper/state/path diversity is the objective. AUTO may remain within the proof bound; inspect helper depths.
+4. Run selected modes in parallel when licenses permit; otherwise run sequentially.
 
 ```tcl
 hunt -config -strategy CS -mode cycle_swarm \
     -first_trace_attempt {10 12 15} -engine_mode B -max_jobs 3
+hunt -show -strategy CS
 hunt -run -strategy CS -property {<targets>}
 
 hunt -config -strategy BS -mode bound_swarm \
     -first_trace_attempt <bound> -max_trace_length <bound_plus_range> \
     -trace_attempt_time_limit 1s -trace_attempt_time_limit_factor 10
+hunt -show -strategy BS
 hunt -run -strategy BS -property {<targets>}
 
 hunt -run -auto -property {<targets>} -time_limit <time>
@@ -196,18 +225,21 @@ hunt -config -strategy <name> -mode <cycle_or_bound_swarm> \
     -deeper_cycles_earlier true
 ```
 
-Before launching Bound Swarm, capacity-plan the intended scan tiers. For a job
-assigned `C` cycles through effort tier `K`, estimate its wall-clock work as:
+Before `hunt -run`, record `[lo, hi]`, jobs, each job's assigned cycles `C_j`,
+intended tier `K`, initial attempt limit, factor, per-job limit, and remaining
+aggregate slot-second budget. Estimate:
 
 ```text
-C * sum(scan=0..K,
-        trace_attempt_time_limit * trace_attempt_time_limit_factor ^ scan)
+W_j = C_j * sum(scan=0..K,
+                trace_attempt_time_limit * trace_attempt_time_limit_factor ^ scan)
+W_aggregate = sum(jobs, W_j)
 ```
 
-Sum that work across jobs for an aggregate slot-second estimate. Compare the
-per-job estimate with the strategy time limit and the aggregate estimate with
-the remaining search budget. After `hunt -config`, record `IHT002` and repeat
-the calculation using the resolved distribution.
+Require every `W_j` to fit its strategy limit and `W_aggregate` to fit the
+remaining budget, assuming every assigned cycle reaches tier `K`. After
+`hunt -config`, use `hunt -show -strategy <name>` for the pre-run audit. After
+`hunt -run`, archive `IHT002`, Trace Attempt, `IPF180`, and final status to
+audit dynamic assignments and actual execution.
 
 If the target interval cannot reach its intended effort tier, either narrow it
 using evidence, select a trace-directed search, or label the run as a partial
@@ -366,7 +398,10 @@ prove -wait
 | Use independent ordered guide covers | First-occurrence matching can reorder milestones | Make later covers cumulative with `##[0:$]` |
 | Discard pending Trace Swarm work | AUTO time can expire with queued traces | Report pending traces and run Trace Swarm separately |
 | Keep one trace per valuable property | Loses path diversity | Set selective trace storage to `unlimited` |
-| Start a reset-based Swarm before checking stored traces | Rebuilds a reachable prefix that an existing trace may bypass | Inventory legal traces; try `prove -from` when one removes the prefix |
+| Treat a prior report's trace as current-session state | A fresh session may lack the property or valid trace ID | Recreate/run the source, then re-query status, ID, and length |
+| Start reset-based Swarm before checking current traces | Rebuilds a reachable prefix that a legal trace may bypass | Try `prove -from` when one relevant trace removes the prefix |
+| Run Hunt after continuation already found the target CEX | Spends budget without changing the falsification conclusion | Stop that target's bug search and preserve the CEX |
+| Use `IHT002` as a pre-run budget gate | The message is emitted after `hunt -run` starts | Preflight with `hunt -show`; archive `IHT002` after the run |
 | Copy example numeric values as defaults | Many values are testcase or version choices | Inspect built-ins and budget from bounds/resources |
 | Call a partial Bound Swarm a full-range rescan | The time limit may prevent the target interval from reaching its intended effort tier | Capacity-plan before launch; report actual resolved coverage and tiers |
 | Call a deeper `prove -max_trace_length` run "DBH" | Hides whether Hunt/swarm atoms were actually exercised | Label it focused bounded deepening; show `hunt -config`/`hunt -run` artifacts for DBH |
@@ -387,7 +422,7 @@ prove -wait
 | Command / option | Purpose |
 |---|---|
 | `hunt -config -strategy N -mode M` / `hunt -run -strategy N` | Define/run isolated strategies |
-| `hunt -list strategy` / `hunt -show -strategy N` | Inspect installed strategies/defaults |
+| `hunt -list strategy` / `hunt -show -strategy N` | Inspect built-ins and audit declared strategy settings before run |
 | `hunt -run ... -from P [-trace_id I] [-cycle N]` | Initialize from a stored trace |
 | `prove -property T -from P -trace_id I -cycle -1 ...` | Continue target CEX search from one legal stored trace; no-hit is non-exhaustive |
 | `hunt -run ... -force` / `-tag ID` / `-seed S` | Preserve results / identify / reproduce a run |

@@ -359,24 +359,27 @@ I decide when the option is legal?"
 engine-tuning
 
 ### User Prompt
-"A JasperGold cover already has a long legal stored trace, while a target
+"A JasperGold cover had a long legal trace in a prior run, while a target
 assertion remains undetermined. The trace removes most of the deterministic
-prefix to the suspected failure region. What should I try before reset-based
-Swarm search, which exact Tcl options continue from that trace, and what can a
-no-hit result prove?"
+prefix to the suspected failure region, but a standalone replay starts a fresh
+analysis session. What should I do before reset-based Swarm search, which exact
+Tcl commands query and continue from that trace, when should the target search
+stop, and what does a no-hit establish?"
 
 ### Modules That Should Be Consulted
 - knowledge/fpv/engine-tuning.md
 - knowledge/fpv/engine-tuning/bug-hunting.md
 
 ### Expected Key Points
-- [ ] Inventory current legal covered/CEX traces and their trace IDs before reset-based search
+- [ ] Distinguish prior-run trace evidence from a trace usable in the current session; query `status`, `trace_id`, and `trace_length`
+- [ ] If the source property/trace is absent, recreate or run it in the same session and environment, then re-query it
 - [ ] Continue the target with `prove -from`, `-trace_id`, `-cycle -1`, and an appropriate trace engine/budget
-- [ ] Treat a found CEX as conclusive but preserve `undetermined` after no hit; use Trace Swarm/Search when no one trace removes the prefix
+- [ ] Treat a found CEX as terminal for the target search with no follow-up Hunt; preserve `undetermined` after no hit
 
 ### Anti-Patterns to Avoid
 - Assuming a no-hit `prove -from` run proves the target or makes a cover unreachable
-- Reusing a trace produced under a different design, environment, reset, or assumptions
+- Treating a historical trace report, missing trace ID, or command failure as a valid current-session no-hit
+- Running Hunt only to demonstrate DBH after continuation already found the target CEX
 
 ---
 
@@ -389,7 +392,8 @@ engine-tuning
 "I want a JasperGold Bound Swarm over a broad depth range with several jobs and
 increasing per-attempt effort. Before launching it, how do I determine whether
 each job can reach the intended effort tier within the strategy time limit and
-whether the whole portfolio fits my remaining compute budget?"
+whether the whole portfolio fits my remaining compute budget? Which evidence
+is available before launch, and which log records exist only after the run?"
 
 ### Modules That Should Be Consulted
 - knowledge/fpv/engine-tuning.md
@@ -397,9 +401,12 @@ whether the whole portfolio fits my remaining compute budget?"
 
 ### Expected Key Points
 - [ ] Calculate assigned cycles times the sum of all intended effort tiers per job, then sum jobs for aggregate slot-second demand
-- [ ] Compare per-job work with the time limit and aggregate work with remaining budget; use `IHT002` resolved assignments after configuration
+- [ ] Compare per-job work with the time limit and aggregate work with remaining budget before launch
+- [ ] Use `hunt -config` plus `hunt -show -strategy` for pre-run inspection; `IHT002` is post-`hunt -run`, not feasibility evidence
+- [ ] Archive `IHT002`, Trace Attempt, `IPF180`, and final status after the run
 - [ ] Narrow with evidence, use a trace-directed method, or report a partial exploration when the intended tier cannot fit
 
 ### Anti-Patterns to Avoid
 - Calling a timed-out partial scan a full-range rescan
+- Using `IHT002` as a pre-launch budget gate
 - Copying one example range, job count, or effort factor as a default

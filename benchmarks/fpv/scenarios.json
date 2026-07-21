@@ -101,17 +101,17 @@
       "id": "dbh-stored-trace-continuation",
       "type": "control",
       "module": "engine-tuning",
-      "prompt": "A JasperGold cover already has a long legal stored trace, while a target assertion remains undetermined. The trace removes most of the deterministic prefix to the suspected failure region. What should I try before reset-based Swarm search, which exact Tcl options continue from that trace, and what can a no-hit result prove?",
-      "expect_concept": ["stored.*trace|trace.*inventory|covered.*trace", "non.?exhaustive|no.?hit.*not|not.*(proof|unreachable)"],
-      "expect_exact": ["prove -property", "-from", "-trace_id", "-cycle -1"]
+      "prompt": "A JasperGold cover had a long legal trace in a prior run, while a target assertion remains undetermined. The trace removes most of the deterministic prefix to the suspected failure region, but a standalone replay starts a fresh analysis session. What should I do before reset-based Swarm search, which exact Tcl commands query and continue from that trace, when should the target search stop, and what does a no-hit establish?",
+      "expect_concept": ["current.*session|fresh.*session", "recreate|rebuild|re.?run", "status|until covered|covered.*then", "trace_id", "trace_length", "CEX.*(stop|terminal)|stop.*(CEX|target|search)|no follow.?up Hunt", "non.?exhaustive|no.?hit.*not|not.*(proof|unreachable)|remains.*undetermined|neither.*proven"],
+      "expect_exact": ["get_property_info", "prove -property", "-from", "-trace_id", "-cycle -1"]
     },
     {
       "id": "dbh-bound-swarm-budget",
       "type": "control",
       "module": "engine-tuning",
-      "prompt": "I want a JasperGold Bound Swarm over a broad depth range with several jobs and increasing per-attempt effort. Before launching it, how do I determine whether each job can reach the intended effort tier within the strategy time limit and whether the whole portfolio fits my remaining compute budget?",
-      "expect_concept": ["per.?job|assigned cycles", "aggregate|slot.?second", "partial|target.*tier|time.*limit"],
-      "expect_exact": ["trace_attempt_time_limit", "trace_attempt_time_limit_factor", "IHT002"]
+      "prompt": "I want a JasperGold Bound Swarm over a broad depth range with several jobs and increasing per-attempt effort. Before launching it, how do I determine whether each job can reach the intended effort tier within the strategy time limit and whether the whole portfolio fits my remaining compute budget? Which evidence is available before launch, and which log records exist only after the run?",
+      "expect_concept": ["per.?job|assigned cycles", "aggregate|slot.?second", "pre.?run|before.*launch|before.*run", "post.?run|after.*run", "partial|target.*tier|time.*limit"],
+      "expect_exact": ["hunt -config", "hunt -show -strategy", "trace_attempt_time_limit", "trace_attempt_time_limit_factor", "IHT002", "IPF180"]
     }
   ]
 }
