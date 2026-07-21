@@ -40,4 +40,4 @@ iteration-*/
 # Packaged skills (generated)
 *.skill
 test
-.plan
+plan/*
