@@ -88,6 +88,30 @@
       "prompt": "In a JasperGold regression, previously proven properties are now slow, an old CEX has not reappeared, and several critical coverage items remain uncovered. How should I carry history into DBH and close reachable coverage without claiming unreachability? Include the exact key Tcl commands.",
       "expect_concept": ["previous|prior|history|old", "cycle[_ ]swarm", "bound[_ ]swarm", "coverage|cover", "not.*unreachable|cannot.*unreachable|unreachable.*only.*exhaustive|only.*exhaustive.*unreachable"],
       "expect_exact": ["report -csv", "check_cov -create_cover_item_property", "check_cov -measure"]
+    },
+    {
+      "id": "tcl-silent-command-grammar",
+      "type": "control",
+      "module": "tcl-commands",
+      "prompt": "I am scripting JasperGold and want clean Tcl return values. May I append -silent to every command, including a Hunt strategy-list command? How should I decide when the option is legal?",
+      "expect_concept": ["exact.*(grammar|template)|help|support", "not.*every|only.*support|do not.*infer"],
+      "expect_exact": ["hunt -list strategy"]
+    },
+    {
+      "id": "dbh-stored-trace-continuation",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "A JasperGold cover already has a long legal stored trace, while a target assertion remains undetermined. The trace removes most of the deterministic prefix to the suspected failure region. What should I try before reset-based Swarm search, which exact Tcl options continue from that trace, and what can a no-hit result prove?",
+      "expect_concept": ["stored.*trace|trace.*inventory|covered.*trace", "non.?exhaustive|no.?hit.*not|not.*(proof|unreachable)"],
+      "expect_exact": ["prove -property", "-from", "-trace_id", "-cycle -1"]
+    },
+    {
+      "id": "dbh-bound-swarm-budget",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "I want a JasperGold Bound Swarm over a broad depth range with several jobs and increasing per-attempt effort. Before launching it, how do I determine whether each job can reach the intended effort tier within the strategy time limit and whether the whole portfolio fits my remaining compute budget?",
+      "expect_concept": ["per.?job|assigned cycles", "aggregate|slot.?second", "partial|target.*tier|time.*limit"],
+      "expect_exact": ["trace_attempt_time_limit", "trace_attempt_time_limit_factor", "IHT002"]
     }
   ]
 }

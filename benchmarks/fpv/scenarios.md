@@ -326,3 +326,80 @@ workflow
 ### Anti-Patterns to Avoid
 - Copying one lab's `+20` depth or 50%/70% timing as a universal project threshold
 - Calling an uncovered item unreachable because DBH did not cover it
+
+---
+
+## Scenario: tcl-silent-command-grammar  [control]
+
+### Category
+Tcl commands
+
+### User Prompt
+"I am scripting JasperGold and want clean Tcl return values. May I append
+`-silent` to every command, including a Hunt strategy-list command? How should
+I decide when the option is legal?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/tcl-commands.md
+- tool-specific/jaspergold/quirks.md
+
+### Expected Key Points
+- [ ] Use `-silent` only when the exact command form supports it; installed help and exact templates override a general scripting idiom
+- [ ] On the validated release, use `hunt -list strategy` without `-silent`
+- [ ] Do not infer that the option is valid for every Hunt subcommand
+
+### Anti-Patterns to Avoid
+- Appending `-silent` blindly and treating an invalid-command error as a proof or Hunt failure
+
+---
+
+## Scenario: dbh-stored-trace-continuation  [control]
+
+### Category
+engine-tuning
+
+### User Prompt
+"A JasperGold cover already has a long legal stored trace, while a target
+assertion remains undetermined. The trace removes most of the deterministic
+prefix to the suspected failure region. What should I try before reset-based
+Swarm search, which exact Tcl options continue from that trace, and what can a
+no-hit result prove?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+
+### Expected Key Points
+- [ ] Inventory current legal covered/CEX traces and their trace IDs before reset-based search
+- [ ] Continue the target with `prove -from`, `-trace_id`, `-cycle -1`, and an appropriate trace engine/budget
+- [ ] Treat a found CEX as conclusive but preserve `undetermined` after no hit; use Trace Swarm/Search when no one trace removes the prefix
+
+### Anti-Patterns to Avoid
+- Assuming a no-hit `prove -from` run proves the target or makes a cover unreachable
+- Reusing a trace produced under a different design, environment, reset, or assumptions
+
+---
+
+## Scenario: dbh-bound-swarm-budget  [control]
+
+### Category
+engine-tuning
+
+### User Prompt
+"I want a JasperGold Bound Swarm over a broad depth range with several jobs and
+increasing per-attempt effort. Before launching it, how do I determine whether
+each job can reach the intended effort tier within the strategy time limit and
+whether the whole portfolio fits my remaining compute budget?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+
+### Expected Key Points
+- [ ] Calculate assigned cycles times the sum of all intended effort tiers per job, then sum jobs for aggregate slot-second demand
+- [ ] Compare per-job work with the time limit and aggregate work with remaining budget; use `IHT002` resolved assignments after configuration
+- [ ] Narrow with evidence, use a trace-directed method, or report a partial exploration when the intended tier cannot fit
+
+### Anti-Patterns to Avoid
+- Calling a timed-out partial scan a full-range rescan
+- Copying one example range, job count, or effort factor as a default

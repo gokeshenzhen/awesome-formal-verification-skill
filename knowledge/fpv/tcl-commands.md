@@ -12,14 +12,14 @@ JasperGold-specific Tcl scripting: the `-silent` idiom, scripted design/COI intr
 Scripting JasperGold in Tcl?
 ├─ Referencing an HDL signal/bit-range/$func in a string? .. see escaping rules in tcl-common.md
 ├─ Command argument might be invalid (signal/file)? ........ catch {cmd} var  (see tcl-common.md)
-├─ Writing a script (not interactive)? .................... add -silent to every Jasper cmd that supports it
+├─ Writing a script (not interactive)? .................... use `-silent` only where the exact grammar supports it
 ├─ Need design / COI facts in a variable? ................. get_design_info / get_signal_info ... -silent
 └─ A standard Tcl command behaving oddly? ................. check Jasper Tcl differences (clock→tcl_clock, pid)
 ```
 
 ## Core Rules (JasperGold-specific)
 
-1. **In scripts, add `-silent` to every Jasper command that supports it** — the command then returns results as a clean Tcl value instead of printing. If a command lacks `-silent`, its results are already returned as a Tcl value.
+1. **In scripts, use `-silent` only when the exact command grammar supports it.** It returns results as a clean Tcl value instead of printing. Prefer a documented command template; for an unfamiliar subcommand, check installed `help` instead of appending `-silent` by habit.
 2. **Use `get_design_info` / `get_signal_info` for scripted introspection** — modules, instances, flops, registers, COI membership, signal width/indexes. Add `-silent` so you get the value, not a printout.
 3. **Know the Jasper Tcl differences**: standard `clock` is renamed `tcl_clock`; `pid` returns the analysis-session PID (not the Jasper console's); some standard packages are unavailable: `Thread`, `tdbc`, `tdbc::mysql`, `tdbc::odbc`, `tdbc::postgres`.
 4. **The HDL-vs-Tcl escaping pitfall applies to every Jasper script** — brace/escape Verilog references (`sig\[0:7\]`, `\$func`). Full rules in `tcl-common.md`.
@@ -41,7 +41,7 @@ foreach m [get_design_info -silent -list module] {
   if { [lsearch -exact $coiMods $m] < 0 } { lappend notCOI $m }
 }
 ```
-**Gotchas**: without `-silent` these print and return verbose values — unusable in a pipeline. COI queries feed abstraction/cutpoint decisions (see `complexity-management.md`).
+**Gotchas**: these queries support `-silent`; without it they print and return verbose values — unusable in a pipeline. COI queries feed abstraction/cutpoint decisions (see `complexity-management.md`).
 
 ### Reporting & per-property status queries
 **When to use**: dump a run summary to a file, or read each property's status back in a script. These are non-derivable [JG-specific] syntax atoms — get them exactly. 🔧 VERSION-SENSITIVE (switch names verified on 2025.12).
@@ -67,7 +67,7 @@ foreach p [get_property_list -silent] {
 
 | Anti-Pattern | Why It Fails | Correct Alternative |
 |-------------|-------------|-------------------|
-| Omitting `-silent` in scripts | Command prints instead of returning a clean value | add `-silent` |
+| Blindly appending `-silent` to an unfamiliar subcommand | Some Jasper command forms reject it | Use the exact template or installed `help`; add `-silent` only when supported |
 | Assuming `clock`/`pid` behave as standard Tcl | Jasper renames `clock`→`tcl_clock`; `pid`=analysis-session PID | use `tcl_clock`; know `pid` semantics |
 | `package require Thread`/`tdbc*` in Jasper | Those standard packages aren't shipped | install/import another way or avoid; see `tcl-common.md` |
 | `report -file f` without `-force` (file exists) | `ERROR (EFL012)` aborts the run | `report ... -force -file f` (or `rm -f f` first) |
@@ -79,7 +79,7 @@ foreach p [get_property_list -silent] {
 ## Tool-Specific Notes
 
 ### JasperGold
-- `-silent` is the key scripting switch — returns results as Tcl values instead of printing. Use it on every command that supports it.
+- `-silent` is the key scripting switch — it returns results as Tcl values instead of printing when that command form supports it. Exact templates and installed `help` take precedence over a general idiom.
 - `get_design_info` / `get_signal_info` are the workhorse introspection commands.
 - Jasper Tcl deviates from standard: `clock`→`tcl_clock`; `pid`=analysis-session PID; some std packages unavailable.
 
@@ -90,7 +90,7 @@ foreach p [get_property_list -silent] {
 
 | Command | Purpose | Tool |
 |---|---|---|
-| `<cmd> -silent` | return results instead of printing | JG |
+| `<supported-cmd> -silent` | return results instead of printing when that command form supports it | JG |
 | `get_design_info [-list module\|instance\|input\|flop\|register] [-module M] [-property P] -silent` | design / COI queries | JG |
 | `get_signal_info -indexes\|-width <sig> -silent` | signal bit range / width | JG |
 | `report -summary -result -force -file <f>` | dump run summary to file (`-force` mandatory if file exists; no `-details` switch) | JG |
