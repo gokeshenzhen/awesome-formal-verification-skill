@@ -383,6 +383,39 @@ stop, and what does a no-hit establish?"
 
 ---
 
+## Scenario: dbh-trace-first-probe  [control]
+
+### Category
+engine-tuning
+
+### User Prompt
+"A meaningful JasperGold prove left a target assertion undetermined, and the
+baseline produced several legal cover traces. One trace is long but only
+loosely related to the suspected failure region. A reset-based B or Swarm run
+could consume most of the remaining investigation budget. Give me the ordered
+next experiments and exact Tcl shape: how should I select and qualify a source,
+budget the first continuation, react when it makes no quick progress, and keep
+the result sound?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+
+### Expected Key Points
+- [ ] Inventory and qualify current-session traces before any reset-originating focused B/Hts, bounded, or Hunt search
+- [ ] Rank sources by target/endpoint relevance, remaining suffix, and cone cost rather than trace length alone
+- [ ] Use a predeclared capped `prove -from` probe with an expected suffix/progress criterion; do not give the first generic trace most of the budget
+- [ ] On no quick progress, inspect the target cone/source endpoint and derive a reset-reachable observational milestone nearer the failure region with a smaller cone
+- [ ] Cover and qualify that milestone under the unchanged environment before reusing its trace; add no assumption or behavioral restriction
+- [ ] Stop on CEX; otherwise preserve `undetermined` and route a broad suffix to Trace Swarm/Search or justified reset-based DBH
+
+### Anti-Patterns to Avoid
+- Running reset-based bounded deepening before inspecting usable traces
+- Repeatedly increasing the timeout on a long but weakly related source
+- Treating an observational milestone as proof, a constraint, or a case split
+
+---
+
 ## Scenario: dbh-bound-swarm-budget  [control]
 
 ### Category

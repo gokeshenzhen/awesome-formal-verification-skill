@@ -10,30 +10,42 @@ Use Deep Bug Hunting (DBH) after a meaningful exhaustive `prove` run leaves targ
 
 ## DBH Activation Gate
 
-Classify the previous run before spending Hunt budget:
+Classify the previous run before spending Hunt budget. Complete the trace-first
+steps below before any reset-originating focused B/Hts extension,
+`prove -max_trace_length` search, or Hunt:
 
 1. Before reset-based search, inventory baseline CEX/covered status,
    `trace_length`, and `trace_id`; distinguish a prior report from a trace that
    is actually available in the current session's property table.
-2. Re-query the current session. If the source property or legal trace is
+2. Rank traces by target relevance, not length alone. Prefer an endpoint near a
+   target antecedent or architectural failure region, a small remaining suffix,
+   and a source cone cheaper than rebuilding the prefix from reset.
+3. Re-query the current session. If the source property or legal trace is
    absent, recreate/run that source under the same RTL, reset, environment, and
    assumptions, then verify `status`, `trace_id`, and `trace_length` again.
-3. If one legal trace removes a long relevant prefix, try target continuation
-   with `prove -from`. A CEX is terminal for that target's bug search; stop
-   without a follow-up Hunt. A no-hit stays `undetermined`; a missing/invalid
-   trace or command failure is setup failure, not a no-hit result.
-4. Treat B/Ht/Hts/J/K/L/U-family work stopped by a finite
+4. If one legal trace removes a long relevant prefix, run a declared,
+   small-budget target-continuation probe with `prove -from` before spending a
+   reset-search budget. Predeclare the expected remaining suffix and the
+   trace-attempt progress that would justify more budget. A CEX is terminal;
+   stop without a follow-up Hunt. A no-hit stays `undetermined`; a
+   missing/invalid trace or command failure is setup failure, not a no-hit.
+5. Do not give the first generic long trace most of the remaining budget. If
+   its capped probe shows no quick target-relevant progress, inspect the target
+   cone and source endpoint. Prefer a reset-reachable observational milestone
+   nearer the failure region with a smaller cone, qualify its trace in the same
+   session, and probe from it. Add no assumption or behavioral restriction.
+6. Treat B/Ht/Hts/J/K/L/U-family work stopped by a finite
    `-max_trace_length` as bounded trace search, not as a meaningful exhaustive
    proof. Use its `min_length` as a frontier only.
-5. Use one focused B/Hts depth extension only when RTL, architecture, a stored
-   legal trace, or a prior result explains both endpoints of a credible narrow
-   witness interval and scanning it is cheap. If it hits, keep the CEX and
-   stop; call this **focused bounded deepening**, not DBH. Do not call an
-   arbitrary frontier-to-round-number range credible.
-6. Activate DBH when the witness depth is unknown or broad, direct deepening has
+7. Use one focused B/Hts depth extension only after no viable trace-first branch
+   remains, and only when RTL, architecture, or a prior result explains both
+   endpoints of a credible narrow witness interval and scanning it is cheap. If
+   it hits, keep the CEX and stop; call this **focused bounded deepening**, not
+   DBH. Do not call an arbitrary frontier-to-round-number range credible.
+8. Activate DBH when the witness depth is unknown or broad, direct deepening has
    already missed or advances slowly, cycle difficulty is uneven, several
    targets compete for budget, or state/path/trace diversity is the objective.
-7. Only after the decision tree selects Hunt, execute a named `hunt -config` +
+9. Only after the decision tree selects Hunt, execute a named `hunt -config` +
    `hunt -run` strategy (or `hunt -run -auto`) and archive its limits, tag,
    seed, resolved settings, and raw result.
 
@@ -47,9 +59,13 @@ the final flow contains only `prove -max_trace_length`.
 What is the immediate objective?
 ├─ Undetermined after prove
 │  ├─ One current-session legal trace removes a long relevant prefix
-│  │  └─ `prove -from`: CEX → stop target search; no-hit → remain undetermined
+│  │  └─ capped `prove -from` probe
+│  │     ├─ CEX ............................ stop target search
+│  │     └─ no quick progress
+│  │        ├─ generic endpoint ............ derive/qualify a nearer small-cone milestone
+│  │        └─ relevant but broad suffix ... trace_swarm or trace_search
 │  ├─ Several relevant traces, no decisive prefix trace_swarm or trace_search
-│  ├─ Credible narrow depth; cheap first try ... focused B/Hts (not DBH)
+│  ├─ No viable trace branch; credible narrow depth focused B/Hts (not DBH)
 │  ├─ One expensive frontier cycle ............. cycle_swarm
 │  ├─ Unknown/broad or uneven depth range ....... bound_swarm after preflight
 │  ├─ Useful unordered milestones ............... state_swarm or hunt -auto
@@ -153,11 +169,12 @@ hunt -run -strategy OC -property {<targets>}
 
 ## Stored-Trace Target Continuation
 
-Before reset-based Swarm work, distinguish a trace reported by a prior run from
-one usable in the current Jasper session. If the current property table lacks
-the source or a valid trace, recreate/load the source property and run it under
-the same RTL, reset, environment, and assumptions until covered/CEX, then
-re-query it. A long reachable prefix can make target search much cheaper.
+Before any reset-based bounded or Swarm work, distinguish a trace reported by a
+prior run from one usable in the current Jasper session. If the current
+property table lacks the source or a valid trace, recreate/load the source
+property and run it under the same RTL, reset, environment, and assumptions
+until covered/CEX, then re-query it. Rank candidates by endpoint relevance,
+remaining suffix, and source-cone cost; trace length alone is insufficient.
 
 ```tcl
 foreach source [get_property_list -silent] {
@@ -180,14 +197,33 @@ if {$trace_id eq ""} { error "source trace is unavailable in this session" }
 prove -property <target> \
     -from $source -trace_id $trace_id -cycle -1 \
     -engine_mode Ht -first_trace_attempt <remaining_depth> \
-    -time_limit <budget>
+    -time_limit <declared_probe_budget>
 ```
 
 With a qualified reset-reachable source, a returned CEX is a concrete
 falsification: stop the target's bug search; no extra Hunt is required. A
 no-hit stays `undetermined` and cannot prove an assertion or make a cover
-unreachable. If no one trace removes the relevant prefix, select Trace Swarm
-or Trace Search; only then consider reset-based Hunt.
+unreachable. Predeclare a probe slice instead of assigning the first source the
+whole remaining investigation budget. Record the expected remaining suffix and
+the trace-attempt progress required to continue. Archive `Trace Attempt`,
+`IPF180`, termination reason, and final target status.
+
+If a generic source probe shows no quick progress, do not merely raise its time
+limit. Inspect the target cone and the source endpoint, then define a nearer
+observational milestone over target-relevant architectural state. Prove the
+milestone reachable from reset under the unchanged environment, qualify its
+current-session trace, and repeat the capped continuation:
+
+```tcl
+visualize -property <target>
+cover -name <milestone> {<target_relevant_reachable_state>}
+prove -property <milestone> -time_limit <milestone_budget>
+# Re-query status, trace_id, and trace_length before using -from.
+```
+
+The milestone is steering evidence, not a constraint or case split. If no
+credible milestone exists, or a relevant source still leaves a broad suffix,
+select Trace Swarm or Trace Search; only then consider reset-based Hunt.
 
 ## Hunt Beyond the Proof Bound
 
@@ -399,7 +435,8 @@ prove -wait
 | Discard pending Trace Swarm work | AUTO time can expire with queued traces | Report pending traces and run Trace Swarm separately |
 | Keep one trace per valuable property | Loses path diversity | Set selective trace storage to `unlimited` |
 | Treat a prior report's trace as current-session state | A fresh session may lack the property or valid trace ID | Recreate/run the source, then re-query status, ID, and length |
-| Start reset-based Swarm before checking current traces | Rebuilds a reachable prefix that a legal trace may bypass | Try `prove -from` when one relevant trace removes the prefix |
+| Start focused bounded or Swarm work before checking current traces | Rebuilds a reachable prefix that a legal trace may bypass | Complete trace inventory, qualification, and a capped relevant-source probe first |
+| Spend most of the budget on the first long but generic trace | Length does not show endpoint relevance or suffix difficulty | Cap the probe; on no progress derive/qualify a nearer small-cone observational milestone |
 | Run Hunt after continuation already found the target CEX | Spends budget without changing the falsification conclusion | Stop that target's bug search and preserve the CEX |
 | Use `IHT002` as a pre-run budget gate | The message is emitted after `hunt -run` starts | Preflight with `hunt -show`; archive `IHT002` after the run |
 | Copy example numeric values as defaults | Many values are testcase or version choices | Inspect built-ins and budget from bounds/resources |

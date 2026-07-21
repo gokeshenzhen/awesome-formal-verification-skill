@@ -106,6 +106,14 @@
       "expect_exact": ["get_property_info", "prove -property", "-from", "-trace_id", "-cycle -1"]
     },
     {
+      "id": "dbh-trace-first-probe",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "A meaningful JasperGold prove left a target assertion undetermined, and the baseline produced several legal cover traces. One trace is long but only loosely related to the suspected failure region. A reset-based B or Swarm run could consume most of the remaining investigation budget. Give me the ordered next experiments and exact Tcl shape: how should I select and qualify a source, budget the first continuation, react when it makes no quick progress, and keep the result sound?",
+      "expect_concept": ["before.*reset|trace.*before.*reset", "relevan.*(endpoint|target)|endpoint.*relevan", "remaining suffix|suffix.*remain", "cap|probe|small.*budget|budget.*small", "progress.*(criter|justify|poor)|Trace Attempt.*advance|advance.*Trace Attempt", "target cone|source endpoint|smaller cone|small-cone", "observational.*milestone|milestone.*observational", "no assumption|without.*assumption|unchanged environment", "CEX.*stop|stop.*CEX", "undetermined|no.?hit.*not"],
+      "expect_exact": ["get_property_info", "visualize -property", "cover -name", "prove -property", "-from", "-trace_id"]
+    },
+    {
       "id": "dbh-bound-swarm-budget",
       "type": "control",
       "module": "engine-tuning",

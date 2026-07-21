@@ -59,9 +59,11 @@ Proof not converging / choosing engines?
 Classify the baseline before escalating. A trace-only engine such as B stopped by
 `-max_trace_length` performed bounded trace search, not a meaningful exhaustive
 proof; its `undetermined` result supplies a frontier but no failed proof effort.
-Run one focused B/Hts extension only when RTL, architecture, a stored legal
-trace, or a prior result explains both endpoints of a credible narrow witness
-interval and the extension is cheap. Do not relabel an arbitrary
+Before any reset-originating focused extension, inventory and qualify
+current-session legal traces and run a capped continuation probe when one
+removes a relevant prefix. Run one focused B/Hts extension only when no viable
+trace-first branch remains and RTL, architecture, or a prior result explains
+both endpoints of a credible narrow witness interval. Do not relabel an arbitrary
 frontier-to-round-number range as focused deepening; it is not DBH. Route to
 the DBH activation gate in `engine-tuning/bug-hunting.md` when depth is unknown
 or broad, direct deepening repeats or stalls, complexity varies across the
