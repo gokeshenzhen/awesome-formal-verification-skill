@@ -93,7 +93,7 @@ grade() { # file, csv-of-regexes  → prints "hit/total"
   IFS=',' read -ra pats <<< "$csv"
   for p in "${pats[@]}"; do
     tot=$((tot+1))
-    grep -qiE "$p" "$f" && hit=$((hit+1))
+    grep -qiE -- "$p" "$f" && hit=$((hit+1))
   done
   echo "$hit/$tot"
 }
