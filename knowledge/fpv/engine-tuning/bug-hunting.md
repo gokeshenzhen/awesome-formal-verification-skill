@@ -37,20 +37,20 @@ steps below before any reset-originating focused B/Hts extension,
 6. Treat B/Ht/Hts/J/K/L/U-family work stopped by a finite
    `-max_trace_length` as bounded trace search, not as a meaningful exhaustive
    proof. Use its `min_length` as a frontier only.
-7. Use one focused B/Hts depth extension only after no viable trace-first branch
-   remains, and only when RTL, architecture, or a prior result explains both
-   endpoints of a credible narrow witness interval and scanning it is cheap. If
-   it hits, keep the CEX and stop; call this **focused bounded deepening**, not
-   DBH. Do not call an arbitrary frontier-to-round-number range credible.
-8. Activate DBH when the witness depth is unknown or broad, direct deepening has
+7. Treat RTL-derived depths as scheduling hypotheses, not evidence; include reset and SVA-sampling ambiguity.
+   Use one focused B/Hts extension only for a deterministic singleton or cheap contiguous interval with justified endpoints.
+   Treat several candidates or input-dependent strides/skips as sparse/broad search.
+8. After each capped B/Hts probe, compare its first and last `Trace Attempt`; if unchanged, classify an exact-cycle stall.
+   `-max_trace_length` is a ceiling, not a scheduler; do not extend that job expecting it to visit adjacent cycles.
+9. Reserve a declared Hunt slice before a focused probe; after one miss/stall, execute the selected named Hunt instead of another direct run.
+10. Activate DBH when the witness depth is unknown or broad, direct deepening has
    already missed or advances slowly, cycle difficulty is uneven, several
    targets compete for budget, or state/path/trace diversity is the objective.
-9. Only after the decision tree selects Hunt, execute a named `hunt -config` +
+11. Only after the decision tree selects Hunt, execute a named `hunt -config` +
    `hunt -run` strategy (or `hunt -run -auto`) and archive its limits, tag,
    seed, resolved settings, and raw result.
 
-Do not force Hunt when one deterministic bounded extension is demonstrably the
-cheapest decisive experiment. Do not claim skill-provided DBH execution when
+Do not force Hunt when one deterministic bounded extension is demonstrably the cheapest decisive experiment. Do not claim skill-provided DBH execution when
 the final flow contains only `prove -max_trace_length`.
 
 ## Use-Case Decision Tree
@@ -65,8 +65,8 @@ What is the immediate objective?
 │  │        ├─ generic endpoint ............ derive/qualify a nearer small-cone milestone
 │  │        └─ relevant but broad suffix ... trace_swarm or trace_search
 │  ├─ Several relevant traces, no decisive prefix trace_swarm or trace_search
-│  ├─ No viable trace branch; credible narrow depth focused B/Hts (not DBH)
-│  ├─ One expensive frontier cycle ............. cycle_swarm
+│  ├─ Deterministic singleton/cheap interval .... focused B/Hts (not DBH)
+│  ├─ Few candidates, sampling ambiguity, or hard cycle cycle_swarm
 │  ├─ Unknown/broad or uneven depth range ....... bound_swarm after preflight
 │  ├─ Useful unordered milestones ............... state_swarm or hunt -auto
 │  └─ Known ordered milestones .................. guidepoint
@@ -231,16 +231,19 @@ Only after trace-first and focused-extension branches are inapplicable or have
 missed, select the smallest Hunt portfolio justified by the objective. Do not
 add unrelated auxiliary properties merely because they are `undetermined`:
 
-1. Use Cycle Swarm when one or a few frontier cycles are especially expensive.
-2. Use Bound Swarm after preflight when depth is unknown/broad and traces cannot narrow it. Example: scan through `bound + 100`, start at `1s`, and multiply effort by `10`; these are not defaults.
-3. Use `hunt -auto` when helper/state/path diversity is the objective. AUTO may remain within the proof bound; inspect helper depths.
-4. Run selected modes in parallel when licenses permit; otherwise run sequentially.
+1. Use Cycle Swarm for one/few plausible cycles, sampling ambiguity, or an exact-cycle stall.
+2. Use Bound Swarm after preflight when depth is unknown/broad, input-dependent strides/skips make it sparse, or traces cannot narrow it. Example: scan through `bound + 100`, start at `1s`, and multiply effort by `10`; these are not defaults.
+3. After one focused miss/stall, run the selected named Hunt; do not spend its reserved slice on another direct probe.
+4. Use `hunt -auto` when helper/state/path diversity is the objective. AUTO may remain within the proof bound; inspect helper depths.
+5. Run selected modes in parallel when licenses permit; otherwise run sequentially.
 
 ```tcl
 hunt -config -strategy CS -mode cycle_swarm \
-    -first_trace_attempt {10 12 15} -engine_mode B -max_jobs 3
+    -first_trace_attempt {10 12 15} -max_first_trace_attempt 3 -max_trace_length <above_last_candidate> \
+    -trace_attempt_time_limit <per_attempt_slice> \
+    -engine_mode B -max_jobs 3 -time_limit <reserved_hunt_slice>
 hunt -show -strategy CS
-hunt -run -strategy CS -property {<targets>}
+hunt -run -strategy CS -property {<targets>} -tag <tag> -seed <seed>
 
 hunt -config -strategy BS -mode bound_swarm \
     -first_trace_attempt <bound> -max_trace_length <bound_plus_range> \
@@ -251,7 +254,13 @@ hunt -run -strategy BS -property {<targets>}
 hunt -run -auto -property {<targets>} -time_limit <time>
 ```
 
-Cycle jobs advance by `next_cycle = current_cycle + number_of_engine_jobs`. For `B`, `B4`, or `Hts`, use multiple jobs per start cycle for multiple properties; `-max_first_trace_attempt` defaults to `max_jobs` when omitted and is ignored for MPE. A practical Cycle Swarm timeout range is `5m` to `10m`.
+`-first_trace_attempt` selects each group's initial cycle. In Cycle Swarm,
+`-max_first_trace_attempt` is the maximum number of parallel trace-attempt
+groups, not a cycle ceiling; the tool caps it by available start values and
+`-max_jobs`. For B/B4/Hts, `max_jobs / max_first_trace_attempt` is the jobs per
+group, so use divisible values; Bm/Ht ignore this option. The tool may tune
+initial cycles/increments to avoid duplicate B-family attempts; audit `hunt -show`, `IHT002`, and actual
+`Trace Attempt` lines. A practical per-attempt timeout range is `5m` to `10m`.
 
 Enable full-range starts when jobs cluster near the lower bound:
 
@@ -437,6 +446,8 @@ prove -wait
 | Treat a prior report's trace as current-session state | A fresh session may lack the property or valid trace ID | Recreate/run the source, then re-query status, ID, and length |
 | Start focused bounded or Swarm work before checking current traces | Rebuilds a reachable prefix that a legal trace may bypass | Complete trace inventory, qualification, and a capped relevant-source probe first |
 | Spend most of the budget on the first long but generic trace | Length does not show endpoint relevance or suffix difficulty | Cap the probe; on no progress derive/qualify a nearer small-cone observational milestone |
+| Expect `-max_trace_length` to scan adjacent candidates | One hard starting cycle can consume the whole direct probe | Use an explicit Cycle Swarm candidate list with per-attempt time limits |
+| Set `-max_first_trace_attempt` to a cycle number | It controls parallel attempt groups, not the trace ceiling | Set it to the intended group count; use `-max_trace_length` for the ceiling |
 | Run Hunt after continuation already found the target CEX | Spends budget without changing the falsification conclusion | Stop that target's bug search and preserve the CEX |
 | Use `IHT002` as a pre-run budget gate | The message is emitted after `hunt -run` starts | Preflight with `hunt -show`; archive `IHT002` after the run |
 | Copy example numeric values as defaults | Many values are testcase or version choices | Inspect built-ins and budget from bounds/resources |
@@ -446,11 +457,9 @@ prove -wait
 
 ## Validation Flags
 
-> ⚠️ **NEEDS VALIDATION** — The effective default and boolean interpretation of `no_cover_traces` can vary by release and context. Verify resolved settings before scripting it.
-
-> ⚠️ **NEEDS VALIDATION** — Engine modes, maximum trace values, and configuration spellings can vary by release or flow. Use installed help and resolved strategy output rather than combining unverified values.
-
-> ⚠️ **NEEDS VALIDATION** — Confirm whether `get_signal_list` uses `-intersect` or `-intersection` in the installed release. Do not use the suspicious `$set` argument form without validation.
+> ⚠️ **NEEDS VALIDATION** — Verify the release-specific default and boolean interpretation of `no_cover_traces`.
+> ⚠️ **NEEDS VALIDATION** — Verify engine modes, maximum trace values, and configuration spellings with installed help and resolved output.
+> ⚠️ **NEEDS VALIDATION** — Verify whether `get_signal_list` uses `-intersect` or `-intersection`; reject the suspicious `$set` form.
 
 > 📝 **GAP** — No portable numeric threshold defines when a Hunt miss provides sufficient residual-risk confidence. Establish project-specific budgets and retain exhaustive signoff criteria.
 
@@ -465,8 +474,8 @@ prove -wait
 | `hunt -run ... -force` / `-tag ID` / `-seed S` | Preserve results / identify / reproduce a run |
 | `hunt -run -auto` | Automatic helper + State/Trace Swarm flow |
 | `hunt -report -trace_swarm -tag T -pending -silent` | List unconsumed Trace Swarm work |
-| `-first_trace_attempt`, `-max_first_trace_attempt` | Set and parallelize initial cycle attempts |
-| `-max_trace_length`, `-deeper_cycles_earlier` | Limit/distribute cycle search |
+| `-first_trace_attempt`, `-max_first_trace_attempt` | Set initial cycles / maximum parallel attempt-group count |
+| `-max_trace_length`, `-deeper_cycles_earlier` | Set the trace ceiling / distribute cycle search |
 | `-trace_attempt_time_limit`, `-trace_attempt_time_limit_factor` | Set/grow per-cycle effort |
 | `-tail_length`, `-max_segment_length`, `-segment_time_limit` | Control State Swarm segments |
 | `-target_depth`, `-interval_cycles` | Control Trace Search neighborhood/staging |

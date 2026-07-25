@@ -68,6 +68,9 @@ frontier-to-round-number range as focused deepening; it is not DBH. Route to
 the DBH activation gate in `engine-tuning/bug-hunting.md` when depth is unknown
 or broad, direct deepening repeats or stalls, complexity varies across the
 range, multiple targets compete for budget, or path/trace diversity matters.
+If a capped B/Hts run begins and ends on the same `Trace Attempt`, treat it as
+an exact-cycle stall: `-max_trace_length` is a ceiling, not a cycle scheduler.
+Route a few plausible cycles to Cycle Swarm and a broad/sparse range to Bound Swarm.
 
 If the goal is `proven`/`unreachable` signoff, apply abstraction,
 decomposition, assumptions, or helper lemmas through `complexity-management.md`,

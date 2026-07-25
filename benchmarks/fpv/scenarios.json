@@ -74,6 +74,14 @@
       "expect_exact": ["hunt -config", "hunt -run", "IHT002", "tag", "seed"]
     },
     {
+      "id": "dbh-exact-cycle-stall",
+      "type": "control",
+      "module": "engine-tuning",
+      "prompt": "A capped JasperGold Engine B run starts and ends at Trace Attempt 250 even though max_trace_length is 252. RTL analysis suggests the first violation sample may be at 250, 251, or 252 because of reset/SVA timing, while input-controlled skips allow later sparse depths. I have limited investigation budget. What should I run next, and what exact Jasper Tcl and evidence should I preserve?",
+      "expect_concept": ["exact.?cycle.*stall|Trace Attempt.*(unchanged|same)|unchanged.*Trace Attempt", "ceiling|not.*scheduler|does not.*scan", "cycle[_ ]swarm", "bound[_ ]swarm", "group.*count|count.*group|not.*cycle", "reserve.*(Hunt|budget)|budget.*reserve"],
+      "expect_exact": ["hunt -config", "hunt -show -strategy", "hunt -run", "first_trace_attempt", "max_first_trace_attempt", "max_trace_length", "trace_attempt_time_limit", "tag", "seed", "IHT002", "IPF180"]
+    },
+    {
       "id": "dbh-known-bug-reproduction",
       "type": "control",
       "module": "engine-tuning",

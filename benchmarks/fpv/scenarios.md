@@ -278,6 +278,38 @@ activate DBH, and what artifacts prove that I actually ran DBH?"
 
 ---
 
+## Scenario: dbh-exact-cycle-stall  [control]
+
+### Category
+engine-tuning
+
+### User Prompt
+"A capped JasperGold Engine B run starts and ends at `Trace Attempt 250` even
+though `max_trace_length` is 252. RTL analysis suggests the first violation
+sample may be at 250, 251, or 252 because of reset/SVA timing, while
+input-controlled skips allow later sparse depths. I have limited investigation
+budget. What should I run next, and what exact Jasper Tcl and evidence should I
+preserve?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/engine-tuning.md
+- knowledge/fpv/engine-tuning/bug-hunting.md
+
+### Expected Key Points
+- [ ] Classify unchanged first/last `Trace Attempt` as an exact-cycle stall
+- [ ] State that `-max_trace_length` is a ceiling, not a scheduler over adjacent candidates
+- [ ] Use Cycle Swarm with an explicit candidate list and per-attempt time limit; use Bound Swarm for the later broad/sparse range
+- [ ] Treat `-max_first_trace_attempt` as the maximum parallel attempt-group count, not a cycle number
+- [ ] Reserve Hunt budget before a focused probe and switch after one focused miss/stall
+- [ ] Use `hunt -config`, `hunt -show -strategy`, and `hunt -run`; archive tag, seed, `IHT002`, Trace Attempt, `IPF180`, and final status
+
+### Anti-Patterns to Avoid
+- Extending the same focused B job because its `max_trace_length` includes neighboring cycles
+- Setting `-max_first_trace_attempt` to the maximum cycle
+- Spending the reserved Hunt slice on another direct run
+
+---
+
 ## Scenario: dbh-known-bug-reproduction  [control]
 
 ### Category
