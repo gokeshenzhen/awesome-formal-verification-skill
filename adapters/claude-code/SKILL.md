@@ -54,8 +54,9 @@ When a JasperGold baseline leaves an assertion `undetermined` and the task asks
 for the strongest conclusion, a falsification witness, deeper reachability, or
 risk investigation, read `knowledge/fpv/engine-tuning.md` and
 `knowledge/fpv/engine-tuning/bug-hunting.md` before writing the next run. Apply
-the leaf's DBH activation gate: distinguish one focused bounded deepening from
-an actual Hunt strategy, and do not label the former as DBH.
+the leaf's DBH activation gate and complete its mandatory `DBH_DECISION` record
+before writing the next Tcl. Treat a missing decision record as incomplete
+routing; distinguish focused bounded deepening from an actual Hunt strategy.
 
 When a JasperGold/formal run leaves many properties `undetermined` after a sane
 direct `prove`, do not continue only with longer time limits, engine racing,

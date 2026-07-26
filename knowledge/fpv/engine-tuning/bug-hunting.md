@@ -8,50 +8,46 @@ Use Deep Bug Hunting (DBH) after a meaningful exhaustive `prove` run leaves targ
 
 > 🔧 **VERSION-SENSITIVE** — Hunt modes, option availability, built-in defaults, and configuration displays vary across JasperGold releases. Inspect installed-version help and resolved strategy settings before copying a configuration.
 
+## Mandatory Post-Run Gate
+
+After every capped trace-oriented run, stop before writing the next Tcl. Fill
+this record from raw logs and the task's wall-time policy:
+
+```text
+DBH_DECISION
+objective = proof_closure | bug_search | mixed
+first_trace_attempt = <cycle | none>
+last_trace_attempt = <cycle | none>
+candidate_cycles = <few explicit cycles | none>
+fallback_depth_shape = none | broad | sparse | unknown
+elapsed_wall = <all Jasper process wall time counted by task policy>
+remaining_wall = <task budget - elapsed_wall>
+reserved_hunt_wall = <nonzero for bug_search/mixed | 0 means stop>
+next_action = focused | cycle_swarm | bound_swarm | proof_closure
+```
+
+Apply these hard gates:
+
+1. Use `proof_closure` only for an explicit proof/signoff-only request, `bug_search` for falsification/risk, and `mixed` when asked for the strongest sound conclusion under a finite budget.
+2. Count every completed exploratory or discarded Jasper process; use process wall time, not `-time_limit` or slot-seconds. Apply explicit task policy to setup failures.
+3. For `bug_search` or `mixed`, unchanged first/last `Trace Attempt` is an exact-cycle stall. Run `cycle_swarm` first when `candidate_cycles` is nonempty; otherwise use `bound_swarm` for broad/sparse/unknown depth. Do not select generic `prove`/orchestration.
+4. Treat `-max_trace_length` as a ceiling, not a scheduler over adjacent cycles. In Cycle Swarm, set `-max_first_trace_attempt` to the parallel attempt-group count, never to a cycle.
+5. Permit one focused B/Hts probe only for a deterministic singleton or cheap justified interval; include reset/SVA sampling ambiguity. Put several candidates in `candidate_cycles`; classify input-dependent strides/skips as the fallback.
+6. After one focused miss/stall, execute the named Hunt next. After a candidate Cycle Swarm miss, use its declared fallback only if budget remains. Never spend `reserved_hunt_wall` on proof closure; if the selected run cannot fit, report partial exploration.
+
 ## DBH Activation Gate
 
-Classify the previous run before spending Hunt budget. Complete the trace-first
-steps below before any reset-originating focused B/Hts extension,
-`prove -max_trace_length` search, or Hunt:
+Complete these trace-first steps, then apply `DBH_DECISION`:
 
-1. Before reset-based search, inventory baseline CEX/covered status,
-   `trace_length`, and `trace_id`; distinguish a prior report from a trace that
-   is actually available in the current session's property table.
-2. Rank traces by target relevance, not length alone. Prefer an endpoint near a
-   target antecedent or architectural failure region, a small remaining suffix,
-   and a source cone cheaper than rebuilding the prefix from reset.
-3. Re-query the current session. If the source property or legal trace is
-   absent, recreate/run that source under the same RTL, reset, environment, and
-   assumptions, then verify `status`, `trace_id`, and `trace_length` again.
-4. If one legal trace removes a long relevant prefix, run a declared,
-   small-budget target-continuation probe with `prove -from` before spending a
-   reset-search budget. Predeclare the expected remaining suffix and the
-   trace-attempt progress that would justify more budget. A CEX is terminal;
-   stop without a follow-up Hunt. A no-hit stays `undetermined`; a
-   missing/invalid trace or command failure is setup failure, not a no-hit.
-5. Do not give the first generic long trace most of the remaining budget. If
-   its capped probe shows no quick target-relevant progress, inspect the target
-   cone and source endpoint. Prefer a reset-reachable observational milestone
-   nearer the failure region with a smaller cone, qualify its trace in the same
-   session, and probe from it. Add no assumption or behavioral restriction.
-6. Treat B/Ht/Hts/J/K/L/U-family work stopped by a finite
-   `-max_trace_length` as bounded trace search, not as a meaningful exhaustive
-   proof. Use its `min_length` as a frontier only.
-7. Treat RTL-derived depths as scheduling hypotheses, not evidence; include reset and SVA-sampling ambiguity.
-   Use one focused B/Hts extension only for a deterministic singleton or cheap contiguous interval with justified endpoints.
-   Treat several candidates or input-dependent strides/skips as sparse/broad search.
-8. After each capped B/Hts probe, compare its first and last `Trace Attempt`; if unchanged, classify an exact-cycle stall.
-   `-max_trace_length` is a ceiling, not a scheduler; do not extend that job expecting it to visit adjacent cycles.
-9. Reserve a declared Hunt slice before a focused probe; after one miss/stall, execute the selected named Hunt instead of another direct run.
-10. Activate DBH when the witness depth is unknown or broad, direct deepening has
-   already missed or advances slowly, cycle difficulty is uneven, several
-   targets compete for budget, or state/path/trace diversity is the objective.
-11. Only after the decision tree selects Hunt, execute a named `hunt -config` +
-   `hunt -run` strategy (or `hunt -run -auto`) and archive its limits, tag,
-   seed, resolved settings, and raw result.
+1. Inventory current-session CEX/covered status, `trace_length`, and `trace_id`; a prior report is not a usable trace.
+2. Rank traces by target relevance, remaining suffix, and source-cone cost, not length alone; recreate and re-query a missing source under the same RTL/reset/environment/assumptions.
+3. If one legal trace removes a relevant prefix, run a declared capped `prove -from` probe with expected suffix/progress criteria. Stop on CEX; no-hit stays `undetermined`; missing trace or command failure is setup failure.
+4. If a generic source makes no quick progress, inspect the target cone and qualify a nearer reset-reachable observational milestone without assumptions or behavioral restrictions.
+5. Treat finite-`-max_trace_length` B/Ht/Hts/J/K/L/U work as bounded trace search, not meaningful exhaustive proof; use `min_length` only as a frontier.
+6. Activate DBH for unknown/broad depth, a direct miss/stall, uneven cycle difficulty, competing targets, or state/path/trace diversity.
+7. Execute a named `hunt -config` + `hunt -run` (or AUTO) and archive limits, tag, seed, resolved settings, raw progress, and result.
 
-Do not force Hunt when one deterministic bounded extension is demonstrably the cheapest decisive experiment. Do not claim skill-provided DBH execution when
-the final flow contains only `prove -max_trace_length`.
+Do not force Hunt when one deterministic extension is the cheapest decisive experiment. Do not claim DBH when the final flow contains only `prove -max_trace_length`.
 
 ## Use-Case Decision Tree
 

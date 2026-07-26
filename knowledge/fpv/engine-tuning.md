@@ -35,7 +35,7 @@ Proof not converging / choosing engines?
 
 ## Core Rules
 
-1. **Proof Orchestration is ON by default — keep it on for most work.** It dynamically adjusts engine selection, per-property time limits, and license use, respecting your max jobs/licenses and global time limits. Disable it only for single-pass runs or a known-good engine set.
+1. **Proof Orchestration is ON by default — keep it on for the first proof and ordinary proof closure.** It does not override the DBH post-run gate: after an exact-cycle stall in a bug-search or mixed objective, execute the selected Cycle/Bound Swarm before returning to a separately budgeted proof-closure run.
 2. **Orchestration treats your settings as hints, not hard constraints.** With `set_engine_mode {list}` it only chooses from your list (dynamically); `set_engine_mode auto` lets it choose freely. For strict control, turn orchestration off.
 3. **Match the engine to the objective.** Proof-finding and trace-finding engines are different — using a trace engine (B/J/K/L) to find an exhaustive proof never converges (they only give CEX or bounded proofs).
 4. **Run multi-engine / multi-job proofs on REMOTE hosts (ProofGrid).** Many engines/jobs in local mode overload the machine → poor performance or OOM crashes.
@@ -70,7 +70,10 @@ or broad, direct deepening repeats or stalls, complexity varies across the
 range, multiple targets compete for budget, or path/trace diversity matters.
 If a capped B/Hts run begins and ends on the same `Trace Attempt`, treat it as
 an exact-cycle stall: `-max_trace_length` is a ceiling, not a cycle scheduler.
-Route a few plausible cycles to Cycle Swarm and a broad/sparse range to Bound Swarm.
+Route a few plausible cycles first to Cycle Swarm; use Bound Swarm as the
+fallback for a broad/sparse range.
+Complete the leaf's `DBH_DECISION` record before writing the next Tcl; a generic
+`prove` or orchestration run is not a substitute for the selected Hunt branch.
 
 If the goal is `proven`/`unreachable` signoff, apply abstraction,
 decomposition, assumptions, or helper lemmas through `complexity-management.md`,

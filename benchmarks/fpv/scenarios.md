@@ -287,9 +287,10 @@ engine-tuning
 "A capped JasperGold Engine B run starts and ends at `Trace Attempt 250` even
 though `max_trace_length` is 252. RTL analysis suggests the first violation
 sample may be at 250, 251, or 252 because of reset/SVA timing, while
-input-controlled skips allow later sparse depths. I have limited investigation
-budget. What should I run next, and what exact Jasper Tcl and evidence should I
-preserve?"
+input-controlled skips allow later sparse depths. I need the strongest sound
+conclusion within a limited investigation budget. An earlier exploratory Jasper
+run completed but will not appear in my final report. What should I run next,
+and what exact Jasper Tcl and evidence should I preserve?"
 
 ### Modules That Should Be Consulted
 - knowledge/fpv/engine-tuning.md
@@ -297,16 +298,19 @@ preserve?"
 
 ### Expected Key Points
 - [ ] Classify unchanged first/last `Trace Attempt` as an exact-cycle stall
+- [ ] Classify a strongest-conclusion finite-budget task as `mixed`, then fill `DBH_DECISION` before the next Tcl
+- [ ] Record explicit candidate cycles separately from the broad/sparse fallback, plus elapsed/remaining wall time, reserved Hunt budget, and next action
 - [ ] State that `-max_trace_length` is a ceiling, not a scheduler over adjacent candidates
-- [ ] Use Cycle Swarm with an explicit candidate list and per-attempt time limit; use Bound Swarm for the later broad/sparse range
+- [ ] Run Cycle Swarm first with the explicit candidate list and per-attempt time limit; use Bound Swarm only as the later broad/sparse fallback
 - [ ] Treat `-max_first_trace_attempt` as the maximum parallel attempt-group count, not a cycle number
-- [ ] Reserve Hunt budget before a focused probe and switch after one focused miss/stall
+- [ ] Count completed exploratory/discarded runs using process wall time; reserve Hunt budget and switch after one focused miss/stall
 - [ ] Use `hunt -config`, `hunt -show -strategy`, and `hunt -run`; archive tag, seed, `IHT002`, Trace Attempt, `IPF180`, and final status
 
 ### Anti-Patterns to Avoid
 - Extending the same focused B job because its `max_trace_length` includes neighboring cycles
+- Collapsing explicit near-term candidates and a sparse fallback into one broad range
 - Setting `-max_first_trace_attempt` to the maximum cycle
-- Spending the reserved Hunt slice on another direct run
+- Spending the reserved Hunt slice on another direct run, or excluding an already completed exploratory run from the wall-time ledger
 
 ---
 
