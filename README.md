@@ -31,7 +31,7 @@ The methodology used to build this Skill comes from [liandan](https://github.com
 Clone the repo, then run the installer once:
 
 ```bash
-git clone <this-repo-url>
+git clone https://github.com/gokeshenzhen/awesome-formal-verification-skill.git
 cd awesome-formal-verification-skill
 bash scripts/install.sh
 ```

@@ -31,7 +31,7 @@
 克隆仓库，然后运行一次安装程序：
 
 ```bash
-git clone <this-repo-url>
+git clone https://github.com/gokeshenzhen/awesome-formal-verification-skill.git
 cd awesome-formal-verification-skill
 bash scripts/install.sh
 ```
