@@ -100,4 +100,10 @@ module phase_stride_orig (
 
   P0: assert property (!bad_event);
 
+`ifdef PHASE_STRIDE_ENABLE_CEX110_COVER
+  // Jasper numbers the first post-reset sampled state as trace cycle 1.
+  // Therefore ##109 targets bad_event at reported trace length 110.
+  CEX110: cover property (1'b1 ##109 bad_event);
+`endif
+
 endmodule
