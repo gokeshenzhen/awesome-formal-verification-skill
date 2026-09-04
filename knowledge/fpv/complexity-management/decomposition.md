@@ -201,17 +201,131 @@ prove -property {top.v_top.ast_has_same_id_on_ID} -time_limit 2m -with_helpers
 - If helper dependencies become hard to audit, move the same obligations into
   `proof_structure` and require the propagated ROOT result.
 
-## State Space Tunneling (SST)
+## SST-Guided Helper Refinement [JG-specific]
 
-**When to use**: Proof stalls in irrelevant initialization cycles before reaching interesting states.
+> 🔧 **VERSION-SENSITIVE — validated on JasperGold 2025.12p002.** Recheck
+> `help prove` and `help visualize` before standardizing this flow on another
+> release.
+>
+> ⚠️ **NEEDS VALIDATION — agent trigger/refinement efficacy awaits the manual
+> blind A/B; the command and trace semantics below have been tool-validated.**
 
-**Template**:
+**Trigger**: Use this diagnostic flow when an invariant-like assertion remains
+`undetermined` after a sane direct proof, no reset-reachable CEX exists, and a
+missing relation among state variables is plausible. Typical signals are a deep
+antecedent, slowly growing BMC bound, or a target that looks true only because
+of history not stated in the property. SST also helps bypass irrelevant
+initialization prefixes. Do not use it as a generic response to every timeout;
+first correct reset/setup errors and identify obvious cone-size causes.
+
+Jasper calls the result an **SST trace**. Do not rename it a design CEX or claim
+that Jasper exposed an internal IC3/PDR counterexample to induction (CTI).
+`prove -sst` runs without formal reset and without bounded assumptions while
+requiring enabled helper/SST properties to hold for an initial prefix. If it
+finds a violating continuation, the property remains `undetermined` and the
+trace metadata carries `tag SST`. Jasper keeps reset behavior only as soft
+constraints under `-prefer_quiet`; it is not a reachability proof.
+
+`-sst N` sets the minimum SST trace length, not a reset-based BMC bound. Start
+with `N=2` for a single-cycle state invariant (one predecessor plus one failing
+state); choose a longer prefix for temporal properties. A trace may be longer
+than `N`. If `N` is omitted, Jasper uses `set_sst_default_trace_length` (default
+`15` in the validated release).
+
+### Capture the Diagnostic State
+
+Do not stop at the console message. Retrieve the stored SST trace and export its
+signal values so an agent can reason from the actual states:
+
 ```tcl
-prove -property {target} -sst <N>    ;# N = tunnel depth
-set_sst_default_trace_length 8
+set target <property_name>
+set sst_n 2
+
+set sst_result [prove -property $target -sst $sst_n -prefer_quiet \
+  -engine_mode B -time_limit <diagnostic_budget>]
+puts "SST_RETURN $sst_result"
+
+lassign [get_property_info $target -list {status trace_id}] status trace_id
+puts "SST_PROPERTY status=$status trace_id=$trace_id"
+
+if {$trace_id ne ""} {
+  set trace_info [get_trace_info $trace_id]
+  puts "SST_TRACE $trace_info"
+  array set trace_meta $trace_info
+  if {![info exists trace_meta(tag)] || $trace_meta(tag) ne "SST"} {
+    error "attached trace is not tagged SST; classify it before use"
+  }
+
+  visualize -violation -sst -property $target -trace_id $trace_id \
+    -new_window sst_diag
+  visualize -save -vcd [file normalize ./sst_diag.vcd] \
+    -force -window sst_diag
+}
 ```
 
-**Gotchas**: Set `-sst N` based on design init depth; too shallow is ineffective.
+An attached trace does not imply `status cex`. Record both fields. If no trace
+is attached, inspect `sst_max_length`; a finite SST bound is not by itself a
+full proof. Jasper can close a proof only when the normal reset-based
+`min_length` and SST result overlap sufficiently.
+
+Inspect the exported waveform with the available waveform reader. Compare the
+last prefix state with the failing state, then ask:
+
+1. Which compact relation does reset establish and every RTL transition
+   preserve, but the arbitrary SST start violates?
+2. Would that relation exclude the whole impossible state family rather than
+   only the literal values in this trace?
+3. Is the candidate structurally simpler and more inductive than the target?
+
+Prefer range, phase/order, mutual-exclusion, correlation, and conservation
+relations over helpers that merely restate the target. Treat the trace as
+negative feedback for candidate generation, not as evidence that the candidate
+is true.
+
+### Refine, Prove, Then Activate
+
+Declare each candidate as a helper assertion and prove it from the same RTL,
+clock, reset, and legal environment as the target. Do not add an assumption to
+make the candidate pass.
+
+If the candidate is `cex`, discard or weaken it using that reset-reachable
+counterexample. If it remains `undetermined`, leave it inactive and run the
+same SST diagnostic on the candidate; use the new SST trace to refine or split
+the candidate. Keep this loop bounded and escalate to AG/CAG when the helper
+graph becomes multi-stage or as hard as the target.
+
+Activate only after an explicit status gate:
+
+```tcl
+assert -helper -name h_candidate {<candidate_invariant>}
+prove -property h_candidate
+
+set helper_status [get_property_info h_candidate -list status]
+puts "HELPER_STATUS $helper_status"
+if {$helper_status ne "proven"} {
+  error "candidate is not independently proven; refusing set_helper"
+}
+
+assert -set_helper h_candidate
+prove -property $target -with_helpers
+```
+
+Report the SST trace separately from proof results. A sound completion records:
+
+- target status before refinement (`undetermined`, bound, engine, time);
+- SST property status plus `trace_id`, trace length, and `tag SST`;
+- every candidate helper result before activation;
+- the status-gate evidence preceding `assert -set_helper`;
+- final helper and target statuses, with `Infinite` bounds for full proof.
+
+**Anti-patterns**:
+
+- Calling an SST trace a reset-reachable bug or ordinary CEX.
+- Saying “CTI” without disclosing that Jasper reported `tag SST`.
+- Asking a model to infer a helper from `prove -sst` metadata without opening or
+  exporting the trace.
+- Promoting an SST-inspired candidate directly with `assert -set_helper`.
+- Replacing independent helper proof with `assume` or `assert -mark_proven`.
 
 ## See Also
 - Shrinking the cone before decomposing (stopat/cutpoints/free vars): `cone-reduction.md`

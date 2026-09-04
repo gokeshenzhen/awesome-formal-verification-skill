@@ -24,7 +24,10 @@ Property not converging?
 ├─ Many peer/global invariants? Yes → decomposition.md "Helper vs. Proof Structure Decision"
 ├─ Single property too hard? .. Yes → decomposition.md "Proof Decomposition (AG/CAG)"
 ├─ Need lemma scaffolding? .... Yes → decomposition.md "Helper Assertions"
-├─ Stuck in init cycles? ...... Yes → decomposition.md "State Space Tunneling (SST)"
+├─ Invariant undetermined, no reset CEX, missing state fact plausible?
+│                              Yes → decomposition.md "SST-Guided Helper Refinement"
+├─ Stuck before interesting states?
+│                              Yes → decomposition.md "SST-Guided Helper Refinement"
 ├─ One property far harder? ... Yes → targeted-reductions.md "Per-Property Simplification"
 ├─ Multi-clock robustness? .... Yes → targeted-reductions.md "Clock Ratio Management"
 └─ False CEX / missed bugs? ... Yes → "Under/Over-Constraint Management" (below)
@@ -36,7 +39,7 @@ Property not converging?
 |---|---|
 | [`complexity-management/abstraction.md`](complexity-management/abstraction.md) | Counter abstraction (auto + manual 4-step), Initial Value Abstraction (IVA), Memory abstraction, Synchronizer abstraction |
 | [`complexity-management/cone-reduction.md`](complexity-management/cone-reduction.md) | Free variables / NDC, **Configuration cutpoints + legality assumptions** (`stopat`, `setup_ndc`), Profiler-guided stopat mining, Parameter reduction |
-| [`complexity-management/decomposition.md`](complexity-management/decomposition.md) | Proof decomposition (AG / CAG / multi-stage), Helper assertions (lemmas), State space tunneling (SST) |
+| [`complexity-management/decomposition.md`](complexity-management/decomposition.md) | Proof decomposition (AG / CAG / multi-stage), helper assertions, SST-guided helper refinement |
 | [`complexity-management/targeted-reductions.md`](complexity-management/targeted-reductions.md) | **Per-property simplification** (`set_per_property_simplification`), Clock ratio management |
 
 ## Core Rules
@@ -47,11 +50,12 @@ Property not converging?
 4. **Include reset value `0` in counter abstraction values.** Omitting it breaks the reset-to-milestone path.
 5. **`stopat`/cutpoints alone are never sufficient.** Always add legality assumptions (`assume -constant`, `assume -bound 1`, `setup_ndc`, or transition constraints) after cutting a signal.
 6. **Prove helpers before using them.** `assert -set_helper` on an unproven assertion is unsound; always `prove -property helper` first.
-7. **Choose helpers by proof shape, not by property label.** Try a compact local or global helper when one or a few independently provable inductive invariants summarize the missing fact. Switch to `proof_structure` when the helper is as hard as the targets, dependencies are multi-stage, peer obligations have no compact summary, reviewer-audited signoff requires explicit obligations, or a propagated `ROOT` result is required.
-8. **Separate model setup from proof decomposition.** Create a `SETUP` task first, then derive `ROOT` from it.
-9. **Sound results live on ROOT, not on local AG/CAG nodes.** Only the propagated ROOT status is the verified result.
-10. **Detect overconstraint actively.** Use `check_assumptions -dead_end` and reachability covers to ensure assumptions don't block real behavior.
-11. **Persist reductions to files.** Write generated `stopat` decks to `.tcl` files via `eju_list_to_file` so they survive across sessions.
+7. **Classify SST traces before interpreting them.** A JasperGold SST trace is an arbitrary-state diagnostic witness, not a reset-reachable CEX or an exposed IC3/PDR CTI; the target remains `undetermined`. Retrieve its `trace_id`, confirm `tag SST`, inspect/export the waveform, and use it only to propose candidate invariants.
+8. **Choose helpers by proof shape, not by property label.** Try a compact local or global helper when one or a few independently provable inductive invariants summarize the missing fact. Switch to `proof_structure` when the helper is as hard as the targets, dependencies are multi-stage, peer obligations have no compact summary, reviewer-audited signoff requires explicit obligations, or a propagated `ROOT` result is required.
+9. **Separate model setup from proof decomposition.** Create a `SETUP` task first, then derive `ROOT` from it.
+10. **Sound results live on ROOT, not on local AG/CAG nodes.** Only the propagated ROOT status is the verified result.
+11. **Detect overconstraint actively.** Use `check_assumptions -dead_end` and reachability covers to ensure assumptions don't block real behavior.
+12. **Persist reductions to files.** Write generated `stopat` decks to `.tcl` files via `eju_list_to_file` so they survive across sessions.
 
 ## Anti-Pattern Reference
 
@@ -63,6 +67,8 @@ Property not converging?
 | Cutpoint config signals without legality | Proof explores impossible/invalid configurations | Pair config cutpoints with validity-check assumptions |
 | `abstract -init_value` without `assume -bound 1` | Explores impossible initial states | Always pair with `assume -bound 1` |
 | Unproven helper as `-set_helper` | Unsound lemma | `prove -property helper` first |
+| Reporting an SST trace as a design CEX / CTI | SST omits formal reset and leaves the target `undetermined` | Confirm `tag SST`; report it only as a diagnostic witness |
+| Running `prove -sst` without reading its trace | The agent sees metadata, not the missing state relation | Query `trace_id`, open the trace, and export/read its waveform |
 | CAG local node result as signoff | Not sound | Use propagated ROOT result only |
 | Overconstraints on baseline task | Masks real bugs | Clone: `task -create oc -source_task baseline -copy_all` |
 | Proving all IDs simultaneously | State explosion | One stable symbolic `chosen_id` |
@@ -137,6 +143,11 @@ assume -name oc_constraint {<expr>}
 | `assert -set_helper <name>` | Activate proven helper | JG |
 | `prove -property <p> -with_helpers` | Use helpers in proof | JG |
 | `prove -property <p> -sst <N>` | State space tunneling | JG |
+| `set_sst_default_trace_length <N>` | Default SST minimum trace length when `-sst` omits `N` | JG |
+| `get_property_info <p> -list {status trace_id}` | Distinguish property status from attached SST trace | JG |
+| `get_trace_info <trace_id>` | Inspect trace length and `tag SST` metadata | JG |
+| `visualize -violation -sst -property <p> -trace_id <id> -new_window <w>` | Open a selected SST trace in SST mode | JG |
+| `visualize -save -vcd <file> -force -window <w>` | Export the trace for signal-level analysis | JG |
 | `set_per_property_simplification on\|off` | Precondition-based per-property simplification | JG |
 | `check_assumptions -dead_end` | Detect overconstraint | JG |
 | `get_needed_assumptions -property <prop>` | Find minimal assumption set | JG |

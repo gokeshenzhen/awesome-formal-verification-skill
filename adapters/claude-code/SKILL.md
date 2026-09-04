@@ -62,6 +62,12 @@ When a JasperGold/formal run leaves many properties `undetermined` after a sane
 direct `prove`, do not continue only with longer time limits, engine racing,
 ProofMaster, or ad-hoc local helpers. Read `knowledge/fpv/complexity-management.md`.
 
+When one invariant-like target remains `undetermined` with no reset-reachable
+CEX and a missing relation between state variables is plausible, also read
+`knowledge/fpv/complexity-management/decomposition.md` before merely extending
+proof time or adding assumptions. Route through its JasperGold SST-guided helper
+refinement flow and preserve the trace-classification and helper-proof gates.
+
 If the hard assertions are global invariants over many peers or generated
 instances — especially no-duplicate, uniqueness, conservation, mutual exclusion,
 placement, token ownership, queues/FIFOs/banks/tiles/arbiters — also read
