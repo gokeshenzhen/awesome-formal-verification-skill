@@ -4,7 +4,12 @@
 
 ## Overview
 
-Use Deep Bug Hunting (DBH) after a meaningful exhaustive `prove` run leaves targets `undetermined`, or to reproduce a known bug, carry bug-search intent across a regression, or close reachable coverage. DBH searches non-exhaustively for CEX and covered traces; a miss is never proof, unreachability evidence, or signoff closure.
+Use Deep Bug Hunting (DBH) to seek reachable witnesses after a meaningful exhaustive `prove` run leaves targets `undetermined`, reproduce a known bug, carry bug-search intent across a regression, or close reachable coverage. DBH searches non-exhaustively for CEX and covered traces; a miss is never proof, unreachability evidence, or signoff closure.
+
+Select the investigation route first: follow **Post-Baseline Triage** in
+`../complexity-management.md` for a plausible missing state relation unless
+explicit bug-search/reachability intent or a concrete witness lead selects this
+leaf. "Strongest sound conclusion" alone does not activate DBH; the post-run gate applies to reachable-trace search, not SST diagnostics.
 
 > 🔧 **VERSION-SENSITIVE** — Hunt modes, option availability, built-in defaults, and configuration displays vary across JasperGold releases. Inspect installed-version help and resolved strategy settings before copying a configuration.
 
@@ -28,7 +33,7 @@ next_action = focused | cycle_swarm | bound_swarm | proof_closure
 
 Apply these hard gates:
 
-1. Use `proof_closure` only for an explicit proof/signoff-only request, `bug_search` for falsification/risk, and `mixed` when asked for the strongest sound conclusion under a finite budget.
+1. Within this search branch, use `proof_closure` for a proof/signoff-only next phase, `bug_search` for falsification/risk, and `mixed` when both search and proof remain objectives. A strongest-conclusion request with a concrete witness lead can be `mixed`; do not use that wording to bypass invariant triage.
 2. Count every completed exploratory or discarded Jasper process; use process wall time, not `-time_limit` or slot-seconds. Apply explicit task policy to setup failures.
 3. For `bug_search` or `mixed`, unchanged first/last `Trace Attempt` is an exact-cycle stall. Run `cycle_swarm` first when `candidate_cycles` is nonempty; otherwise use `bound_swarm` for broad/sparse/unknown depth. Do not select generic `prove`/orchestration.
 4. Treat `-max_trace_length` as a ceiling, not a scheduler over adjacent cycles. In Cycle Swarm, set `-max_first_trace_attempt` to the parallel attempt-group count, never to a cycle.

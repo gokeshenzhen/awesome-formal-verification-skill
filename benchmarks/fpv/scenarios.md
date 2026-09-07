@@ -47,6 +47,39 @@ Run each with the skill loaded and without, and compare against the key-point ch
 
 ---
 
+## Scenario: invariant-stall-routing  [control]
+
+### Category
+complexity
+
+### User Prompt
+"A sane JasperGold baseline leaves one same-cycle assertion comparing state
+registers undetermined, with no reset-reachable counterexample or stored trace.
+Reset and updates appear to maintain a relationship that the assertion does not
+state. There is no obvious large-memory or setup issue, no suspected failure
+window, and I do not yet know the missing relation. I want the strongest sound
+conclusion within a finite budget. Which investigation should come next, what
+evidence should I inspect, and when may a new fact be used in the final proof?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+- [ ] Route to a capped SST diagnostic before ordinary deepening; no finished helper is needed to select the route
+- [ ] Do not select DBH solely from "strongest sound conclusion" or the finite budget
+- [ ] Query status and trace ID separately, confirm `tag SST`, then inspect waveform values
+- [ ] Classify SST as arbitrary-state diagnostic evidence, not a reset-reachable bug or exposed IC3/PDR CTI
+- [ ] Prove candidates independently and gate on `proven` before `assert -set_helper`; reserve time for the target
+- [ ] Preserve explicit bug-search intent: the existing `dbh-stalled-bound` and `dbh-exact-cycle-stall` scenarios must still route to search
+
+### Anti-Patterns to Avoid
+- Spending the remaining budget on another ordinary trace-only run without state-relation diagnosis
+- Assuming the waveform proves the candidate, or activating an undetermined helper
+- Forcing SST onto explicit known-bug reproduction or a concrete failure-window investigation
+
+---
+
 ## Scenario: counter-abstraction-timeout  [control]
 
 ### Category

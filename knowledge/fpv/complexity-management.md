@@ -8,8 +8,28 @@ Complexity management is the core discipline that determines whether formal proo
 
 ## Quick Decision Tree
 
+### Post-Baseline Triage [JG-specific]
+
+For one invariant-like assertion that remains `undetermined` with no
+reset-reachable CEX, inspect whether it compares state whose relationship is
+established by reset and preserved across updates. A plausible missing relation
+is enough; do not require a finished helper before selecting this branch.
+After excluding reset/setup errors and obvious capacity causes, read
+`complexity-management/decomposition.md` → **SST-Guided Helper Refinement**.
+Use a capped SST diagnostic and inspect its waveform before another ordinary
+time-limit extension or DBH search. Reserve time for independent helper proof
+and the original target; if SST is unavailable or uninformative, record that
+outcome and choose the next experiment from evidence.
+
+Honor an explicit bug-search/reachability objective or a concrete reachable
+witness lead through `engine-tuning.md`. "Strongest sound conclusion" and a
+finite budget alone do not override the invariant-diagnostic branch. Record
+the selected route and the baseline evidence that triggered it.
+
 ```
 Property not converging?
+├─ Invariant undetermined, no reset CEX, missing state relation plausible?
+│                              Yes → post-baseline triage above → decomposition.md "SST-Guided Helper Refinement"
 ├─ Have you profiled? ......... No → formal_profiler → cone-reduction.md "Profiler-Guided Stopat Mining"
 ├─ Large counters in cone? .... Yes → abstraction.md "Counter Abstraction"
 ├─ Large memories in cone? .... Yes → abstraction.md "Memory Abstraction"
@@ -24,8 +44,6 @@ Property not converging?
 ├─ Many peer/global invariants? Yes → decomposition.md "Helper vs. Proof Structure Decision"
 ├─ Single property too hard? .. Yes → decomposition.md "Proof Decomposition (AG/CAG)"
 ├─ Need lemma scaffolding? .... Yes → decomposition.md "Helper Assertions"
-├─ Invariant undetermined, no reset CEX, missing state fact plausible?
-│                              Yes → decomposition.md "SST-Guided Helper Refinement"
 ├─ Stuck before interesting states?
 │                              Yes → decomposition.md "SST-Guided Helper Refinement"
 ├─ One property far harder? ... Yes → targeted-reductions.md "Per-Property Simplification"
@@ -69,6 +87,7 @@ Property not converging?
 | Unproven helper as `-set_helper` | Unsound lemma | `prove -property helper` first |
 | Reporting an SST trace as a design CEX / CTI | SST omits formal reset and leaves the target `undetermined` | Confirm `tag SST`; report it only as a diagnostic witness |
 | Running `prove -sst` without reading its trace | The agent sees metadata, not the missing state relation | Query `trace_id`, open the trace, and export/read its waveform |
+| Selecting DBH solely from "strongest conclusion" or a finite budget | Skips diagnosis of a plausible missing state relation | Apply post-baseline triage before ordinary deepening or Hunt |
 | CAG local node result as signoff | Not sound | Use propagated ROOT result only |
 | Overconstraints on baseline task | Masks real bugs | Clone: `task -create oc -source_task baseline -copy_all` |
 | Proving all IDs simultaneously | State explosion | One stable symbolic `chosen_id` |

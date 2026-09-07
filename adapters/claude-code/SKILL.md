@@ -50,23 +50,30 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 
 ### Mandatory Escalation Routing
 
-When a JasperGold baseline leaves an assertion `undetermined` and the task asks
-for the strongest conclusion, a falsification witness, deeper reachability, or
-risk investigation, read `knowledge/fpv/engine-tuning.md` and
-`knowledge/fpv/engine-tuning/bug-hunting.md` before writing the next run. Apply
-the leaf's DBH activation gate and complete its mandatory `DBH_DECISION` record
-before writing the next Tcl. Treat a missing decision record as incomplete
-routing; distinguish focused bounded deepening from an actual Hunt strategy.
+After a baseline, choose the first applicable route below before writing the
+next run. A request for the "strongest sound conclusion" or a finite budget
+alone does not select bug hunting.
+
+1. **Explicit bug-search / reachability objective, or a concrete witness lead**
+   (known failure window or a relevant reset-reachable source trace): read
+   `knowledge/fpv/engine-tuning.md` and its `engine-tuning/bug-hunting.md` leaf.
+   Apply the leaf's activation and `DBH_DECISION` gates.
+2. **One invariant-like assertion remains `undetermined`, no reset-reachable
+   CEX, and a missing state relation is plausible** (for example, a comparison
+   between registers updated on different paths): read
+   `knowledge/fpv/complexity-management.md`, then
+   `knowledge/fpv/complexity-management/decomposition.md` **first**. Follow the
+   index's post-baseline triage and the leaf's SST-guided helper-refinement flow
+   before another ordinary proof-time extension or a DBH detour. The exact
+   helper need not already be known to select this route.
+3. **Other stalled proofs**: read `knowledge/fpv/complexity-management.md` for
+   proof-shape/capacity symptoms; read `knowledge/fpv/engine-tuning.md` for
+   engine selection. Select DBH only when the investigation calls for reachable
+   witnesses, not solely because status is `undetermined`.
 
 When a JasperGold/formal run leaves many properties `undetermined` after a sane
 direct `prove`, do not continue only with longer time limits, engine racing,
 ProofMaster, or ad-hoc local helpers. Read `knowledge/fpv/complexity-management.md`.
-
-When one invariant-like target remains `undetermined` with no reset-reachable
-CEX and a missing relation between state variables is plausible, also read
-`knowledge/fpv/complexity-management/decomposition.md` before merely extending
-proof time or adding assumptions. Route through its JasperGold SST-guided helper
-refinement flow and preserve the trace-classification and helper-proof gates.
 
 If the hard assertions are global invariants over many peers or generated
 instances — especially no-duplicate, uniqueness, conservation, mutual exclusion,
@@ -80,6 +87,7 @@ choice; the decomposition decision tree selects a proven compact helper or
 
 - "Help me write an assertion for FIFO overflow" → Read `property-writing.md` + `sva-reference.md`
 - "My proof is running forever" → Read `complexity-management.md` + `engine-tuning.md`
+- "One state invariant is undetermined, no CEX; find the strongest sound conclusion" → Read `complexity-management.md` + `complexity-management/decomposition.md` first when a missing state relation is plausible
 - "Set up a JasperGold FPV run" → Read `workflow.md` + `tcl-commands.md` + `jaspergold/`
 - "414 assertions, 412 undetermined, no CEX" → Read `workflow.md` + `complexity-management.md` + `complexity-management/decomposition.md`
 - "Prove no duplicates across many FIFOs" → Read `complexity-management.md` + `complexity-management/decomposition.md`

@@ -2,6 +2,14 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "invariant-stall-routing",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A sane JasperGold baseline leaves one same-cycle assertion comparing state registers undetermined, with no reset-reachable counterexample or stored trace. Reset and updates appear to maintain a relationship that the assertion does not state. There is no obvious large-memory or setup issue, no suspected failure window, and I do not yet know the missing relation. I want the strongest sound conclusion within a finite budget. Which investigation should come next, what evidence should I inspect, and when may a new fact be used in the final proof?",
+      "expect_concept": ["SST", "arbitrary.?state|not.*reset.?reachable", "waveform|signal values", "independent.*prov|prov.*independent", "proven", "budget|cap", "not.*(alone|solely)|alone.*not|not.*automatically"],
+      "expect_exact": ["prove -property", "-sst", "trace_id", "get_trace_info", "assert -set_helper"]
+    },
+    {
       "id": "counter-abstraction-timeout",
       "type": "control",
       "module": "complexity-management",

@@ -56,6 +56,14 @@ Proof not converging / choosing engines?
 
 ### DBH Escalation Boundary
 
+Select the investigation route before applying this search gate. For one
+invariant-like target with no reset-reachable CEX and a plausible missing state
+relation, use **Post-Baseline Triage** in `complexity-management.md` first,
+unless the user explicitly requests bug search/reachability or a concrete
+witness lead justifies that search. A finite budget or "strongest sound
+conclusion" alone does not require DBH. An SST diagnostic is outside the
+reset-reachable trace-search gate below.
+
 Classify the baseline before escalating. A trace-only engine such as B stopped by
 `-max_trace_length` performed bounded trace search, not a meaningful exhaustive
 proof; its `undetermined` result supplies a frontier but no failed proof effort.
