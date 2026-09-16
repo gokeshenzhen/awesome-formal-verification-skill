@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import tarfile
 
-from experiment_policy import PILOT, RECOVERY, PREFIXES, validate_snapshots
+from experiment_policy import PILOT, RECOVERY, END_TO_END, PREFIXES, validate_snapshots, series_spec
 
 BASE = Path(__file__).resolve().parent
 REPO = BASE.parents[1]
@@ -43,8 +43,13 @@ def export_skill(commit, destination):
         stream.extractall(destination, filter='data')
 
 
-def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None):
+def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, series=None):
     root = check_destination(root, kind)
+    if kind == END_TO_END:
+        if not series or series != series_spec(series['id'], series['pair_index'], series['pair_count']):
+            raise ValueError('End-to-end comparison requires a predeclared series/order')
+    elif series is not None:
+        raise ValueError('Only the end-to-end comparison uses a repeated series')
     commits = [subprocess.check_output(['git', '-C', str(REPO), 'rev-parse', '--verify',
                                       f'{revision}^{{commit}}'], text=True).strip()
                for revision in (revision_a, revision_b)]
@@ -54,7 +59,7 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None):
             raise ValueError('Recovery requires an explicit raw checkpoint source')
         inspect_source(checkpoint)
     elif checkpoint is not None:
-        raise ValueError('A neutral pilot cannot inherit a checkpoint')
+        raise ValueError('A neutral task cannot inherit a checkpoint')
     subprocess.run(['sha256sum', '--status', '-c', 'CHECKSUMS.sha256'], cwd=CASE, check=True)
     subprocess.run(['git', '-C', str(TW), 'diff', '--quiet', 'HEAD', '--', *TW_PATHS], check=True)
     names = subprocess.check_output(['git', '-C', str(TW), 'ls-files', '-z', *TW_PATHS],
@@ -87,7 +92,7 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None):
     (root / 'launch.sh').chmod(0o755)
     for script in (root / 'runtime').glob('*.py'):
         script.chmod(0o755)
-    plan_name = 'PLAN.md' if kind == PILOT else 'RECOVERY_PLAN.md'
+    plan_name = {PILOT: 'PLAN.md', RECOVERY: 'RECOVERY_PLAN.md', END_TO_END: 'E2E_PLAN.md'}[kind]
     shutil.copy2(BASE / 'epoch_return' / plan_name, control / 'SCORING.md')
     source = dict(kind=kind,
                   created_utc=datetime.now(timezone.utc).isoformat(),
@@ -97,7 +102,7 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None):
                   generator_sha256=checksum(Path(__file__)),
                   repository_commit=subprocess.check_output(
                       ['git', '-C', str(REPO), 'rev-parse', 'HEAD'], text=True).strip(),
-                  checkpoint_provenance=provenance)
+                  checkpoint_provenance=provenance, series=series)
     (control / 'source.json').write_text(json.dumps(source, indent=2) + '\n')
     common = root / 'common'
     common.mkdir()
@@ -109,12 +114,16 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None):
     (common / 'case.json').write_text(json.dumps(dict(case_path=str(CASE), target=source['target']), indent=2) + '\n')
     for arm in 'ab':
         (root / f'blind/arm_{arm}').mkdir(parents=True)
-    run_name = 'RUN.md' if kind == PILOT else 'RECOVERY_RUN.md'
-    (root / 'README_RUN.md').write_text((BASE / 'epoch_return' / run_name).read_text()
-                                      .replace('@EXPERIMENT@', str(root))
-                                      .replace('@SKILL_COMMIT@', commits[0])
-                                      .replace('@OLD_COMMIT@', commits[0])
-                                      .replace('@NEW_COMMIT@', commits[1]))
+    run_name = {PILOT: 'RUN.md', RECOVERY: 'RECOVERY_RUN.md', END_TO_END: 'E2E_RUN.md'}[kind]
+    readme = ((BASE / 'epoch_return' / run_name).read_text()
+              .replace('@EXPERIMENT@', str(root)).replace('@SKILL_COMMIT@', commits[0])
+              .replace('@OLD_COMMIT@', commits[0]).replace('@NEW_COMMIT@', commits[1]))
+    if series:
+        for key, value in dict(PAIR_INDEX=series['pair_index'], PAIR_COUNT=series['pair_count'],
+                               FIRST_ARM=series['launch_order'][0], SECOND_ARM=series['launch_order'][1],
+                               SERIES=series['id']).items():
+            readme = readme.replace(f'@{key}@', str(value))
+    (root / 'README_RUN.md').write_text(readme)
     print(f'Prepared {root}; kind={kind}; skill a={commits[0]}, b={commits[1]}.')
     print(f'Next: {root}/launch.sh seal; then check and preflight all. No model was launched.')
 

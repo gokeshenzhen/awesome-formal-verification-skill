@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 
-from experiment_policy import RECOVERY, validate_snapshots
+from experiment_policy import RECOVERY, END_TO_END, validate_snapshots, series_spec
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTROL = ROOT / 'control'
@@ -97,6 +97,10 @@ def verify():
     changed = validate_snapshots(SOURCE['kind'], FROZEN / 'snapshot_a', FROZEN / 'snapshot_b')
     if changed != SOURCE['skill_changed_files']:
         raise ValueError('Skill treatment differs from its declared delta')
+    if SOURCE['kind'] == END_TO_END:
+        series = SOURCE['series']
+        if series != series_spec(series['id'], series['pair_index'], series['pair_count']):
+            raise ValueError('Invalid preregistered series/order')
     checkpoint = FROZEN / 'checkpoint'
     if (SOURCE['kind'] == RECOVERY) != checkpoint.is_dir():
         raise ValueError('Checkpoint presence must match the experiment kind')
@@ -235,6 +239,10 @@ def launch(arm, pins):
     receipt = receipt_dir / f'launch_{arm}.json'
     if receipt.exists():
         raise ValueError('Arm was already launched; do not reuse the run')
+    if SOURCE['kind'] == END_TO_END:
+        first = SOURCE['series']['launch_order'][0]
+        if arm != first and not (receipt_dir / f'launch_{first}.json').exists():
+            raise ValueError(f'Preregistered order requires arm {first} first')
     if not sys.stdin.isatty():
         raise ValueError('Launch the manual arm from a real terminal')
     user = CONTROL / f'private/arm_{arm}/user'

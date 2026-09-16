@@ -23,6 +23,9 @@ FORBIDDEN = [
     REPO + '/benchmarks', REPO + '/.git',
     REPO + '/test/.epoch_return_control',
     REPO + '/test/epoch_return_pilot_gpt55_01',
+    REPO + '/test/epoch_return_recovery_ab_gpt55_01',
+    REPO + '/test/epoch_return_e2e_ab_gpt55_01',
+    REPO + '/test/epoch_return_e2e_ab_gpt55_02',
     REPO + '/test/.reservation_journal_control',
     REPO + '/test/.reservation_journal_control/CALIBRATION.md',
     REPO + '/test/.reservation_journal_control/setup.tcl',
@@ -140,6 +143,9 @@ async def probe_mcp():
             assert result.isError or payload.get('error'), payload
             for root in [REPO + '/test/.epoch_return_control',
                          REPO + '/test/epoch_return_pilot_gpt55_01',
+                         REPO + '/test/epoch_return_recovery_ab_gpt55_01',
+                         REPO + '/test/epoch_return_e2e_ab_gpt55_01',
+                         REPO + '/test/epoch_return_e2e_ab_gpt55_02',
                          REPO + '/test/.reservation_journal_control/runs',
                          REPO + '/test/reservation_journal_isolated_ab_gpt55_01/blind/arm_a',
                          REPO + '/test/reservation_journal_isolated_ab_gpt55_01/blind/arm_b']:

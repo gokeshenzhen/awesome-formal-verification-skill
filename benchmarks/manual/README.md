@@ -78,3 +78,23 @@ Follow the generated README_RUN.md to seal, preflight and manually launch.
 The new baseline and 180-second post-baseline budget are identical in both arms;
 the supplied history is read-only and its prior costs are separate. The original
 pilot and historical evidence are not changed. See `epoch_return/RECOVERY_PLAN.md`.
+
+## Neutral-start old/new series
+
+After reviewing recovery, use the separately frozen neutral-start series to
+measure the patch from the original task. No historical checkpoint is mounted.
+Declare the pair count before launch; retain all outcomes. The default prepares
+two pairs with opposite sequential launch orders, keeping a=old and b=new.
+
+```bash
+python3 benchmarks/manual/prepare_e2e.py \
+  --dest-prefix test/epoch_return_e2e_ab_gpt55 --pairs 2 \
+  --old-revision 82a7408 --new-revision 883d481
+```
+
+This creates `_01` and `_02` directories; it never runs a model. Follow each
+README_RUN.md. Do not pool these results with conditional recovery or the
+same-snapshot pilot. Both versions already support SST; this isolates the
+readback/trial patch on a development case, not general feedback efficacy.
+See `epoch_return/E2E_PLAN.md`. If recovery prompts another skill change, leave
+this series sealed and create a newly versioned one instead of editing its pins.

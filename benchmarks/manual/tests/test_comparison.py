@@ -10,6 +10,7 @@ BASE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE))
 import experiment_policy as policy
 import prepare_pilot
+import prepare_e2e
 import recovery_checkpoint as checkpoint
 
 
@@ -26,11 +27,41 @@ class Treatment(unittest.TestCase):
                 policy.validate_snapshots(policy.RECOVERY, left, right)
             (right / leaf).write_text('readback refinement')
             self.assertEqual(policy.validate_snapshots(policy.RECOVERY, left, right), [leaf])
+            self.assertEqual(policy.validate_snapshots(policy.END_TO_END, left, right), [leaf])
             with self.assertRaises(ValueError):
                 policy.validate_snapshots(policy.PILOT, left, right)
             (right / 'routing.md').write_text('changed routing')
             with self.assertRaises(ValueError):
                 policy.validate_snapshots(policy.RECOVERY, left, right)
+
+    def test_series_has_fixed_size_and_counterbalanced_order(self):
+        prefix = prepare_pilot.REPO / 'test/epoch_return_e2e_ab_test'
+        first, second = [policy.series_spec(prefix, index, 2) for index in (1, 2)]
+        self.assertEqual(first['id'], second['id'])
+        self.assertEqual(first['pair_count'], second['pair_count'])
+        self.assertEqual(first['launch_order'], ['a', 'b'])
+        self.assertEqual(second['launch_order'], ['b', 'a'])
+        for index, count in ((0, 2), (3, 2), (1, 0)):
+            with self.assertRaises(ValueError):
+                policy.series_spec(prefix, index, count)
+
+    def test_all_series_destinations_checked_before_creation(self):
+        with tempfile.TemporaryDirectory(prefix='epoch_return_e2e_ab_test_',
+                                         suffix='_02', dir=prepare_pilot.REPO / 'test') as existing:
+            prefix = Path(existing[:-3])
+            with self.assertRaises(ValueError):
+                prepare_e2e.destinations(prefix, 2)
+            self.assertFalse(Path(f'{prefix}_01').exists())
+            self.assertEqual(list(Path(existing).iterdir()), [])
+        with self.assertRaises(ValueError):
+            prepare_e2e.destinations(prepare_pilot.REPO / 'test/epoch_return_e2e_ab_new', 0)
+
+    def test_neutral_comparison_refuses_checkpoint_before_writing(self):
+        with self.assertRaisesRegex(ValueError, 'neutral task'):
+            prepare_pilot.prepare_pair(prepare_pilot.REPO / 'test/epoch_return_e2e_ab_never_written',
+                '82a7408', '883d481', kind=policy.END_TO_END, checkpoint=Path('/unused'),
+                series=policy.series_spec(prepare_pilot.REPO / 'test/epoch_return_e2e_ab_test', 1, 2))
+        self.assertFalse((prepare_pilot.REPO / 'test/epoch_return_e2e_ab_never_written').exists())
 
     def test_kind_and_destination_are_explicit(self):
         with self.assertRaises(ValueError):
