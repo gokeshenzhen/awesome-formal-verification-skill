@@ -2,6 +2,43 @@
 
 This directory contains test scenarios for validating the FPV skill modules.
 
+## Scenario: sst-partial-transition-readback [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"A JasperGold helper remains undetermined. Its exported diagnostic trace is
+tagged SST and contains a satisfying prefix followed by a violation. The
+waveform reader returns only one clock-aligned sample, marks the response
+truncated, and shows the helper bit low. I queried only the terms in the helper
+expression; it uses fixed-width arithmetic. Have I inspected enough to refine
+it? What should I read next, how should that evidence change the next proof
+attempt, and what would count as a completed refinement?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+
+- [ ] Read predecessor and failing state; explicitly fetch the initial timestamp if edge sampling omitted it
+- [ ] Read RTL update enables, selection/priority conditions and source operands beyond the candidate expression
+- [ ] Interpret fixed-width arithmetic and sampling correctly, not as an arbitrary-precision sum
+- [ ] Link concrete values and the active update branch to a revised candidate or supporting lemma
+- [ ] Prove new obligations before activation; keep `tag SST` separate from a reachable CEX
+- [ ] If no useful relation emerges, report why and choose the next experiment; do not invent a helper for compliance
+- [ ] A tool call, syntax fix, unchanged expression or promise is not evidence of completed refinement
+
+### Anti-Patterns to Avoid
+
+- Treating one returned sample or a pseudo-signal as a complete causal explanation
+- Giving this generic scenario the signal names or solution from a development benchmark
+- Counting token-pattern matches as proof of end-to-end behavioral efficacy
+
 ## How Benchmarks Work
 
 Each scenario describes a realistic user prompt and the expected AI behavior. These are used to verify that the skill modules provide accurate, actionable guidance.

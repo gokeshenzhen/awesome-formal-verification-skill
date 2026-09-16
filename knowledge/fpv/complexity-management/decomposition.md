@@ -285,19 +285,35 @@ is attached, inspect `sst_max_length`; a finite SST bound is not by itself a
 full proof. Jasper can close a proof only when the normal reset-based
 `min_length` and SST result overlap sufficiently.
 
-Inspect the exported waveform with the available waveform reader. Compare the
-last prefix state with the failing state, then ask:
+### Read the Transition, Not Just the Failure
 
-1. Which compact relation does reset establish and every RTL transition
-   preserve, but the arbitrary SST start violates?
-2. Would that relation exclude the whole impossible state family rather than
-   only the literal values in this trace?
-3. Is the candidate structurally simpler and more inductive than the target?
+Use the available waveform reader to locate the last satisfying prefix state
+and the failing state. Check returned sample times/counts and truncation; a
+clock-edge query can omit the initial VCD state when the clock starts high.
+Read that state explicitly by timestamp if missing. Do not treat one returned
+sample as both states, or infer a relation from the helper pseudo-signal alone.
+For temporal properties, retain the additional history required by the SVA.
 
-Prefer range, phase/order, mutual-exclusion, correlation, and conservation
-relations over helpers that merely restate the target. Treat the trace as
-negative feedback for candidate generation, not as evidence that the candidate
-is true.
+When TraceWeave is available, use `get_formal_paths` for discovery and
+`search_signals` to resolve paths. Use `get_signals_by_cycle` for edge-aligned
+samples; use `get_signals_around_time` with `return_mode="values_only"`,
+`window_ps=0`, and `extra_transitions=0` for missing timestamp samples. Convert
+the waveform time unit to ps; select actual trace times, not assumed cycles.
+An equivalent waveform reader is sufficient; TraceWeave is not a dependency.
+
+For the changed state terms, inspect the RTL assignment that produced the next
+value. Read its update enable, priority/select conditions, source operands,
+and any validity or identity conditions, including signals absent from the
+candidate expression. Compute the transition with the actual widths,
+signedness, truncation, reset and SVA sampling semantics. A large arithmetic
+sum alone does not establish failure of a modular bit-vector equality.
+
+Explain which observed values take which update branch and break the candidate,
+then propose a compact relation that excludes that impossible state family.
+Check why reset could establish it and the RTL could preserve it; this is a
+hypothesis to prove, not permission to constrain the environment. Prefer
+range, phase/order, mutual-exclusion, correlation, and conservation relations
+over helpers that restate the target or ban literal trace values.
 
 ### Refine, Prove, Then Activate
 
@@ -313,6 +329,15 @@ from the unchanged setup; previously proven supporting lemmas may be used only
 with their dependencies disclosed and without circular assumptions. Keep the
 loop bounded and escalate to AG/CAG when the helper graph becomes multi-stage
 or as hard as the target.
+
+Before leaving this diagnostic route, record either the concrete revised
+assertion/supporting lemma and its proof attempt, or why the evidence did not
+support one (missing samples, unresolved update, uninformative trace, or budget
+limit). Complete a bounded evidence-linked trial when a plausible relation is
+available; do not substitute an engine change for that trial without a reason.
+Do not invent a helper merely to satisfy a checklist. A syntax/printing fix,
+unchanged candidate, tool call, or promise to refine is not a refinement result.
+Keep success discovered directly from RTL distinct from trace-driven discovery.
 
 Activate only after an explicit status gate:
 
@@ -350,6 +375,10 @@ target-guided candidate discovery from revision of a failed candidate.
 - Saying “CTI” without disclosing that Jasper reported `tag SST`.
 - Asking a model to infer a helper from `prove -sst` metadata without opening or
   exporting the trace.
+- Reading only the failing state or the candidate's operands, without the
+  predecessor and the RTL update's source/select conditions.
+- Treating truncated clock-edge readback as a complete diagnostic transition.
+- Explaining modular arithmetic using unbounded integer sums.
 - Promoting an SST-inspired candidate directly with `assert -set_helper`.
 - Replacing independent helper proof with `assume` or `assert -mark_proven`.
 

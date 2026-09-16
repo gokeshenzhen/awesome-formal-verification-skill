@@ -2,6 +2,14 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "sst-partial-transition-readback",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A JasperGold helper remains undetermined. Its exported diagnostic trace is tagged SST and contains a satisfying prefix followed by a violation. The waveform reader returns only one clock-aligned sample, marks the response truncated, and shows the helper bit low. I queried only the terms in the helper expression; it uses fixed-width arithmetic. Have I inspected enough to refine it? What should I read next, how should that evidence change the next proof attempt, and what would count as a completed refinement?",
+      "expect_concept": ["predecessor|preceding|prefix state", "initial.*(state|sample)|timestamp", "enable|guard|select|priority", "source|operand", "width|modular|truncation", "support|revis", "independent.*prov|prov.*independent", "not.*(alone|itself)|alone.*not"],
+      "expect_exact": ["tag SST", "get_signals_around_time", "assert -set_helper", "proven"]
+    },
+    {
       "id": "helper-first-candidate-fast-path",
       "type": "control",
       "module": "complexity-management",
