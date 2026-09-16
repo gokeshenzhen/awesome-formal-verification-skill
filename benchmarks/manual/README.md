@@ -1,9 +1,10 @@
 # Manual experiment runtime
 
-These utilities meter JasperGold processes and record skill delivery. They do
-not launch models, select proof techniques, score answers, or automate A/B runs.
-The user starts independent sessions manually inside the experiment's isolation
-boundary. Keep TraceWeave inside that same boundary.
+These utilities meter JasperGold processes, record skill delivery and prepare
+isolated manual sessions. They do not invoke model inference non-interactively,
+select proof techniques, score answers, or automate A/B runs. The user starts
+independent sessions manually inside the experiment's isolation boundary. Keep
+TraceWeave inside that same boundary.
 
 `runtime/` is the maintained source for **new** frozen experiment copies. Never
 patch an already launched experiment or rewrite its receipts to apply a fix.
@@ -40,3 +41,20 @@ Run license-free tests:
 ```bash
 python3 -m unittest discover -s benchmarks/manual/tests -v
 ```
+
+## Development-case qualification
+
+For the epoch-return case, `prepare_pilot.py` creates a fresh pair with the same
+skill snapshot in both sessions. This is a **pilot, not an old/new efficacy A/B**.
+It copies only allowlisted public case files and runtime-only TraceWeave files.
+The launcher seals content/executable hashes, checks client discovery aliases,
+and requires a passing model-free environment preflight before manual launch.
+
+```bash
+python3 benchmarks/manual/prepare_pilot.py \
+  --dest test/epoch_return_pilot_gpt55_01 --skill-revision 82a7408
+```
+
+Follow the generated `README_RUN.md`; start a and b sequentially from a terminal.
+Never overwrite a prior directory or relax pins to reuse a launched run. See
+`epoch_return/PLAN.md` for the preregistered classification and later A/B boundary.

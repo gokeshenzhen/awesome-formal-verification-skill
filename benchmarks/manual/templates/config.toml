@@ -1,0 +1,41 @@
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
+# The whole client and its MCP children are inside the outer mount/PID sandbox.
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+allow_login_shell = false
+web_search = "disabled"
+cli_auth_credentials_store = "file"
+
+[features]
+hooks = false
+memories = false
+external_agent_memory_import = false
+plugins = false
+remote_plugin = false
+apps = false
+browser_use = false
+browser_use_external = false
+computer_use = false
+in_app_browser = false
+multi_agent = false
+shell_snapshot = false
+
+[projects."/work"]
+trust_level = "trusted"
+
+[mcp_servers.TraceWeave]
+command = "/home/robin/Projects/mcp/TraceWeave/.venv/bin/python"
+args = ["/home/robin/Projects/mcp/TraceWeave/server.py"]
+cwd = "/work"
+required = true
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+
+[mcp_servers.TraceWeave.env]
+TRACEWEAVE_CACHE_DIR = "/home/robin/.cache/traceweave"
+TRACEWEAVE_SOURCE_GRAPH_DISK_CACHE = "1"
+TRACEWEAVE_SOURCE_GRAPH_DISK_CACHE_MAX_ENTRIES = "8"
+TRACEWEAVE_SOURCE_GRAPH_DISK_CACHE_MAX_BYTES = "536870912"
+TRACEWEAVE_SOURCE_GRAPH_SEMANTIC_SESSION = "1"
+TRACEWEAVE_TELEMETRY = "1"

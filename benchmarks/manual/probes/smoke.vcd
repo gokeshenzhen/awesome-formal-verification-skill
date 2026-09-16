@@ -1,0 +1,12 @@
+$timescale 1ns $end
+$scope module smoke $end
+$var wire 1 ! q $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+0!
+$end
+#10
+1!
+#20
