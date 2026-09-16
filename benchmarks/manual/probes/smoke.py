@@ -1,5 +1,6 @@
 """Real stdio MCP and JG preflight, without any model call or benchmark proof."""
 import asyncio
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,7 @@ CASE = json.loads(Path('/opt/experiment/common/case.json').read_text())['case_pa
 FORBIDDEN = [
     REPO + '/benchmarks', REPO + '/.git',
     REPO + '/test/.epoch_return_control',
+    REPO + '/test/epoch_return_pilot_gpt55_01',
     REPO + '/test/.reservation_journal_control',
     REPO + '/test/.reservation_journal_control/CALIBRATION.md',
     REPO + '/test/.reservation_journal_control/setup.tcl',
@@ -63,6 +65,19 @@ def probe_filesystem():
         else:
             os.close(fd)
             raise AssertionError(f'Frozen file writable: {path}')
+    checkpoint = Path('/opt/experiment/checkpoint')
+    if checkpoint.exists():
+        manifest = json.loads((checkpoint / 'MANIFEST.json').read_text())['files']
+        assert {path.name for path in checkpoint.iterdir()} == set(manifest) | {'MANIFEST.json'}
+        for name, expected in manifest.items():
+            assert hashlib.sha256((checkpoint / name).read_bytes()).hexdigest() == expected
+        try:
+            fd = os.open(checkpoint / 'candidate.tcl', os.O_WRONLY | os.O_APPEND)
+        except OSError:
+            checks.append(dict(checkpoint_read_only=True, manifest_verified=True))
+        else:
+            os.close(fd)
+            raise AssertionError('Historical checkpoint writable')
     # Newly mounted procfs cannot expose host ancestors through /proc/PID/root.
     assert os.readlink('/proc/self/ns/pid')
     save('filesystem_checks.json', checks)
@@ -108,6 +123,15 @@ async def probe_mcp():
                     return_mode='values_only'))
                 assert not result.isError
                 assert values['signals']['smoke.q']['value_at_center']['dec'] == expected, values
+            checkpoint = Path('/opt/experiment/checkpoint')
+            if checkpoint.exists():
+                result, _ = await call('get_formal_paths', dict(formal_root=str(checkpoint),
+                    formal_tool='jaspergold', formal_log=str(checkpoint / 'diagnostic.stdout.log'),
+                    wave_file=str(checkpoint / 'diagnostic.vcd')))
+                assert not result.isError
+                result, payload = await call('get_waveform_summary', dict(
+                    wave_path=str(checkpoint / 'diagnostic.vcd')))
+                assert not result.isError and not payload.get('error'), payload
             for path in [hidden_wave, '/work/escape.vcd']:
                 result, payload = await call('get_waveform_summary', dict(wave_path=path))
                 assert result.isError or payload.get('error'), payload
@@ -115,6 +139,7 @@ async def probe_mcp():
                 formal_root=REPO + '/test/resource_settlement_routing_ab/blind/arm_a', formal_tool='jaspergold'))
             assert result.isError or payload.get('error'), payload
             for root in [REPO + '/test/.epoch_return_control',
+                         REPO + '/test/epoch_return_pilot_gpt55_01',
                          REPO + '/test/.reservation_journal_control/runs',
                          REPO + '/test/reservation_journal_isolated_ab_gpt55_01/blind/arm_a',
                          REPO + '/test/reservation_journal_isolated_ab_gpt55_01/blind/arm_b']:

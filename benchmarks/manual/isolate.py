@@ -12,6 +12,8 @@ import subprocess
 import sys
 import tempfile
 
+from experiment_policy import RECOVERY, validate_snapshots
+
 ROOT = Path(__file__).resolve().parents[1]
 CONTROL = ROOT / 'control'
 REPO = ROOT.parents[1]
@@ -64,6 +66,7 @@ def seal():
                 frozen=tree_manifest(FROZEN), common=tree_manifest(ROOT / 'common'),
                 runtime=tree_manifest(ROOT / 'runtime'), probes=tree_manifest(CONTROL / 'probes'),
                 launcher=digest(__file__), launch_sh=digest(ROOT / 'launch.sh'),
+                policy_sha256=digest(CONTROL / 'experiment_policy.py'),
                 source=SOURCE, source_sha256=digest(SOURCE_FILE),
                 scoring_sha256=digest(CONTROL / 'SCORING.md'),
                 model='gpt-5.5', reasoning_effort='medium', case=str(CASE),
@@ -82,6 +85,7 @@ def verify():
         if pins[key] != tree_manifest(path):
             raise ValueError(f'Pinned {key} content changed')
     for key, path in [('launcher', Path(__file__)), ('launch_sh', ROOT / 'launch.sh'),
+                      ('policy_sha256', CONTROL / 'experiment_policy.py'),
                       ('source_sha256', SOURCE_FILE), ('scoring_sha256', CONTROL / 'SCORING.md'),
                       ('codex_sha256', Path(pins['codex_binary'])), ('node_sha256', Path(pins['node'])),
                       ('codex_host_sha256', Path(pins['codex_binary']).with_name('codex-code-mode-host')),
@@ -90,10 +94,18 @@ def verify():
                       ('jasper_launcher_sha256', JG_ROOT / 'bin/jg')]:
         if pins[key] != digest(path):
             raise ValueError(f'Pinned executable changed: {key}')
-    if SOURCE['kind'] != 'development_pilot_same_snapshot':
-        raise ValueError('This launcher is only for the declared same-snapshot pilot')
-    if tree_manifest(FROZEN / 'snapshot_a') != tree_manifest(FROZEN / 'snapshot_b'):
-        raise ValueError('Pilot requires identical skill snapshots')
+    changed = validate_snapshots(SOURCE['kind'], FROZEN / 'snapshot_a', FROZEN / 'snapshot_b')
+    if changed != SOURCE['skill_changed_files']:
+        raise ValueError('Skill treatment differs from its declared delta')
+    checkpoint = FROZEN / 'checkpoint'
+    if (SOURCE['kind'] == RECOVERY) != checkpoint.is_dir():
+        raise ValueError('Checkpoint presence must match the experiment kind')
+    if checkpoint.exists():
+        expected = json.loads((checkpoint / 'MANIFEST.json').read_text())['files']
+        actual = tree_manifest(checkpoint)
+        actual.pop('MANIFEST.json')
+        if actual != expected:
+            raise ValueError('Checkpoint differs from its raw manifest')
     for arm in 'ab':
         snapshot = FROZEN / f'snapshot_{arm}'
         for part in ['knowledge', 'tool-specific']:
@@ -175,6 +187,8 @@ def command(arm, sandbox_user_dir, work, pins, argv, probes=False):
              '--symlink', '/opt/experiment/runtime/jg_run.py', '/opt/experiment/bin/jg-run',
              '--bind', str(work), '/work',
              '--ro-bind', str(ROOT / 'common/AGENTS.md'), '/work/AGENTS.md']
+    if SOURCE['kind'] == RECOVERY:
+        args += ['--ro-bind', str(FROZEN / 'checkpoint'), '/opt/experiment/checkpoint']
     if probes:
         args += ['--ro-bind', str(CONTROL / 'probes'), '/opt/preflight']
     return args + ['--chdir', '/work', '--'] + argv

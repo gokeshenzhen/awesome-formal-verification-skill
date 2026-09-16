@@ -58,3 +58,23 @@ python3 benchmarks/manual/prepare_pilot.py \
 Follow the generated `README_RUN.md`; start a and b sequentially from a terminal.
 Never overwrite a prior directory or relax pins to reuse a launched run. See
 `epoch_return/PLAN.md` for the preregistered classification and later A/B boundary.
+
+## Conditional recovery comparison
+
+`prepare_recovery.py` prepares an old/new pair from the same raw failure
+checkpoint. It never copies interpretations, solutions or sessions. This is
+explicitly conditional recovery, not neutral discovery. Both skills already
+contain SST; the comparison isolates the new readback/trial guidance in the
+decomposition leaf. Other skill differences are refused.
+
+```bash
+python3 benchmarks/manual/prepare_recovery.py \
+  --dest test/epoch_return_recovery_ab_gpt55_01 \
+  --old-revision 82a7408 --new-revision 883d481 \
+  --checkpoint-arm test/epoch_return_pilot_gpt55_01/blind/arm_b
+```
+
+Follow the generated README_RUN.md to seal, preflight and manually launch.
+The new baseline and 180-second post-baseline budget are identical in both arms;
+the supplied history is read-only and its prior costs are separate. The original
+pilot and historical evidence are not changed. See `epoch_return/RECOVERY_PLAN.md`.
