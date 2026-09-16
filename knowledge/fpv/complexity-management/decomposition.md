@@ -16,8 +16,8 @@ Direct proof stalls?
 ├─ Can one/few inductive invariants summarize
 │  the missing local or global fact? ........ Yes → bounded helper trial
 │    prove alone → gate on proven → assert -set_helper → prove -with_helpers
-├─ Helper independently proven from the
-│  same setup, without new assumptions? ..... No  → do not set helper; use AG/CAG
+├─ Candidate CEX / undetermined? ............ Yes → keep inactive; classify feedback
+│    reachable CEX → revise; missing support → capped SST/refinement below
 ├─ Helper graph has multiple stages? ........ Yes → proof_structure AG
 ├─ Helpers are as hard as the target? ....... Yes → proof_structure CAG/AG
 ├─ Many symmetric peer obligations with no
@@ -58,9 +58,10 @@ prove -property $targets -with_helpers
 
 Keep the RTL, reset, and legal environment assumptions identical to the target
 task. Do not add an assumption merely to make the helper prove. Report helper
-and original-target status separately. Escalate instead of extending the helper
-trial when the candidate remains undetermined, requires many pairwise lemmas,
-or reproduces the original target cone and difficulty.
+and original-target status separately. If the trial fails, classify the result
+using the refinement flow below; do not require failure or SST before accepting
+a proven first candidate. Escalate instead of repeatedly extending the trial
+when it requires many pairwise lemmas or reproduces the target's difficulty.
 
 **Proof structure is a signoff framework** for multi-stage dependencies,
 long-lived reviews, and decomposition experiments. It makes assume-side and
@@ -207,8 +208,8 @@ prove -property {top.v_top.ast_has_same_id_on_ID} -time_limit 2m -with_helpers
 > `help prove` and `help visualize` before standardizing this flow on another
 > release.
 >
-> ⚠️ **NEEDS VALIDATION — agent trigger/refinement efficacy awaits the manual
-> blind A/B; the command and trace semantics below have been tool-validated.**
+> ⚠️ **NEEDS VALIDATION — command/trace semantics are tool-validated; a successful
+> first candidate or an SST call alone does not validate refinement efficacy.**
 
 **Trigger**: Use this diagnostic flow when an invariant-like assertion remains
 `undetermined` after a sane direct proof, no reset-reachable CEX exists, and a
@@ -217,6 +218,22 @@ antecedent, slowly growing BMC bound, or a target that looks true only because
 of history not stated in the property. SST also helps bypass irrelevant
 initialization prefixes. Do not use it as a generic response to every timeout;
 first correct reset/setup errors and identify obvious cone-size causes.
+
+### Choose the Entry Point
+
+| Evidence available now | Next experiment |
+|---|---|
+| Clear compact candidate from RTL | Independently prove it with a capped budget; skip SST if it proves |
+| No reasonable compact candidate | Diagnose the target with capped SST and inspect its state values |
+| Candidate has a reset-reachable CEX in the unchanged model | Inspect that CEX; correct, weaken, or replace the false candidate |
+| Candidate remains `undetermined`, missing support is plausible | Keep it inactive; diagnose the candidate with capped SST, then refine or add supporting lemmas |
+| Candidate is as hard as the target or needs a large dependency graph | Escalate to AG/CAG instead of repeating diagnostics |
+
+`undetermined` does not establish that a candidate is false. A true but
+non-inductive candidate may need a stronger conjunction or separately proven
+support, not weakening. If the model is abstracted, first classify whether a
+candidate CEX is feasible in the original RTL. Never modify the environment
+merely to exclude inconvenient states.
 
 Jasper calls the result an **SST trace**. Do not rename it a design CEX or claim
 that Jasper exposed an internal IC3/PDR counterexample to induction (CTI).
@@ -288,11 +305,14 @@ Declare each candidate as a helper assertion and prove it from the same RTL,
 clock, reset, and legal environment as the target. Do not add an assumption to
 make the candidate pass.
 
-If the candidate is `cex`, discard or weaken it using that reset-reachable
-counterexample. If it remains `undetermined`, leave it inactive and run the
-same SST diagnostic on the candidate; use the new SST trace to refine or split
-the candidate. Keep this loop bounded and escalate to AG/CAG when the helper
-graph becomes multi-stage or as hard as the target.
+Apply the entry-point decision to the actual candidate result. When diagnostic
+feedback motivates a revision, record the old expression, the trace type and
+state values, the newly proposed relation, and the new expression. Exclude an
+impossible state family, not just the literal trace values. Prove each revision
+from the unchanged setup; previously proven supporting lemmas may be used only
+with their dependencies disclosed and without circular assumptions. Keep the
+loop bounded and escalate to AG/CAG when the helper graph becomes multi-stage
+or as hard as the target.
 
 Activate only after an explicit status gate:
 
@@ -310,16 +330,22 @@ assert -set_helper h_candidate
 prove -property $target -with_helpers
 ```
 
-Report the SST trace separately from proof results. A sound completion records:
+Report any diagnostic trace separately from proof results. A sound completion records:
 
 - target status before refinement (`undetermined`, bound, engine, time);
-- SST property status plus `trace_id`, trace length, and `tag SST`;
+- when SST was used: property status, `trace_id`, trace length, and `tag SST`;
 - every candidate helper result before activation;
 - the status-gate evidence preceding `assert -set_helper`;
 - final helper and target statuses, with `Infinite` bounds for full proof.
 
+If the first candidate succeeds, report `refinement_not_exercised`; do not run
+SST retrospectively to claim feedback caused its discovery. Distinguish
+target-guided candidate discovery from revision of a failed candidate.
+
 **Anti-patterns**:
 
+- Requiring a deliberately wrong helper or mandatory SST before a clear first candidate.
+- Counting diagnostic-tool use without an evidence-linked candidate revision as refinement.
 - Calling an SST trace a reset-reachable bug or ordinary CEX.
 - Saying “CTI” without disclosing that Jasper reported `tag SST`.
 - Asking a model to infer a helper from `prove -sst` metadata without opening or

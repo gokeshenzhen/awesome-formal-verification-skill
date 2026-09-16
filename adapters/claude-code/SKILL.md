@@ -63,9 +63,10 @@ alone does not select bug hunting.
    between registers updated on different paths): read
    `knowledge/fpv/complexity-management.md`, then
    `knowledge/fpv/complexity-management/decomposition.md` **first**. Follow the
-   index's post-baseline triage and the leaf's SST-guided helper-refinement flow
+   index's post-baseline triage and the leaf's compact-helper/diagnostic decision
    before another ordinary proof-time extension or a DBH detour. The exact
-   helper need not already be known to select this route.
+   helper need not already be known to select this route; reading the diagnostic
+   recipe does not require executing it when a compact candidate is available.
 3. **Other stalled proofs**: read `knowledge/fpv/complexity-management.md` for
    proof-shape/capacity symptoms; read `knowledge/fpv/engine-tuning.md` for
    engine selection. Select DBH only when the investigation calls for reachable

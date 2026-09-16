@@ -2,6 +2,22 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "helper-first-candidate-fast-path",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A sane JasperGold baseline leaves one invariant-like target undetermined without a reachable counterexample. Reading the RTL gives me a compact candidate relation with a clear reset and update argument. No helper proof has been attempted. What should I run next? Must I obtain a diagnostic waveform first, and what evidence is needed before using the candidate to close the target?",
+      "expect_concept": ["independent.*prov|prov.*independent", "first|before", "not.*(mandatory|required|necessary)|skip|without.*(SST|diagnostic)", "proven", "same.*(RTL|setup)|unchanged", "refinement_not_exercised|not.*refinement"],
+      "expect_exact": ["prove -property", "assert -set_helper", "-with_helpers"]
+    },
+    {
+      "id": "helper-feedback-classification",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "Two candidate helpers were independently attempted against unchanged raw RTL in JasperGold. One has a reset-reachable CEX; the other is undetermined and an SST trace shows an arbitrary initial state inconsistent with a suspected ownership relation. How should the next candidate differ in each case, what evidence should I preserve, and when can I activate it? Is either tool call alone proof that feedback helped?",
+      "expect_concept": ["false|incorrect", "not.*false|does not.*false|may.*true|true.*non.?inductive", "support|strengthen|conjunction", "old.*(expression|candidate)|previous.*candidate", "state values|signal values|waveform", "independent.*prov|prov.*independent", "not.*(alone|itself)|alone.*not"],
+      "expect_exact": ["tag SST", "assert -set_helper", "proven"]
+    },
+    {
       "id": "invariant-stall-routing",
       "type": "control",
       "module": "complexity-management",

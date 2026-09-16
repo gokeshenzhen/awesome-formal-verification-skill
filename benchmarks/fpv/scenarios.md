@@ -47,6 +47,65 @@ Run each with the skill loaded and without, and compare against the key-point ch
 
 ---
 
+## Scenario: helper-first-candidate-fast-path  [control]
+
+### Category
+complexity
+
+### User Prompt
+"A sane JasperGold baseline leaves one invariant-like target undetermined without
+a reachable counterexample. Reading the RTL gives me a compact candidate relation
+with a clear reset and update argument. No helper proof has been attempted. What
+should I run next? Must I obtain a diagnostic waveform first, and what evidence is
+needed before using the candidate to close the target?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+- [ ] Try a capped independent proof of the available candidate before diagnostics
+- [ ] Preserve RTL/reset/environment; gate `assert -set_helper` on `proven`
+- [ ] Prove the original target with `-with_helpers` and report its own status
+- [ ] If the first candidate succeeds, skip SST and report `refinement_not_exercised`
+
+### Anti-Patterns to Avoid
+- Requiring a deliberately failed first helper or a diagnostic waveform before proof
+- Treating a candidate's success as evidence of trace-guided refinement
+
+---
+
+## Scenario: helper-feedback-classification  [control]
+
+### Category
+complexity
+
+### User Prompt
+"Two candidate helpers were independently attempted against unchanged raw RTL in
+JasperGold. One has a reset-reachable CEX; the other is undetermined and an SST
+trace shows an arbitrary initial state inconsistent with a suspected ownership
+relation. How should the next candidate differ in each case, what evidence should
+I preserve, and when can I activate it? Is either tool call alone proof that
+feedback helped?"
+
+### Modules That Should Be Consulted
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+- [ ] A raw reset-reachable CEX refutes the candidate, not necessarily the target
+- [ ] `undetermined` does not refute it; a true but non-inductive relation may need support
+- [ ] SST is arbitrary-state diagnostic evidence, not an exposed internal CTI or reachable bug
+- [ ] Preserve old/new expressions, trace classification and actual state values that motivate revision
+- [ ] Prove the revised candidate independently before activation; disclose proven dependencies
+- [ ] Tool use alone does not establish refinement or causal benefit
+
+### Anti-Patterns to Avoid
+- Weakening every undetermined candidate, or blocking just the literal trace values
+- Adding environment assumptions to make the helper pass
+- Promoting an unproven candidate or circularly assuming supporting lemmas
+
+---
+
 ## Scenario: invariant-stall-routing  [control]
 
 ### Category

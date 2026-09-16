@@ -64,6 +64,11 @@ witness lead justifies that search. A finite budget or "strongest sound
 conclusion" alone does not require DBH. An SST diagnostic is outside the
 reset-reachable trace-search gate below.
 
+This triage permits a capped independent proof of an available compact helper
+before SST. Do not force trace generation when that first candidate proves;
+diagnose a missing candidate or an unproven candidate according to the
+decomposition leaf.
+
 Classify the baseline before escalating. A trace-only engine such as B stopped by
 `-max_trace_length` performed bounded trace search, not a meaningful exhaustive
 proof; its `undetermined` result supplies a frontier but no failed proof effort.

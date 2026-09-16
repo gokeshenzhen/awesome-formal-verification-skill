@@ -16,10 +16,14 @@ established by reset and preserved across updates. A plausible missing relation
 is enough; do not require a finished helper before selecting this branch.
 After excluding reset/setup errors and obvious capacity causes, read
 `complexity-management/decomposition.md` → **SST-Guided Helper Refinement**.
-Use a capped SST diagnostic and inspect its waveform before another ordinary
-time-limit extension or DBH search. Reserve time for independent helper proof
-and the original target; if SST is unavailable or uninformative, record that
-outcome and choose the next experiment from evidence.
+If a clear compact candidate is available, try its independent proof first;
+do not require a diagnostic trace before a successful first candidate. Use a
+capped SST diagnostic when no candidate is available, or when an unproven
+candidate plausibly lacks supporting state relations. Inspect any resulting
+waveform before refining. A reset-reachable candidate CEX instead calls for
+reachable-trace analysis. Reserve time for helper proof and the original
+target; if diagnostics are unavailable or uninformative, record that outcome
+and choose the next experiment from evidence, not another blind time extension.
 
 Honor an explicit bug-search/reachability objective or a concrete reachable
 witness lead through `engine-tuning.md`. "Strongest sound conclusion" and a
@@ -87,6 +91,7 @@ Property not converging?
 | Unproven helper as `-set_helper` | Unsound lemma | `prove -property helper` first |
 | Reporting an SST trace as a design CEX / CTI | SST omits formal reset and leaves the target `undetermined` | Confirm `tag SST`; report it only as a diagnostic witness |
 | Running `prove -sst` without reading its trace | The agent sees metadata, not the missing state relation | Query `trace_id`, open the trace, and export/read its waveform |
+| Requiring SST before trying a clear compact helper | Adds work without establishing a missing fact | Independently prove the candidate first; diagnose only when needed |
 | Selecting DBH solely from "strongest conclusion" or a finite budget | Skips diagnosis of a plausible missing state relation | Apply post-baseline triage before ordinary deepening or Hunt |
 | CAG local node result as signoff | Not sound | Use propagated ROOT result only |
 | Overconstraints on baseline task | Masks real bugs | Clone: `task -create oc -source_task baseline -copy_all` |
