@@ -17,10 +17,10 @@ FILES = {
 }
 
 
-def inspect_source(source):
+def inspect_source(source, files=FILES):
     source = source.resolve(strict=True)
     paths = {}
-    for name, relative in FILES.items():
+    for name, relative in files.items():
         path = source / relative
         if path.is_symlink() or not path.resolve(strict=True).is_relative_to(source) or not path.is_file():
             raise ValueError(f'Checkpoint file must be a regular in-scope file: {relative}')
@@ -42,8 +42,8 @@ def inspect_source(source):
     return paths
 
 
-def copy_checkpoint(source, destination):
-    paths = inspect_source(source)
+def copy_checkpoint(source, destination, files=FILES):
+    paths = inspect_source(source, files)
     destination.mkdir()
     for name, path in paths.items():
         shutil.copy2(path, destination / name)

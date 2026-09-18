@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 
-from experiment_policy import RECOVERY, END_TO_END, validate_snapshots, series_spec
+from experiment_policy import RECOVERY, END_TO_END, READBACK, validate_snapshots, series_spec
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTROL = ROOT / 'control'
@@ -54,15 +54,22 @@ def seal():
         raise ValueError('Cannot reseal after an arm was launched')
     binary = Path(shutil.which('codex')).resolve()
     node = Path(shutil.which('node')).resolve()
-    for name, value in tree_manifest(FROZEN / 'traceweave').items():
-        if isinstance(value, str) and digest(TW / name) != value:
-            raise ValueError('Live TraceWeave no longer matches the prepared runtime; preserve the copy and review provenance')
+    runtime_origin = SOURCE.get('traceweave_provenance')
+    if runtime_origin:
+        if SOURCE['kind'] != READBACK or tree_manifest(FROZEN / 'traceweave') != runtime_origin['files']:
+            raise ValueError('Historical runtime does not match its recorded frozen provenance')
+        tw_commit = runtime_origin['traceweave_commit']
+    else:
+        for name, value in tree_manifest(FROZEN / 'traceweave').items():
+            if isinstance(value, str) and digest(TW / name) != value:
+                raise ValueError('Live TraceWeave no longer matches the prepared runtime; preserve the copy and review provenance')
+        tw_commit = subprocess.check_output(['git', '-C', str(TW), 'rev-parse', 'HEAD'], text=True).strip()
     pins = dict(created_utc=now(), codex_binary=str(binary), codex_sha256=digest(binary),
                 codex_host_sha256=digest(binary.with_name('codex-code-mode-host')),
                 codex_path=tree_manifest(binary.parent.parent / 'codex-path'),
                 codex_version=subprocess.check_output([str(binary), '--version'], text=True).strip(),
                 node=str(node), node_sha256=digest(node),
-                traceweave_commit=subprocess.check_output(['git', '-C', str(TW), 'rev-parse', 'HEAD'], text=True).strip(),
+                traceweave_commit=tw_commit,
                 frozen=tree_manifest(FROZEN), common=tree_manifest(ROOT / 'common'),
                 runtime=tree_manifest(ROOT / 'runtime'), probes=tree_manifest(CONTROL / 'probes'),
                 launcher=digest(__file__), launch_sh=digest(ROOT / 'launch.sh'),
@@ -72,7 +79,10 @@ def seal():
                 model='gpt-5.5', reasoning_effort='medium', case=str(CASE),
                 venv=tree_manifest(TW / '.venv'),
                 python_sha256=digest('/usr/local/bin/python3.11'), bwrap_sha256=digest('/usr/bin/bwrap'),
-                jasper_launcher_sha256=digest(JG_ROOT / 'bin/jg'))
+                jasper_launcher_sha256=None if SOURCE['kind'] == READBACK else digest(JG_ROOT / 'bin/jg'))
+    if SOURCE['kind'] == READBACK:
+        pins['readback_policy_sha256'] = digest(CONTROL / 'readback_packet.py')
+        pins['materials_index_sha256'] = digest(CONTROL / 'materials_index.md')
     PIN.write_text(json.dumps(pins, indent=2) + '\n')
     print(f'Sealed {PIN}; launch will refuse drift')
 
@@ -90,10 +100,18 @@ def verify():
                       ('codex_sha256', Path(pins['codex_binary'])), ('node_sha256', Path(pins['node'])),
                       ('codex_host_sha256', Path(pins['codex_binary']).with_name('codex-code-mode-host')),
                       ('bwrap_sha256', Path('/usr/bin/bwrap')),
-                      ('python_sha256', Path('/usr/local/bin/python3.11')),
-                      ('jasper_launcher_sha256', JG_ROOT / 'bin/jg')]:
+                      ('python_sha256', Path('/usr/local/bin/python3.11'))]:
         if pins[key] != digest(path):
             raise ValueError(f'Pinned executable changed: {key}')
+    if SOURCE['kind'] != READBACK and pins['jasper_launcher_sha256'] != digest(JG_ROOT / 'bin/jg'):
+        raise ValueError('Pinned Jasper launcher changed')
+    if SOURCE['kind'] == READBACK:
+        for field, name in [('readback_policy_sha256', 'readback_packet.py'),
+                            ('materials_index_sha256', 'materials_index.md')]:
+            if pins[field] != digest(CONTROL / name):
+                raise ValueError('Pinned readback preparation policy changed')
+        from readback_packet import validate_presentations
+        validate_presentations(FROZEN, (CONTROL / 'materials_index.md').read_text(), SOURCE['readback'])
     changed = validate_snapshots(SOURCE['kind'], FROZEN / 'snapshot_a', FROZEN / 'snapshot_b')
     if changed != SOURCE['skill_changed_files']:
         raise ValueError('Skill treatment differs from its declared delta')
@@ -102,7 +120,7 @@ def verify():
         if series != series_spec(series['id'], series['pair_index'], series['pair_count']):
             raise ValueError('Invalid preregistered series/order')
     checkpoint = FROZEN / 'checkpoint'
-    if (SOURCE['kind'] == RECOVERY) != checkpoint.is_dir():
+    if (SOURCE['kind'] in (RECOVERY, READBACK)) != checkpoint.is_dir():
         raise ValueError('Checkpoint presence must match the experiment kind')
     if checkpoint.exists():
         expected = json.loads((checkpoint / 'MANIFEST.json').read_text())['files']
@@ -138,6 +156,10 @@ def environment():
                TRACEWEAVE_SOURCE_GRAPH_DISK_CACHE_MAX_BYTES='536870912',
                TRACEWEAVE_SOURCE_GRAPH_SEMANTIC_SESSION='1', TRACEWEAVE_TELEMETRY='1',
                TZ='America/Los_Angeles')
+    if SOURCE['kind'] == READBACK:
+        for name in ['CDS_LIC_FILE', 'CDS_LICENSE_FILE', 'LM_LICENSE_FILE', 'SNPSLMD_LICENSE_FILE',
+                     'Jasper_ROOT', 'VERDI_HOME', 'NOVAS_HOME']:
+            env.pop(name, None)
     return env
 
 
@@ -179,8 +201,6 @@ def command(arm, sandbox_user_dir, work, pins, argv, probes=False):
              '--ro-bind', str(FROZEN / 'case'), str(CASE),
              '--ro-bind', str(FROZEN / 'traceweave'), str(TW),
              '--ro-bind', str(TW / '.venv'), str(TW / '.venv'),
-             '--ro-bind', str(JG_ROOT), str(JG_ROOT),
-             '--ro-bind', str(VERDI), str(VERDI),
              '--ro-bind', str(Path(pins['codex_binary']).parent), '/opt/codex/bin',
              '--ro-bind', str(Path(pins['codex_binary']).parent.parent / 'codex-path'), '/opt/codex/codex-path',
              '--ro-bind', str(Path(pins['node']).parent.parent), '/opt/node',
@@ -188,10 +208,21 @@ def command(arm, sandbox_user_dir, work, pins, argv, probes=False):
              '--ro-bind', str(ROOT / 'common'), '/opt/experiment/common',
              '--dir', '/opt/experiment/bin',
              '--symlink', '/opt/experiment/runtime/skill_read.py', '/opt/experiment/bin/skill-read',
-             '--symlink', '/opt/experiment/runtime/jg_run.py', '/opt/experiment/bin/jg-run',
              '--bind', str(work), '/work',
              '--ro-bind', str(ROOT / 'common/AGENTS.md'), '/work/AGENTS.md']
-    if SOURCE['kind'] == RECOVERY:
+    if SOURCE['kind'] == READBACK:
+        args += ['--ro-bind', str(FROZEN / f'input_{arm}'), '/opt/experiment/input',
+                 '--symlink', '/opt/experiment/runtime/input_read.py', '/opt/experiment/bin/input-read',
+                 '--symlink', '/opt/experiment/runtime/proof_disabled.py', '/opt/experiment/bin/jg-run',
+                 '--symlink', '/opt/experiment/runtime/proof_disabled.py', '/opt/experiment/bin/jg']
+        if probes:
+            # Ground-truth mechanical values are available to model-free checks
+            # only; the raw-input arm never receives this JSON in a model run.
+            args += ['--ro-bind', str(FROZEN / 'readback_packet.json'), '/opt/readback-check.json']
+    else:
+        args += ['--ro-bind', str(JG_ROOT), str(JG_ROOT), '--ro-bind', str(VERDI), str(VERDI),
+                 '--symlink', '/opt/experiment/runtime/jg_run.py', '/opt/experiment/bin/jg-run']
+    if SOURCE['kind'] in (RECOVERY, READBACK):
         args += ['--ro-bind', str(FROZEN / 'checkpoint'), '/opt/experiment/checkpoint']
     if probes:
         args += ['--ro-bind', str(CONTROL / 'probes'), '/opt/preflight']
@@ -206,12 +237,13 @@ def preflight(arm, pins):
     work = base / 'work'
     work.mkdir()
     user = make_private_state(base / 'state')
+    probe = 'readback_smoke.py' if SOURCE['kind'] == READBACK else 'smoke.py'
     args = command(arm, user, work, pins,
-                   [str(TW / '.venv/bin/python'), '/opt/preflight/smoke.py'], probes=True)
+                   [str(TW / '.venv/bin/python'), f'/opt/preflight/{probe}'], probes=True)
     with (base / 'stdout.log').open('xb') as log:
         proc = subprocess.Popen(args, env=environment(), stdout=log, stderr=subprocess.STDOUT)
         try:
-            exit_code = proc.wait(timeout=90)
+            exit_code = proc.wait(timeout=120 if SOURCE['kind'] == READBACK else 90)
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait()
@@ -243,6 +275,10 @@ def launch(arm, pins):
         first = SOURCE['series']['launch_order'][0]
         if arm != first and not (receipt_dir / f'launch_{first}.json').exists():
             raise ValueError(f'Preregistered order requires arm {first} first')
+    if SOURCE['kind'] == READBACK:
+        first = SOURCE['readback']['launch_order'][0]
+        if arm != first and not (receipt_dir / f'launch_{first}.json').exists():
+            raise ValueError(f'Preregistered order requires arm {first} first')
     if not sys.stdin.isatty():
         raise ValueError('Launch the manual arm from a real terminal')
     user = CONTROL / f'private/arm_{arm}/user'
@@ -251,7 +287,9 @@ def launch(arm, pins):
                model='gpt-5.5', effort='medium', internal_cwd='/work', host_output=str(work),
                environment_sha256=hashlib.sha256(json.dumps(env, sort_keys=True).encode()).hexdigest(),
                private_session_dir=str(user / '.codex'),
-               scope='mount/PID isolation; network retained for model API and EDA licenses')
+               scope=('mount/PID isolation; no proof-tool mounts; network retained for model API'
+                      if SOURCE['kind'] == READBACK else
+                      'mount/PID isolation; network retained for model API and EDA licenses'))
     other = receipt_dir / f'launch_{"b" if arm == "a" else "a"}.json'
     if other.exists():
         before = json.loads(other.read_text())

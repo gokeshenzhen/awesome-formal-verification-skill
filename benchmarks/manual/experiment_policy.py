@@ -6,8 +6,9 @@ from pathlib import Path
 PILOT = 'development_pilot_same_snapshot'
 RECOVERY = 'helper_recovery_ab'
 END_TO_END = 'helper_end_to_end_ab'
+READBACK = 'diagnostic_readback_ab'
 PREFIXES = {PILOT: 'epoch_return_pilot_', RECOVERY: 'epoch_return_recovery_ab_',
-            END_TO_END: 'epoch_return_e2e_ab_'}
+            END_TO_END: 'epoch_return_e2e_ab_', READBACK: 'epoch_return_readback_probe_'}
 SKILL_DELTA = {'knowledge/fpv/complexity-management/decomposition.md'}
 
 
@@ -36,9 +37,9 @@ def validate_snapshots(kind, first, second):
         raise ValueError('Unknown experiment kind')
     left, right = manifest(first), manifest(second)
     changed = {name for name in left.keys() | right.keys() if left.get(name) != right.get(name)}
-    if kind == PILOT:
+    if kind in (PILOT, READBACK):
         if changed:
-            raise ValueError('Pilot requires identical skill snapshots')
+            raise ValueError('This experiment requires identical skill snapshots')
     elif changed != SKILL_DELTA or left.keys() != right.keys():
         raise ValueError('Comparison must change only the existing decomposition leaf')
     return sorted(changed)

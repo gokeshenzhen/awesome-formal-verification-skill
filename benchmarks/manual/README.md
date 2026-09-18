@@ -98,3 +98,26 @@ same-snapshot pilot. Both versions already support SST; this isolates the
 readback/trial patch on a development case, not general feedback efficacy.
 See `epoch_return/E2E_PLAN.md`. If recovery prompts another skill change, leave
 this series sealed and create a newly versioned one instead of editing its pins.
+
+## Input-presentation diagnostic probe
+
+`prepare_readback.py` freezes one raw-versus-mechanically-expanded input pair.
+Both arms use the same skill. No new proof executable is mounted, and no model
+is started by preparation or preflight. The attachment contains every exported
+signal at every recorded VCD timestamp, not selected facts or helper answers.
+Its values are checked against stdio MCP in model-free preflight. Historical
+TraceWeave source is copied from a prior verified seal, so unrelated live tool
+edits are neither imported nor modified. The shared Python environment is
+freshly pinned and preflighted for both arms.
+
+```bash
+python3 benchmarks/manual/prepare_readback.py \
+  --dest test/epoch_return_readback_probe_gpt55_01 --skill-revision 883d481 \
+  --checkpoint-arm test/epoch_return_e2e_ab_gpt55_01/blind/arm_a \
+  --traceweave-from test/epoch_return_e2e_ab_gpt55_01
+```
+
+Follow README_RUN.md: seal, check, preflight, then the user manually launches a
+and b sequentially. Evaluate delivery, interpretation and proposed changes,
+not full proof. Do not pool this selected diagnosis pair with skill efficacy
+or end-to-end proof counts. See `epoch_return/READBACK_PLAN.md`.
