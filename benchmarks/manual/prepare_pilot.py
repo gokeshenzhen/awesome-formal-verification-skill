@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import tarfile
 
-from experiment_policy import PILOT, RECOVERY, END_TO_END, READBACK, PREFIXES, validate_snapshots, series_spec
+from experiment_policy import PILOT, RECOVERY, END_TO_END, READBACK, DEPENDENCY_REUSE, PREFIXES, validate_snapshots, series_spec
 
 BASE = Path(__file__).resolve().parent
 REPO = BASE.parents[1]
@@ -44,7 +44,7 @@ def export_skill(commit, destination):
 
 
 def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, series=None,
-                 traceweave_from=None):
+                 traceweave_from=None, checkpoint_log=None):
     root = check_destination(root, kind)
     if kind == END_TO_END:
         if not series or series != series_spec(series['id'], series['pair_index'], series['pair_count']):
@@ -56,6 +56,8 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, seri
                for revision in (revision_a, revision_b)]
     checkpoint_files = None
     runtime_origin = None
+    if checkpoint_log is not None and kind != DEPENDENCY_REUSE:
+        raise ValueError('A standalone replay log is only supported for dependency recovery')
     if kind in (RECOVERY, READBACK):
         from recovery_checkpoint import inspect_source, FILES
         checkpoint_files = FILES
@@ -65,6 +67,11 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, seri
         if checkpoint is None:
             raise ValueError('Recovery requires an explicit raw checkpoint source')
         inspect_source(checkpoint, checkpoint_files)
+    elif kind == DEPENDENCY_REUSE:
+        from dependency_checkpoint import inspect_sources
+        if checkpoint is None or checkpoint_log is None:
+            raise ValueError('Dependency recovery requires the original script and raw replay log')
+        inspect_sources(checkpoint, checkpoint_log)
     elif checkpoint is not None:
         raise ValueError('A neutral task cannot inherit a checkpoint')
     if kind == READBACK:
@@ -87,7 +94,10 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, seri
     export_skill(commits[1], frozen / 'snapshot_b')
     changed = validate_snapshots(kind, frozen / 'snapshot_a', frozen / 'snapshot_b')
     provenance = None
-    if checkpoint is not None:
+    if kind == DEPENDENCY_REUSE:
+        from dependency_checkpoint import copy_checkpoint
+        provenance = copy_checkpoint(checkpoint, checkpoint_log, frozen / 'checkpoint')
+    elif checkpoint is not None:
         from recovery_checkpoint import copy_checkpoint
         provenance = copy_checkpoint(checkpoint, frozen / 'checkpoint', checkpoint_files)
     (frozen / 'case').mkdir()
@@ -113,7 +123,7 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, seri
     for script in (root / 'runtime').glob('*.py'):
         script.chmod(0o755)
     plan_name = {PILOT: 'PLAN.md', RECOVERY: 'RECOVERY_PLAN.md', END_TO_END: 'E2E_PLAN.md',
-                 READBACK: 'READBACK_PLAN.md'}[kind]
+                 READBACK: 'READBACK_PLAN.md', DEPENDENCY_REUSE: 'DEPENDENCY_PLAN.md'}[kind]
     shutil.copy2(BASE / 'epoch_return' / plan_name, control / 'SCORING.md')
     source = dict(kind=kind,
                   created_utc=datetime.now(timezone.utc).isoformat(),
@@ -130,6 +140,8 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, seri
         template = BASE / 'templates' / name
         if name == 'TASK.md' and kind == RECOVERY:
             template = BASE / 'epoch_return/RECOVERY_TASK.md'
+        if name == 'TASK.md' and kind == DEPENDENCY_REUSE:
+            template = BASE / 'epoch_return/DEPENDENCY_TASK.md'
         if kind == READBACK and name in ('TASK.md', 'AGENTS.md'):
             template = BASE / 'epoch_return' / ('READBACK_TASK.md' if name == 'TASK.md' else 'READBACK_RULES.md')
         (common / name).write_text(template.read_text().replace('@CASE_PATH@', str(CASE)))
@@ -145,7 +157,7 @@ def prepare_pair(root, revision_a, revision_b, kind=PILOT, checkpoint=None, seri
     for arm in 'ab':
         (root / f'blind/arm_{arm}').mkdir(parents=True)
     run_name = {PILOT: 'RUN.md', RECOVERY: 'RECOVERY_RUN.md', END_TO_END: 'E2E_RUN.md',
-                READBACK: 'READBACK_RUN.md'}[kind]
+                READBACK: 'READBACK_RUN.md', DEPENDENCY_REUSE: 'DEPENDENCY_RUN.md'}[kind]
     readme = ((BASE / 'epoch_return' / run_name).read_text()
               .replace('@EXPERIMENT@', str(root)).replace('@SKILL_COMMIT@', commits[0])
               .replace('@OLD_COMMIT@', commits[0]).replace('@NEW_COMMIT@', commits[1]))

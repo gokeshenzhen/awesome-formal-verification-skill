@@ -7,9 +7,13 @@ PILOT = 'development_pilot_same_snapshot'
 RECOVERY = 'helper_recovery_ab'
 END_TO_END = 'helper_end_to_end_ab'
 READBACK = 'diagnostic_readback_ab'
+DEPENDENCY_REUSE = 'proven_dependency_reuse_ab'
 PREFIXES = {PILOT: 'epoch_return_pilot_', RECOVERY: 'epoch_return_recovery_ab_',
-            END_TO_END: 'epoch_return_e2e_ab_', READBACK: 'epoch_return_readback_probe_'}
+            END_TO_END: 'epoch_return_e2e_ab_', READBACK: 'epoch_return_readback_probe_',
+            DEPENDENCY_REUSE: 'epoch_return_dependency_ab_'}
 SKILL_DELTA = {'knowledge/fpv/complexity-management/decomposition.md'}
+DEPENDENCY_DELTA = SKILL_DELTA | {'knowledge/fpv/complexity-management.md',
+                                 'knowledge/fpv/workflow.md'}
 
 
 def series_spec(prefix, index, count):
@@ -40,6 +44,9 @@ def validate_snapshots(kind, first, second):
     if kind in (PILOT, READBACK):
         if changed:
             raise ValueError('This experiment requires identical skill snapshots')
+    elif kind == DEPENDENCY_REUSE:
+        if changed != DEPENDENCY_DELTA or left.keys() != right.keys():
+            raise ValueError('Dependency comparison must change exactly the index, decomposition leaf and workflow')
     elif changed != SKILL_DELTA or left.keys() != right.keys():
         raise ValueError('Comparison must change only the existing decomposition leaf')
     return sorted(changed)

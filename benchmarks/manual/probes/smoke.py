@@ -26,6 +26,9 @@ FORBIDDEN = [
     REPO + '/test/epoch_return_recovery_ab_gpt55_01',
     REPO + '/test/epoch_return_e2e_ab_gpt55_01',
     REPO + '/test/epoch_return_e2e_ab_gpt55_02',
+    REPO + '/test/epoch_return_readback_probe_gpt55_01',
+    REPO + '/test/epoch_return_candidate_replay_Uf8nUL',
+    REPO + '/test/epoch_return_a_dependency_replay_01',
     REPO + '/test/.reservation_journal_control',
     REPO + '/test/.reservation_journal_control/CALIBRATION.md',
     REPO + '/test/.reservation_journal_control/setup.tcl',
@@ -128,13 +131,17 @@ async def probe_mcp():
                 assert values['signals']['smoke.q']['value_at_center']['dec'] == expected, values
             checkpoint = Path('/opt/experiment/checkpoint')
             if checkpoint.exists():
-                result, _ = await call('get_formal_paths', dict(formal_root=str(checkpoint),
-                    formal_tool='jaspergold', formal_log=str(checkpoint / 'diagnostic.stdout.log'),
-                    wave_file=str(checkpoint / 'diagnostic.vcd')))
+                has_wave = (checkpoint / 'diagnostic.vcd').is_file()
+                arguments = dict(formal_root=str(checkpoint), formal_tool='jaspergold',
+                    formal_log=str(checkpoint / ('diagnostic.stdout.log' if has_wave else 'candidate.log')))
+                if has_wave:
+                    arguments['wave_file'] = str(checkpoint / 'diagnostic.vcd')
+                result, _ = await call('get_formal_paths', arguments)
                 assert not result.isError
-                result, payload = await call('get_waveform_summary', dict(
-                    wave_path=str(checkpoint / 'diagnostic.vcd')))
-                assert not result.isError and not payload.get('error'), payload
+                if has_wave:
+                    result, payload = await call('get_waveform_summary', dict(
+                        wave_path=str(checkpoint / 'diagnostic.vcd')))
+                    assert not result.isError and not payload.get('error'), payload
             for path in [hidden_wave, '/work/escape.vcd']:
                 result, payload = await call('get_waveform_summary', dict(wave_path=path))
                 assert result.isError or payload.get('error'), payload

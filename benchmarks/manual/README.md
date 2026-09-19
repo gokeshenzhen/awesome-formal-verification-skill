@@ -121,3 +121,24 @@ Follow README_RUN.md: seal, check, preflight, then the user manually launches a
 and b sequentially. Evaluate delivery, interpretation and proposed changes,
 not full proof. Do not pool this selected diagnosis pair with skill efficacy
 or end-to-end proof counts. See `epoch_return/READBACK_PLAN.md`.
+
+## Proven-dependency recovery comparison
+
+`prepare_dependency.py` prepares one manual old/new skill pair from an unchanged
+candidate Tcl and its raw inconclusive replay log. Unlike SST recovery, no
+diagnostic waveform or historical wrapper receipt is required or fabricated.
+The explicit skill delta covers the complexity index, decomposition leaf and
+workflow; older experiment kinds keep their original narrower boundary.
+
+```bash
+python3 benchmarks/manual/prepare_dependency.py \
+  --dest test/epoch_return_dependency_ab_gpt55_01 \
+  --old-revision 72cbbe0 --new-revision 757e0ba \
+  --candidate-script /absolute/path/to/original_candidate.tcl \
+  --replay-log /absolute/path/to/original/jg_session_0.log
+```
+
+Follow the generated README_RUN.md to seal, check, preflight and manually run A
+then B. The same inputs, GPT-5.5/medium and budget apply to both arms. This tests
+conditional recovery of a known stalled script, not invariant discovery or
+general feedback efficacy. See `epoch_return/DEPENDENCY_PLAN.md`.

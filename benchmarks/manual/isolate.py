@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 
-from experiment_policy import RECOVERY, END_TO_END, READBACK, validate_snapshots, series_spec
+from experiment_policy import RECOVERY, END_TO_END, READBACK, DEPENDENCY_REUSE, validate_snapshots, series_spec
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTROL = ROOT / 'control'
@@ -120,7 +120,7 @@ def verify():
         if series != series_spec(series['id'], series['pair_index'], series['pair_count']):
             raise ValueError('Invalid preregistered series/order')
     checkpoint = FROZEN / 'checkpoint'
-    if (SOURCE['kind'] in (RECOVERY, READBACK)) != checkpoint.is_dir():
+    if (SOURCE['kind'] in (RECOVERY, READBACK, DEPENDENCY_REUSE)) != checkpoint.is_dir():
         raise ValueError('Checkpoint presence must match the experiment kind')
     if checkpoint.exists():
         expected = json.loads((checkpoint / 'MANIFEST.json').read_text())['files']
@@ -222,7 +222,7 @@ def command(arm, sandbox_user_dir, work, pins, argv, probes=False):
     else:
         args += ['--ro-bind', str(JG_ROOT), str(JG_ROOT), '--ro-bind', str(VERDI), str(VERDI),
                  '--symlink', '/opt/experiment/runtime/jg_run.py', '/opt/experiment/bin/jg-run']
-    if SOURCE['kind'] in (RECOVERY, READBACK):
+    if SOURCE['kind'] in (RECOVERY, READBACK, DEPENDENCY_REUSE):
         args += ['--ro-bind', str(FROZEN / 'checkpoint'), '/opt/experiment/checkpoint']
     if probes:
         args += ['--ro-bind', str(CONTROL / 'probes'), '/opt/preflight']
@@ -279,6 +279,8 @@ def launch(arm, pins):
         first = SOURCE['readback']['launch_order'][0]
         if arm != first and not (receipt_dir / f'launch_{first}.json').exists():
             raise ValueError(f'Preregistered order requires arm {first} first')
+    if SOURCE['kind'] == DEPENDENCY_REUSE and arm == 'b' and not (receipt_dir / 'launch_a.json').exists():
+        raise ValueError('Preregistered order requires arm a first')
     if not sys.stdin.isatty():
         raise ValueError('Launch the manual arm from a real terminal')
     user = CONTROL / f'private/arm_{arm}/user'
