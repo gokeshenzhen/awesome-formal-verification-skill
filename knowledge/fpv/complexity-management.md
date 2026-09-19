@@ -25,6 +25,11 @@ reachable-trace analysis. Reserve time for helper proof and the original
 target; if diagnostics are unavailable or uninformative, record that outcome
 and choose the next experiment from evidence, not another blind time extension.
 
+If supporting lemmas are already proven but the next obligation stalls, first
+check whether that `prove` call actually selects them. Helper classification,
+proof status, and dependency reuse are distinct; see **Helper Assertions** in
+`complexity-management/decomposition.md` for exact selection and audit rules.
+
 Honor an explicit bug-search/reachability objective or a concrete reachable
 witness lead through `engine-tuning.md`. "Strongest sound conclusion" and a
 finite budget alone do not override the invariant-diagnostic branch. Record
@@ -71,7 +76,7 @@ Property not converging?
 3. **Use explicit `-values` for signoff.** `abstract -counter -find` is exploratory; commit to explicit milestone values in production scripts.
 4. **Include reset value `0` in counter abstraction values.** Omitting it breaks the reset-to-milestone path.
 5. **`stopat`/cutpoints alone are never sufficient.** Always add legality assumptions (`assume -constant`, `assume -bound 1`, `setup_ndc`, or transition constraints) after cutting a signal.
-6. **Prove helpers before using them.** `assert -set_helper` on an unproven assertion is unsound; always `prove -property helper` first.
+6. **Separate helper classification from proven support.** [JG-specific] `assert -set_helper` marks an assertion as a helper; it neither proves it nor unconditionally assumes it. Gate sequential theorem reuse on a valid `proven` result under the same setup, and explicitly select the intended support. Batch helper proof is also valid; report which obligations it actually closes.
 7. **Classify SST traces before interpreting them.** A JasperGold SST trace is an arbitrary-state diagnostic witness, not a reset-reachable CEX or an exposed IC3/PDR CTI; the target remains `undetermined`. Retrieve its `trace_id`, confirm `tag SST`, inspect/export the waveform, and use it only to propose candidate invariants.
 8. **Choose helpers by proof shape, not by property label.** Try a compact local or global helper when one or a few independently provable inductive invariants summarize the missing fact. Switch to `proof_structure` when the helper is as hard as the targets, dependencies are multi-stage, peer obligations have no compact summary, reviewer-audited signoff requires explicit obligations, or a propagated `ROOT` result is required.
 9. **Separate model setup from proof decomposition.** Create a `SETUP` task first, then derive `ROOT` from it.
@@ -88,7 +93,8 @@ Property not converging?
 | `stopat` / cutpoint without re-constraining | Signal fully unconstrained → unrealistic traces | `assume -constant` + legality bounds; `setup_ndc` |
 | Cutpoint config signals without legality | Proof explores impossible/invalid configurations | Pair config cutpoints with validity-check assumptions |
 | `abstract -init_value` without `assume -bound 1` | Explores impossible initial states | Always pair with `assume -bound 1` |
-| Unproven helper as `-set_helper` | Unsound lemma | `prove -property helper` first |
+| Treating `assert -set_helper` as proof or an unconditional `assume` | Confuses a helper label with discharged evidence | Check valid proof status before theorem reuse; inspect actual proof selection |
+| `prove -property target` after proving helpers, expecting automatic reuse | Proven helpers outside the selected set are not automatically used | `set_proven_directive true` + explicit target/support list, or a disclosed broader selection |
 | Reporting an SST trace as a design CEX / CTI | SST omits formal reset and leaves the target `undetermined` | Confirm `tag SST`; report it only as a diagnostic witness |
 | Running `prove -sst` without reading its trace | The agent sees metadata, not the missing state relation | Query `trace_id`, open the trace, and export/read its waveform |
 | Requiring SST before trying a clear compact helper | Adds work without establishing a missing fact | Independently prove the candidate first; diagnose only when needed |
@@ -164,8 +170,10 @@ assume -name oc_constraint {<expr>}
 | `proof_structure -create compositional_assume_guarantee` | CAG decomposition | JG |
 | `proof_structure -create partition` | Partition properties | JG |
 | `assert -helper -name <n> {<expr>}` | Declare helper lemma | JG |
-| `assert -set_helper <name>` | Activate proven helper | JG |
-| `prove -property <p> -with_helpers` | Use helpers in proof | JG |
+| `assert -set_helper <name>` | Convert a regular assertion to a helper assertion; no proof implied | JG |
+| `set_proven_directive true` + `prove -property {target h}` | Reuse selected already-proven `h`; gate its status first | JG |
+| `prove -property <p> -with_helpers` | Include helper assertions, potentially including unproven obligations | JG |
+| `prove -property <p> -with_proven` | Include all proven assertions in the same task as assumptions | JG |
 | `prove -property <p> -sst <N>` | State space tunneling | JG |
 | `set_sst_default_trace_length <N>` | Default SST minimum trace length when `-sst` omits `N` | JG |
 | `get_property_info <p> -list {status trace_id}` | Distinguish property status from attached SST trace | JG |

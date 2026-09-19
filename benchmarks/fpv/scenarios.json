@@ -2,12 +2,28 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "helper-proven-support-selection",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "In one unchanged JasperGold task, h_a and h_b are valid proven assertions. A higher-level h_summary remains undetermined after prove -property h_summary. I marked h_a and h_b as helpers and assumed that this made them available automatically. Before changing any invariant or budget, how do I check and reuse only these two proven dependencies? Give the exact Tcl shape, status gates, and evidence needed to distinguish actual reuse from another isolated attempt.",
+      "expect_concept": ["classif|label|marking|marker", "not.*(automatic|assum)|does not.*(select|include|use)", "same.*(task|setup)|unchanged", "valid|validity", "selected|selection|explicit.*list", "pending|already.proven", "target.*(status|result)|h_summary.*(status|result)"],
+      "expect_exact": ["get_property_info", "set_proven_directive true", "prove -property", "IPF036"]
+    },
+    {
+      "id": "helper-batch-proof-audit",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A JasperGold script declares h_a, h_b, and h_c with assert -helper before any proof. Its wrapper receives support={h_a}, but uses only llength to choose prove -property h_b -with_helpers. At this point h_a is proven; the log shows two pending obligations plus one already-proven assertion, and h_b and h_c become proven in the same call. A later h_c call has no pending obligations. The original target has not been attempted. Is helper declaration before proof unsound? Did the wrapper enforce its named support list, and may I report a sequential h_a-to-h_b-to-h_c proof or full target signoff? Explain how to audit or make the dependency scope exact.",
+      "expect_concept": ["classif|label|declar", "not.*(automatically|itself|inherently).*(unsound|circular)|not.*unconditional", "(batch|together|joint|same call)", "(not|does not|did not).*(whitelist|restrict|enforce|exact)|broader", "already.proven|cached", "target.*(not|unproven|unattempted)|no.*signoff"],
+      "expect_exact": ["assert -helper", "-with_helpers", "set_proven_directive true", "prove -property", "get_property_info"]
+    },
+    {
       "id": "sst-partial-transition-readback",
       "type": "control",
       "module": "complexity-management",
       "prompt": "A JasperGold helper remains undetermined. Its exported diagnostic trace is tagged SST and contains a satisfying prefix followed by a violation. The waveform reader returns only one clock-aligned sample, marks the response truncated, and shows the helper bit low. I queried only the terms in the helper expression; it uses fixed-width arithmetic. Have I inspected enough to refine it? What should I read next, how should that evidence change the next proof attempt, and what would count as a completed refinement?",
       "expect_concept": ["predecessor|preceding|prefix state", "initial.*(state|sample)|timestamp", "enable|guard|select|priority", "source|operand", "width|modular|truncation", "support|revis", "independent.*prov|prov.*independent", "not.*(alone|itself)|alone.*not"],
-      "expect_exact": ["tag SST", "get_signals_around_time", "assert -set_helper", "proven"]
+      "expect_exact": ["tag SST", "get_signals_around_time", "get_property_info|get_property_list", "proven"]
     },
     {
       "id": "helper-first-candidate-fast-path",
@@ -15,7 +31,7 @@
       "module": "complexity-management",
       "prompt": "A sane JasperGold baseline leaves one invariant-like target undetermined without a reachable counterexample. Reading the RTL gives me a compact candidate relation with a clear reset and update argument. No helper proof has been attempted. What should I run next? Must I obtain a diagnostic waveform first, and what evidence is needed before using the candidate to close the target?",
       "expect_concept": ["independent.*prov|prov.*independent", "first|before", "not.*(mandatory|required|necessary)|skip|without.*(SST|diagnostic)", "proven", "same.*(RTL|setup)|unchanged", "refinement_not_exercised|not.*refinement"],
-      "expect_exact": ["prove -property", "assert -set_helper", "-with_helpers"]
+      "expect_exact": ["prove -property", "get_property_info|get_property_list", "-with_helpers|set_proven_directive"]
     },
     {
       "id": "helper-feedback-classification",
@@ -23,7 +39,7 @@
       "module": "complexity-management",
       "prompt": "Two candidate helpers were independently attempted against unchanged raw RTL in JasperGold. One has a reset-reachable CEX; the other is undetermined and an SST trace shows an arbitrary initial state inconsistent with a suspected ownership relation. How should the next candidate differ in each case, what evidence should I preserve, and when can I activate it? Is either tool call alone proof that feedback helped?",
       "expect_concept": ["false|incorrect", "not.*false|does not.*false|may.*true|true.*non.?inductive", "support|strengthen|conjunction", "old.*(expression|candidate)|previous.*candidate", "state values|signal values|waveform", "independent.*prov|prov.*independent", "not.*(alone|itself)|alone.*not"],
-      "expect_exact": ["tag SST", "assert -set_helper", "proven"]
+      "expect_exact": ["tag SST", "get_property_info|get_property_list", "proven"]
     },
     {
       "id": "invariant-stall-routing",
@@ -31,7 +47,7 @@
       "module": "complexity-management",
       "prompt": "A sane JasperGold baseline leaves one same-cycle assertion comparing state registers undetermined, with no reset-reachable counterexample or stored trace. Reset and updates appear to maintain a relationship that the assertion does not state. There is no obvious large-memory or setup issue, no suspected failure window, and I do not yet know the missing relation. I want the strongest sound conclusion within a finite budget. Which investigation should come next, what evidence should I inspect, and when may a new fact be used in the final proof?",
       "expect_concept": ["SST", "arbitrary.?state|not.*reset.?reachable", "waveform|signal values", "independent.*prov|prov.*independent", "proven", "budget|cap", "not.*(alone|solely)|alone.*not|not.*automatically"],
-      "expect_exact": ["prove -property", "-sst", "trace_id", "get_trace_info", "assert -set_helper"]
+      "expect_exact": ["prove -property", "-sst", "trace_id", "get_trace_info", "get_property_info|get_property_list"]
     },
     {
       "id": "counter-abstraction-timeout",
@@ -55,7 +71,7 @@
       "module": "complexity-management",
       "prompt": "After a sane direct JasperGold prove, 412 generated no-duplicate assertions remain undetermined with no counterexample. I can state one global uniqueness invariant that may summarize the missing fact. How should I choose between a helper assertion and CAG, what gates make the result sound, and what are the exact key JasperGold Tcl commands for activating and using the helper?",
       "expect_concept": ["helper", "proven", "CAG", "(same|identical) (RTL|setup)|no assumptions solely|without (new|extra) assumptions"],
-      "expect_exact": ["assert -set_helper", "with_helpers"]
+      "expect_exact": ["get_property_info|get_property_list", "-with_helpers|set_proven_directive"]
     },
     {
       "id": "distributed-peer-cag",

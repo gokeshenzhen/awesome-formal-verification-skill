@@ -118,15 +118,21 @@ Direct prove result?
 ├─ Mostly proven? ............ Tune engines or isolate the remaining properties
 ├─ Many undetermined? ........ Read complexity-management.md
 │   ├─ Compact local/global
-│   │  inductive summary? ...... Prove; gate; assert -set_helper; use -with_helpers
+│   │  inductive summary? ...... Prove; gate; select proven support; prove targets
 │   └─ Distributed peer graph? Read decomposition.md; build proof_structure AG/CAG
 └─ Repeated similar run? ..... ProofMaster may help, but does not replace AG/CAG
 ```
 
 For global invariants over many peer assertions, first determine whether one or
-a few global inductive helpers collapse the dependency. Prove each helper in
-isolation and abort unless its status is `proven`; only then activate it and
-prove the original targets with `-with_helpers`. If no compact helper converges,
+a few global inductive helpers collapse the dependency. For sequential reuse,
+prove each helper under the same setup, optionally using already-proven support;
+gate on valid `proven` status and select it in the next proof. [JG-specific]
+`assert -set_helper` only classifies the assertion. Use `set_proven_directive true`
+and an explicit `prove -property` list for exact support selection. Alternatively,
+`-with_helpers` may prove several helpers together; disclose the actual selected
+set and closed obligations, not a fictitious sequential dependency order. See
+`complexity-management/decomposition.md` → **Helper Assertions** for templates.
+Report the original targets' own results. If no compact helper converges,
 create a `SETUP` task, initialize a `ROOT` proof tree, build the relevant AG/CAG
 or partition operation, and report the propagated `ROOT` status. Local node
 results inside a proof structure are intermediate evidence, not signoff.
@@ -141,7 +147,7 @@ results inside a proof structure are intermediate evidence, not signoff.
 | Proving without sanity/assumption checks | Broken or over-constrained setup → vacuous/false results | Run `sanity_check` + `visualize -reset` + `check_assumptions` first |
 | Proving a huge design with no black-boxing/stopat | State-space explosion | Black-box (`-bbox_*`) or `stopat` heavy sub-blocks at setup |
 | Re-running direct `prove -all` after many `undetermined` results | Same proof shape keeps hitting capacity | Switch to complexity management; try one gated compact helper or use AG/CAG for a distributed peer graph |
-| Activating a helper without a proven-status gate | An undetermined helper can be mistaken for a valid lemma | Prove it in isolation; abort unless status is `proven`; then use `assert -set_helper` |
+| Treating helper classification as proven evidence | An undetermined helper can be mistaken for a valid lemma | Gate sequential theorem reuse on valid `proven` status; verify actual selection |
 | Treating ProofMaster as AG/CAG | Cache reuse does not decompose obligations | Use `proof_structure` and check propagated `ROOT` |
 
 ## Tool-Specific Notes

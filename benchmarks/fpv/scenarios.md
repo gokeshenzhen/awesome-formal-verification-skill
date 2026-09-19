@@ -29,7 +29,7 @@ attempt, and what would count as a completed refinement?"
 - [ ] Read RTL update enables, selection/priority conditions and source operands beyond the candidate expression
 - [ ] Interpret fixed-width arithmetic and sampling correctly, not as an arbitrary-precision sum
 - [ ] Link concrete values and the active update branch to a revised candidate or supporting lemma
-- [ ] Prove new obligations before activation; keep `tag SST` separate from a reachable CEX
+- [ ] Prove new obligations before trusting them as theorems; keep `tag SST` separate from a reachable CEX
 - [ ] If no useful relation emerges, report why and choose the next experiment; do not invent a helper for compliance
 - [ ] A tool call, syntax fix, unchanged expression or promise is not evidence of completed refinement
 
@@ -82,6 +82,87 @@ Each scenario marks its intent: **[control]** = the knowledge file covers this w
 pipeline is known to have dropped (measures whether the loss causes a real task miss).
 Run each with the skill loaded and without, and compare against the key-point checklist.
 
+The token checks in `scenarios.json` are a screen, not a behavioral verdict.
+Review the emitted script and evidence against these checklists; merely naming
+`set_proven_directive` or `-with_helpers` does not establish correct dependency use.
+
+---
+
+## Scenario: helper-proven-support-selection  [control]
+
+### Category
+
+complexity
+
+### User Prompt
+
+"In one unchanged JasperGold task, h_a and h_b are valid proven assertions.
+A higher-level h_summary remains undetermined after prove -property h_summary.
+I marked h_a and h_b as helpers and assumed that this made them available
+automatically. Before changing any invariant or budget, how do I check and reuse
+only these two proven dependencies? Give the exact Tcl shape, status gates, and
+evidence needed to distinguish actual reuse from another isolated attempt."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+
+- [ ] Separate helper classification, valid proof status, and selected dependencies
+- [ ] Keep the same task/setup and check each support with `get_property_info` before reuse
+- [ ] Use `set_proven_directive true` and `prove -property {h_summary h_a h_b}` or the equivalent Tcl list
+- [ ] Omit broad `-with_helpers` / `-with_proven` selection when exact support scope is required
+- [ ] Audit before-call statuses, actual selection, `IPF036` counts, and the target's final status/validity/bounds
+- [ ] Do not change the candidate or raise the budget before checking missing reuse
+
+### Anti-Patterns to Avoid
+
+- Assuming `assert -set_helper` proves a fact or automatically injects it into every later proof
+- Checking the support list but passing only h_summary to `prove`
+- Replacing an exact list with a Boolean toggle for `-with_helpers`
+
+---
+
+## Scenario: helper-batch-proof-audit  [control]
+
+### Category
+
+complexity
+
+### User Prompt
+
+"A JasperGold script declares h_a, h_b, and h_c with assert -helper before any
+proof. Its wrapper receives support={h_a}, but uses only llength to choose
+prove -property h_b -with_helpers. At this point h_a is proven; the log shows two
+pending obligations plus one already-proven assertion, and h_b and h_c become
+proven in the same call. A later h_c call has no pending obligations. The original
+target has not been attempted. Is helper declaration before proof unsound? Did
+the wrapper enforce its named support list, and may I report a sequential
+h_a-to-h_b-to-h_c proof or full target signoff? Explain how to audit or make the
+dependency scope exact."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+
+- [ ] Helper classification is not proof or an unconditional assumption; declaring candidates is not itself unsound
+- [ ] The wrapper did not enforce its list: `-with_helpers` included another unresolved helper
+- [ ] Interpret h_b and h_c as batch-closed obligations, not proven sequentially in separate calls
+- [ ] Treat the later h_c result as already proven, not a fresh independent proof
+- [ ] Check valid per-property results and setup; do not call a tool-managed batch proof inherently circular
+- [ ] Do not claim original-target signoff without the target's own completed proof
+- [ ] For exact sequential reuse, gate supports with `get_property_info`, use `set_proven_directive true`, and pass the actual list to `prove -property`
+
+### Anti-Patterns to Avoid
+
+- Banning all `-with_helpers` calls that include unproven candidates
+- Calling any helper batch a false proof, or claiming minimal dependencies from selection alone
+- Mistaking wrapper argument names or a later cached result for the actual dependency history
+
 ---
 
 ## Scenario: helper-first-candidate-fast-path  [control]
@@ -102,8 +183,8 @@ needed before using the candidate to close the target?"
 
 ### Expected Key Points
 - [ ] Try a capped independent proof of the available candidate before diagnostics
-- [ ] Preserve RTL/reset/environment; gate `assert -set_helper` on `proven`
-- [ ] Prove the original target with `-with_helpers` and report its own status
+- [ ] Preserve RTL/reset/environment; gate theorem reuse on valid `proven` status
+- [ ] Select the proven support with an explicit list or disclosed helper selection; report the original target's own status
 - [ ] If the first candidate succeeds, skip SST and report `refinement_not_exercised`
 
 ### Anti-Patterns to Avoid
@@ -133,13 +214,13 @@ feedback helped?"
 - [ ] `undetermined` does not refute it; a true but non-inductive relation may need support
 - [ ] SST is arbitrary-state diagnostic evidence, not an exposed internal CTI or reachable bug
 - [ ] Preserve old/new expressions, trace classification and actual state values that motivate revision
-- [ ] Prove the revised candidate independently before activation; disclose proven dependencies
+- [ ] Prove the revised candidate under the unchanged setup before theorem reuse; disclose any already-proven dependencies
 - [ ] Tool use alone does not establish refinement or causal benefit
 
 ### Anti-Patterns to Avoid
 - Weakening every undetermined candidate, or blocking just the literal trace values
 - Adding environment assumptions to make the helper pass
-- Promoting an unproven candidate or circularly assuming supporting lemmas
+- Trusting an unproven candidate as established or circularly assuming supporting lemmas
 
 ---
 
@@ -166,12 +247,12 @@ evidence should I inspect, and when may a new fact be used in the final proof?"
 - [ ] Do not select DBH solely from "strongest sound conclusion" or the finite budget
 - [ ] Query status and trace ID separately, confirm `tag SST`, then inspect waveform values
 - [ ] Classify SST as arbitrary-state diagnostic evidence, not a reset-reachable bug or exposed IC3/PDR CTI
-- [ ] Prove candidates independently and gate on `proven` before `assert -set_helper`; reserve time for the target
+- [ ] Prove candidates and gate on valid `proven` status before theorem reuse; reserve time for the target
 - [ ] Preserve explicit bug-search intent: the existing `dbh-stalled-bound` and `dbh-exact-cycle-stall` scenarios must still route to search
 
 ### Anti-Patterns to Avoid
 - Spending the remaining budget on another ordinary trace-only run without state-relation diagnosis
-- Assuming the waveform proves the candidate, or activating an undetermined helper
+- Assuming the waveform proves the candidate, or treating an undetermined helper as established
 - Forcing SST onto explicit known-bug reproduction or a concrete failure-window investigation
 
 ---
@@ -285,13 +366,13 @@ complexity
 ### Expected Key Points
 - [ ] Treat the property labels as a complexity trigger, not a mandatory CAG choice
 - [ ] Try one bounded compact helper because one global invariant may summarize the dependency
-- [ ] Prove the helper from the same RTL/setup without helper-specific assumptions before `assert -set_helper`
-- [ ] Abort or escalate if the helper is not `proven`; use `-with_helpers` only after the gate
+- [ ] Prove the helper from the same RTL/setup without helper-specific assumptions before trusting it as a theorem
+- [ ] Gate sequential reuse on valid `proven` status; explicitly select support or disclose the broader `-with_helpers` set
 - [ ] Escalate to AG/CAG if the helper remains undetermined or is as hard as the targets
 
 ### Anti-Patterns to Avoid
 - Selecting CAG solely because the properties are global, uniqueness, or no-duplicate
-- Activating an undetermined helper
+- Mistaking helper classification for proof, or trusting an undetermined helper as established
 
 ---
 
