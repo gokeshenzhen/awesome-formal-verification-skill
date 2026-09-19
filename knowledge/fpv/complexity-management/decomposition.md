@@ -1,10 +1,6 @@
 # Complexity: Proof Decomposition
 
-> Leaf of `complexity-management.md`. Break one hard proof into smaller obligations: assume-guarantee / compositional AG, helper lemmas, and state-space tunneling. Soundness rule: **only the propagated ROOT result is a verified signoff result** — local decomposition nodes are not.
-
-## Proof Decomposition (AG / CAG)
-
-**When to use**: Single property too complex; can be decomposed via helper lemmas or compositional reasoning.
+> Leaf of `complexity-management.md`. Break one hard proof into smaller obligations: helper lemmas, assume-guarantee / compositional AG, and state-space tunneling. When using `proof_structure`, require the propagated ROOT result for signoff, not just local node results.
 
 ## Helper vs. Proof Structure Decision
 
@@ -13,12 +9,14 @@ requires structure:
 
 ```
 Direct proof stalls?
+├─ Relevant support already proven? ......... Yes → check selection for the CURRENT obligation
+│    helper or final target → "Helper Assertions" below
 ├─ Can one/few inductive invariants summarize
 │  the missing local or global fact? ........ Yes → bounded helper trial
-│    prove → gate on proven → select proven support → prove target
+│    select support → prove obligation → gate on proven → next obligation
 ├─ Candidate CEX / undetermined? ............ Yes → do not trust as a theorem; classify feedback
-│    reachable CEX → revise; missing support → capped SST/refinement below
-├─ Helper graph has multiple stages? ........ Yes → proof_structure AG
+│    reachable CEX → revise; missing relation → capped SST/refinement below
+├─ Dependency graph hard to audit? .......... Yes → proof_structure AG
 ├─ Helpers are as hard as the target? ....... Yes → proof_structure CAG/AG
 ├─ Many symmetric peer obligations with no
 │  compact inductive summary? ................ Yes → proof_structure CAG
@@ -30,37 +28,126 @@ Direct proof stalls?
 
 **Proven helpers are a proof method, not a modeling assumption**, when each
 helper is proven from the same RTL and legal environment setup before theorem
-reuse. Already-proven support is allowed; "independent" need not mean "alone". They
-are ideal for local lemmas and for compact global summaries such as one
-inductive uniqueness or conservation invariant whose proof converges in
-isolation. The words `global`, `uniqueness`, `conservation`, or `peer` identify a
-complexity risk; they do not by themselves require CAG.
+reuse. **Independent does not mean alone**: use already-proven lemmas to prove
+another helper, then use that helper to prove the final target. A small acyclic
+chain does not require AG/CAG merely because it has several levels. The words
+`global`, `uniqueness`, `conservation`, or `peer` identify a complexity risk;
+they do not by themselves require CAG.
 
-### Compact Helper Trial
+## Helper Assertions (Lemmas) [JG-specific]
 
-Use one bounded trial before building a proof structure when a small invariant
-can summarize the missing fact:
+**When to use**: Try a capped helper proof when a compact invariant can summarize
+the missing fact. If relevant lemmas are already proven but a higher-level
+helper or target stalls, check that call's selected support before changing the
+expression or extending time.
+
+> 🔧 **VERSION-SENSITIVE — selection semantics validated on JasperGold
+> 2025.12p002.** Check `help assert`, `help prove`, and
+> `help set_proven_directive` on other releases.
+
+### Sequential Proven Support
+
+Treat each helper and the final target as an **obligation with its own support
+list**. Selecting local lemmas only for the final target does not help an earlier
+helper proof. Use the same procedure at every level; pass `{}` only when no
+previously proven support is selected for that obligation.
+
+Resolve exact names in the same task and keep RTL, clock/reset, assumptions,
+and abstractions unchanged. Use the caller's engine settings and task budgets.
+Pass the support list to `prove`, not just to a Boolean test for `-with_helpers`:
+
+```tcl
+proc prove_with_support {obligation support limit} {
+  foreach h $support {
+    lassign [get_property_info $h -list {status validity_status}] status validity
+    puts "SUPPORT_BEFORE $h $status $validity"
+    if {$h eq $obligation || $status ne "proven" || $validity ne "proven"} {
+      error "support $h is not a valid previously proven dependency"
+    }
+  }
+  set selected [linsert $support 0 $obligation]
+  puts "PROOF_SELECTED $selected"
+  set_proven_directive true
+  set result [prove -property $selected -per_property_time_limit_factor 0 \
+    -per_property_time_limit $limit -time_limit $limit]
+  lassign [get_property_info $obligation \
+    -list {status validity_status min_length max_length}] status validity lo hi
+  puts "PROOF_RESULT $obligation $result $status $validity $lo $hi"
+  if {$status ne "proven" || $validity ne "proven"} {
+    error "obligation $obligation not proven; stop this dependency chain"
+  }
+  return $result
+}
+
+assert -name h_local {<local_invariant>}
+assert -name h_summary {<higher_level_invariant>}
+prove_with_support h_local {} $helper_budget
+prove_with_support h_summary {h_local} $helper_budget
+prove_with_support $target {h_local h_summary} $target_budget
+```
+
+An inconclusive result stops sequential theorem reuse along that chain, not all
+further investigation. Classify the result using the refinement flow below;
+do not require failure or SST before accepting a proven first candidate. Do not
+add an assumption merely to make a helper pass.
+
+For an existing assertion, resolve its exact name before using the same template:
 
 ```tcl
 set matches [get_property_list -include {name *uniqueness_inv*}]
 if {[llength $matches] != 1} {error "resolve one exact helper name first"}
 set helper [lindex $matches 0]
-prove -property $helper
-
-if {[get_property_info $helper -list status] ne "proven"} {
-  error "helper was not proven; do not reuse it as a theorem"
-}
-
-set_proven_directive true
-prove -property [linsert $targets 0 $helper]
+prove_with_support $helper $support $helper_budget
 ```
 
-Keep the RTL, reset, and legal environment assumptions identical to the target
-task. Do not add an assumption merely to make the helper prove. Report helper
-and original-target status separately. If the trial fails, classify the result
-using the refinement flow below; do not require failure or SST before accepting
-a proven first candidate. Escalate instead of repeatedly extending the trial
-when it requires many pairwise lemmas or reproduces the target's difficulty.
+### Classification, Evidence, and Selection
+
+| Atom / evidence | Meaning |
+|---|---|
+| `assert -helper -name h {<expr>}` / `assert -set_helper h` | Create a helper / convert a regular assertion to one. Neither proves it nor unconditionally assumes it. |
+| Valid `status proven` under unchanged RTL/reset/environment | Discharged theorem; helper classification alone is not evidence. |
+| `set_proven_directive true` + `prove -property {obligation h}` | Use selected already-proven `h` for a helper or final target; ordinary assertions work too. |
+| `prove -property target -with_helpers` | Include helper assertions; previously declared unproven helpers may also become proof obligations. |
+| `prove -property target -with_proven` | Use all proven assertions in the same task; not an exact dependency whitelist. |
+
+`set_proven_directive` defaults to `true`, but `prove -property obligation` alone
+does **not** select every previously proven assertion. Merely marking a helper
+is not an unsound assumption. The soundness boundary is trusting an unproved
+fact as established, changing its setup, or leaving required obligations open.
+
+Omit `-with_helpers` and `-with_proven` when the selected list must be exact.
+Record before-call statuses, selected names, `IPF036` pending/already-proven
+counts, and final per-property status/validity/bounds. Distinguish newly proven
+results from later calls that only reuse a result. Selection does not establish
+that every support was necessary. Report the original target's own result.
+
+### Tool-Managed Batch Alternative
+
+`-with_helpers` may prove several unresolved helpers in one call. This is also a
+valid proof strategy, not automatically circular reasoning or a false proof.
+Audit which obligations closed together; do not describe the batch as sequential
+proof with only named prior dependencies. For helpers proven during a call,
+reuse by every engine is not guaranteed; a subsequent explicit selection of the
+now-proven support can help.
+
+**Example** (batch proof with loop-generated FIFO tag helpers):
+```tcl
+for {set i 0} {$i < 16} {incr i} {
+  assert -helper -name help_tag_$i \
+    "(id_fifo.fifo_valid\[$i\] && id_fifo.fifo_out\[$i\]\[0\]) |-> \
+     (id_fifo.fifo_out\[$i\]\[75:68\] == v_top.ID)"
+}
+prove -property {top.v_top.ast_has_same_id_on_ID} -time_limit 2m -with_helpers
+```
+
+**Gotchas**:
+- `-with_helpers` is one selection method, not a requirement for explicit-list reuse.
+- `assert -mark_proven helper`: injects externally verified result (soundness depends on external proof)
+- Loop-generated helpers must escape `[` and `]` in Tcl strings
+- If helper dependencies become hard to audit, move the same obligations into
+  `proof_structure` and require the propagated ROOT result.
+
+## Proof Decomposition (AG / CAG)
 
 **Proof structure is a signoff framework** for multi-stage dependencies,
 long-lived reviews, and decomposition experiments. It makes assume-side and
@@ -88,13 +175,13 @@ other word-level datapaths, first look for local algebraic identities:
 ```tcl
 assert -name h_leaf {leaf.sum_in == leaf.sum_out}
 assert -name h_top {top_sum == rtl_sum}
-# Use prove_with_support from "Helper Assertions" below; budgets are task inputs.
+# Use prove_with_support from "Helper Assertions" above; budgets are task inputs.
 prove_with_support h_leaf {} $helper_budget
 prove_with_support h_top {h_leaf} $helper_budget
 prove_with_support target_prop {h_leaf h_top} $target_budget
 ```
-Escalate this helper chain into `proof_structure` when there are multiple
-helper layers or the report must prove the propagated ROOT node.
+Escalate this helper chain into `proof_structure` when its dependencies become
+hard to manage, proofs remain hard despite support, or a ROOT report is required.
 
 **Template** (Assume-Guarantee):
 ```tcl
@@ -158,95 +245,6 @@ proof_structure -create assume_guarantee -from ROOT \
 - `-copy_abstractions all` is required — env constraints must propagate to CAG nodes
 - `::jasper::psu::prove_all ROOT` auto-proves all obligations in the proof tree
 - Local CAG node results are NOT sound; only propagated ROOT is valid for signoff
-
-## Helper Assertions (Lemmas) [JG-specific]
-
-**When to use**: Target property needs intermediate invariants to converge.
-If supporting lemmas are proven but a higher-level lemma or target stalls,
-check actual proof selection before changing its expression or extending time.
-
-> 🔧 **VERSION-SENSITIVE — selection semantics validated on JasperGold
-> 2025.12p002.** Check `help assert`, `help prove`, and
-> `help set_proven_directive` on other releases.
-
-Keep classification, proof evidence, and selected dependencies distinct:
-
-| Atom / evidence | Meaning |
-|---|---|
-| `assert -helper -name h {<expr>}` / `assert -set_helper h` | Create a helper / convert a regular assertion to one. Neither proves it nor unconditionally assumes it. |
-| Valid `status proven` under unchanged RTL/reset/environment | Discharged theorem; helper classification alone is not evidence. |
-| `set_proven_directive true` + `prove -property {target h}` | Use selected already-proven `h` as support; ordinary assertions work too. |
-| `prove -property target -with_helpers` | Include helper assertions; previously declared unproven helpers may also become proof obligations. |
-| `prove -property target -with_proven` | Use all proven assertions in the same task; not an exact dependency whitelist. |
-
-`set_proven_directive` defaults to `true`, but `prove -property target` alone
-does **not** select every previously proven assertion. Merely marking a helper
-is not an unsound assumption. The soundness boundary is trusting an unproved
-fact as established, changing its setup, or leaving required obligations open.
-
-**Explicit proven-support template**: use for a controlled sequential chain.
-Resolve exact names in the same task; retain the same RTL, reset, assumptions,
-and abstractions. Pass the support list to `prove`, not just to a Boolean test
-that enables `-with_helpers`. Set budgets from the task; retain chosen engines.
-
-```tcl
-proc prove_with_support {target support limit} {
-  foreach h $support {
-    lassign [get_property_info $h -list {status validity_status}] status validity
-    puts "SUPPORT_BEFORE $h $status $validity"
-    if {$h eq $target || $status ne "proven" || $validity ne "proven"} {
-      error "support $h is not a valid previously proven dependency"
-    }
-  }
-  set selected [linsert $support 0 $target]
-  puts "PROOF_SELECTED $selected"
-  set_proven_directive true
-  set result [prove -property $selected -per_property_time_limit_factor 0 \
-    -per_property_time_limit $limit -time_limit $limit]
-  lassign [get_property_info $target \
-    -list {status validity_status min_length max_length}] status validity lo hi
-  puts "PROOF_RESULT $target $result $status $validity $lo $hi"
-  if {$status ne "proven" || $validity ne "proven"} {
-    error "target $target not proven; stop this dependency chain"
-  }
-}
-
-assert -name h_local {<local_invariant>}
-assert -name h_summary {<higher_level_invariant>}
-prove_with_support h_local {} $helper_budget
-prove_with_support h_summary {h_local} $helper_budget
-prove_with_support $target {h_local h_summary} $target_budget
-```
-
-Omit `-with_helpers` and `-with_proven` when the selected list must be exact.
-Record the before-call statuses, selected names, `IPF036` pending/already-proven
-counts, and final per-property status/validity/bounds. Distinguish newly proven
-results from a later call that only reuses an already-proven result. Selection
-does not establish that every support was necessary.
-
-**Batch alternative**: `-with_helpers` may prove several unresolved helpers in
-one call. This is not automatically circular reasoning or a false proof, but
-do not describe it as sequential proof with only named prior dependencies.
-Audit which obligations closed together and the original target's own result.
-For helpers proven during a call, reuse by every engine is not guaranteed;
-a subsequent explicit selection of the now-proven support can help.
-
-**Example** (batch proof with loop-generated FIFO tag helpers):
-```tcl
-for {set i 0} {$i < 16} {incr i} {
-  assert -helper -name help_tag_$i \
-    "(id_fifo.fifo_valid\[$i\] && id_fifo.fifo_out\[$i\]\[0\]) |-> \
-     (id_fifo.fifo_out\[$i\]\[75:68\] == v_top.ID)"
-}
-prove -property {top.v_top.ast_has_same_id_on_ID} -time_limit 2m -with_helpers
-```
-
-**Gotchas**:
-- `-with_helpers` is one selection method, not a requirement for explicit-list reuse.
-- `assert -mark_proven helper`: injects externally verified result (soundness depends on external proof)
-- Loop-generated helpers must escape `[` and `]` in Tcl strings
-- If helper dependencies become hard to audit, move the same obligations into
-  `proof_structure` and require the propagated ROOT result.
 
 ## SST-Guided Helper Refinement [JG-specific]
 
@@ -373,8 +371,8 @@ state values, the newly proposed relation, and the new expression. Exclude an
 impossible state family, not just the literal trace values. Prove each revision
 from the unchanged setup; previously proven supporting lemmas may be used only
 with their dependencies disclosed and without circular assumptions. Keep the
-loop bounded and escalate to AG/CAG when the helper graph becomes multi-stage
-or as hard as the target.
+loop bounded and escalate to AG/CAG when dependencies become hard to manage or
+proofs remain as hard as the target despite selected support.
 
 Before leaving this diagnostic route, record either the concrete revised
 assertion/supporting lemma and its proof attempt, or why the evidence did not
@@ -385,20 +383,14 @@ Do not invent a helper merely to satisfy a checklist. A syntax/printing fix,
 unchanged candidate, tool call, or promise to refine is not a refinement result.
 Keep success discovered directly from RTL distinct from trace-driven discovery.
 
-For sequential theorem reuse, apply an explicit status gate and select support:
+Use the same `prove_with_support` procedure above for each revised candidate
+and the final target. `$candidate_support` names its already-proven dependencies;
+use `{}` only when none are selected:
 
 ```tcl
 assert -helper -name h_candidate {<candidate_invariant>}
-prove -property h_candidate
-
-set helper_status [get_property_info h_candidate -list status]
-puts "HELPER_STATUS $helper_status"
-if {$helper_status ne "proven"} {
-  error "candidate is not independently proven; refusing theorem reuse"
-}
-
-set_proven_directive true
-prove -property [list $target h_candidate]
+prove_with_support h_candidate $candidate_support $helper_budget
+prove_with_support $target [linsert $candidate_support 0 h_candidate] $target_budget
 ```
 
 Report any diagnostic trace separately from proof results. A sound completion records:

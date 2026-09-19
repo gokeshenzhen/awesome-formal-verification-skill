@@ -123,13 +123,14 @@ Direct prove result?
 └─ Repeated similar run? ..... ProofMaster may help, but does not replace AG/CAG
 ```
 
-For global invariants over many peer assertions, first determine whether one or
-a few global inductive helpers collapse the dependency. For sequential reuse,
-prove each helper under the same setup, optionally using already-proven support;
-gate on valid `proven` status and select it in the next proof. [JG-specific]
-`assert -set_helper` only classifies the assertion. Use `set_proven_directive true`
-and an explicit `prove -property` list for exact support selection. Alternatively,
-`-with_helpers` may prove several helpers together; disclose the actual selected
+For sequential helper reuse, treat every helper and the final target as an
+obligation with its own selected support. Under the same setup, prove lower-level
+lemmas, then select them when proving the next helper, not only the final target.
+"Independent" does not mean "without already-proven support". Gate sequential
+reuse on valid `proven` status. [JG-specific] `assert -set_helper` only classifies
+the assertion; `set_proven_directive true` plus an explicit `prove -property`
+list selects exact support. A small acyclic chain need not become AG/CAG.
+Alternatively, `-with_helpers` may prove several helpers together; disclose the selected
 set and closed obligations, not a fictitious sequential dependency order. See
 `complexity-management/decomposition.md` → **Helper Assertions** for templates.
 Report the original targets' own results. If no compact helper converges,

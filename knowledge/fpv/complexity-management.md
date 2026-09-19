@@ -10,13 +10,20 @@ Complexity management is the core discipline that determines whether formal proo
 
 ### Post-Baseline Triage [JG-specific]
 
+If relevant support is already proven but a higher-level helper or final target
+stalls, first check that obligation's `prove` selection. Support selected only
+for the final target does not help an earlier helper proof. See
+`complexity-management/decomposition.md` → **Helper Assertions** for the shared
+obligation/support template and the tool-managed batch alternative.
+
 For one invariant-like assertion that remains `undetermined` with no
 reset-reachable CEX, inspect whether it compares state whose relationship is
 established by reset and preserved across updates. A plausible missing relation
 is enough; do not require a finished helper before selecting this branch.
 After excluding reset/setup errors and obvious capacity causes, read
 `complexity-management/decomposition.md` → **SST-Guided Helper Refinement**.
-If a clear compact candidate is available, try its independent proof first;
+If a clear compact candidate is available, try proving it with any selected
+already-proven support first;
 do not require a diagnostic trace before a successful first candidate. Use a
 capped SST diagnostic when no candidate is available, or when an unproven
 candidate plausibly lacks supporting state relations. Inspect any resulting
@@ -25,11 +32,6 @@ reachable-trace analysis. Reserve time for helper proof and the original
 target; if diagnostics are unavailable or uninformative, record that outcome
 and choose the next experiment from evidence, not another blind time extension.
 
-If supporting lemmas are already proven but the next obligation stalls, first
-check whether that `prove` call actually selects them. Helper classification,
-proof status, and dependency reuse are distinct; see **Helper Assertions** in
-`complexity-management/decomposition.md` for exact selection and audit rules.
-
 Honor an explicit bug-search/reachability objective or a concrete reachable
 witness lead through `engine-tuning.md`. "Strongest sound conclusion" and a
 finite budget alone do not override the invariant-diagnostic branch. Record
@@ -37,6 +39,7 @@ the selected route and the baseline evidence that triggered it.
 
 ```
 Property not converging?
+├─ Relevant support already proven? Yes → check this obligation's selection → decomposition.md "Helper Assertions"
 ├─ Invariant undetermined, no reset CEX, missing state relation plausible?
 │                              Yes → post-baseline triage above → decomposition.md "SST-Guided Helper Refinement"
 ├─ Have you profiled? ......... No → formal_profiler → cone-reduction.md "Profiler-Guided Stopat Mining"
@@ -78,9 +81,9 @@ Property not converging?
 5. **`stopat`/cutpoints alone are never sufficient.** Always add legality assumptions (`assume -constant`, `assume -bound 1`, `setup_ndc`, or transition constraints) after cutting a signal.
 6. **Separate helper classification from proven support.** [JG-specific] `assert -set_helper` marks an assertion as a helper; it neither proves it nor unconditionally assumes it. Gate sequential theorem reuse on a valid `proven` result under the same setup, and explicitly select the intended support. Batch helper proof is also valid; report which obligations it actually closes.
 7. **Classify SST traces before interpreting them.** A JasperGold SST trace is an arbitrary-state diagnostic witness, not a reset-reachable CEX or an exposed IC3/PDR CTI; the target remains `undetermined`. Retrieve its `trace_id`, confirm `tag SST`, inspect/export the waveform, and use it only to propose candidate invariants.
-8. **Choose helpers by proof shape, not by property label.** Try a compact local or global helper when one or a few independently provable inductive invariants summarize the missing fact. Switch to `proof_structure` when the helper is as hard as the targets, dependencies are multi-stage, peer obligations have no compact summary, reviewer-audited signoff requires explicit obligations, or a propagated `ROOT` result is required.
+8. **Choose helpers by proof shape, not by property label.** Try compact local or global invariants, including small acyclic chains with proven support. Switch to `proof_structure` when proofs remain hard despite support, dependencies are hard to manage, peer obligations have no compact summary, reviewer-audited signoff requires explicit obligations, or a propagated `ROOT` result is required.
 9. **Separate model setup from proof decomposition.** Create a `SETUP` task first, then derive `ROOT` from it.
-10. **Sound results live on ROOT, not on local AG/CAG nodes.** Only the propagated ROOT status is the verified result.
+10. **For `proof_structure`, sign off ROOT, not just local AG/CAG nodes.** Require the propagated ROOT status; this does not require a ROOT task for ordinary helper proofs.
 11. **Detect overconstraint actively.** Use `check_assumptions -dead_end` and reachability covers to ensure assumptions don't block real behavior.
 12. **Persist reductions to files.** Write generated `stopat` decks to `.tcl` files via `eju_list_to_file` so they survive across sessions.
 
