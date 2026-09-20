@@ -161,3 +161,16 @@ Follow the generated README_RUN.md to seal, check, preflight and manually run A
 then B. The same inputs, GPT-5.5/medium and budget apply to both arms. This tests
 conditional recovery of a known stalled script, not invariant discovery or
 general feedback efficacy. See `epoch_return/DEPENDENCY_PLAN.md`.
+
+## Feedback-presence diagnosis
+
+The `target_feedback_presence_ab` kind compares identical skills and a shared
+unfinished target checkpoint, with or without a separately mounted raw SST
+diagnostic and exhaustive mechanical readback. This is target-guided candidate
+discovery, **not** failed-helper refinement or an old/new skill comparison.
+Preparation is case-specific; keep cases, assignments and raw outcomes local
+under ignored `test/`. Freeze conditions/order before launching. The common
+checkpoint cannot contain diagnostic files, and the control attachment contains
+only its material index. Neither model arm receives proof executables; evaluate
+their proposals later with the same independent, preregistered proof budget.
+Never include evaluator interpretations or reference solutions in attachments.

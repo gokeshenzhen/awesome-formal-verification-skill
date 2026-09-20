@@ -13,14 +13,14 @@ from mcp.client.stdio import stdio_client
 import smoke
 
 
-async def check_packet_values():
+async def check_packet_values(root='/opt/experiment/checkpoint'):
     expected = json.loads(Path('/opt/readback-check.json').read_text())
     config = tomllib.loads(Path('/home/robin/.codex/config.toml').read_text())
     server = config['mcp_servers']['TraceWeave']
     params = StdioServerParameters(command=server['command'], args=server['args'],
                                   cwd=server['cwd'], env=dict(os.environ, **server['env']))
     calls = []
-    wave = '/opt/experiment/checkpoint/diagnostic.vcd'
+    wave = root + '/diagnostic.vcd'
     async with stdio_client(params) as streams:
         async with ClientSession(*streams) as session:
             await session.initialize()
@@ -31,7 +31,7 @@ async def check_packet_values():
                 assert not result.isError, result
                 return json.loads('\n'.join(block.text for block in result.content if block.type == 'text'))
 
-            await call('get_formal_paths', dict(formal_root='/opt/experiment/checkpoint',
+            await call('get_formal_paths', dict(formal_root=root,
                 formal_tool='jaspergold', formal_log='diagnostic.stdout.log', wave_file='diagnostic.vcd'))
             summary = await call('get_waveform_summary', dict(wave_path=wave))
             assert summary['simulation_duration_ps'] == expected['times_ps'][-1]

@@ -14,7 +14,8 @@ import sys
 import tempfile
 import time
 
-from experiment_policy import RECOVERY, END_TO_END, READBACK, DEPENDENCY_REUSE, validate_snapshots, series_spec
+from experiment_policy import (RECOVERY, END_TO_END, READBACK, DEPENDENCY_REUSE,
+                               FEEDBACK, DIAGNOSIS_ONLY, validate_snapshots, series_spec)
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTROL = ROOT / 'control'
@@ -127,7 +128,7 @@ def seal():
     node = Path(shutil.which('node')).resolve()
     runtime_origin = SOURCE.get('traceweave_provenance')
     if runtime_origin:
-        if SOURCE['kind'] != READBACK or tree_manifest(FROZEN / 'traceweave') != runtime_origin['files']:
+        if SOURCE['kind'] not in DIAGNOSIS_ONLY or tree_manifest(FROZEN / 'traceweave') != runtime_origin['files']:
             raise ValueError('Historical runtime does not match its recorded frozen provenance')
         tw_commit = runtime_origin['traceweave_commit']
     else:
@@ -150,10 +151,12 @@ def seal():
                 model='gpt-5.5', reasoning_effort='medium', case=str(CASE),
                 venv=tree_manifest(TW / '.venv'),
                 python_sha256=digest('/usr/local/bin/python3.11'), bwrap_sha256=digest('/usr/bin/bwrap'),
-                jasper_launcher_sha256=None if SOURCE['kind'] == READBACK else digest(JG_ROOT / 'bin/jg'))
-    if SOURCE['kind'] == READBACK:
+                jasper_launcher_sha256=None if SOURCE['kind'] in DIAGNOSIS_ONLY else digest(JG_ROOT / 'bin/jg'))
+    if SOURCE['kind'] in DIAGNOSIS_ONLY:
         pins['readback_policy_sha256'] = digest(CONTROL / 'readback_packet.py')
         pins['materials_index_sha256'] = digest(CONTROL / 'materials_index.md')
+    if SOURCE['kind'] == FEEDBACK:
+        pins['feedback_policy_sha256'] = digest(CONTROL / 'feedback_packet.py')
     PIN.write_text(json.dumps(pins, indent=2) + '\n')
     print(f'Sealed {PIN}; launch will refuse drift')
 
@@ -175,15 +178,21 @@ def verify():
                       ('python_sha256', Path('/usr/local/bin/python3.11'))]:
         if pins[key] != digest(path):
             raise ValueError(f'Pinned executable changed: {key}')
-    if SOURCE['kind'] != READBACK and pins['jasper_launcher_sha256'] != digest(JG_ROOT / 'bin/jg'):
+    if SOURCE['kind'] not in DIAGNOSIS_ONLY and pins['jasper_launcher_sha256'] != digest(JG_ROOT / 'bin/jg'):
         raise ValueError('Pinned Jasper launcher changed')
-    if SOURCE['kind'] == READBACK:
+    if SOURCE['kind'] in DIAGNOSIS_ONLY:
         for field, name in [('readback_policy_sha256', 'readback_packet.py'),
                             ('materials_index_sha256', 'materials_index.md')]:
             if pins[field] != digest(CONTROL / name):
                 raise ValueError('Pinned readback preparation policy changed')
-        from readback_packet import validate_presentations
-        validate_presentations(FROZEN, (CONTROL / 'materials_index.md').read_text(), SOURCE['readback'])
+        if SOURCE['kind'] == READBACK:
+            from readback_packet import validate_presentations
+            validate_presentations(FROZEN, (CONTROL / 'materials_index.md').read_text(), SOURCE['readback'])
+        else:
+            if pins['feedback_policy_sha256'] != digest(CONTROL / 'feedback_packet.py'):
+                raise ValueError('Pinned feedback preparation policy changed')
+            from feedback_packet import validate_presentations
+            validate_presentations(FROZEN, (CONTROL / 'materials_index.md').read_text(), SOURCE['feedback'])
     changed = validate_snapshots(SOURCE['kind'], FROZEN / 'snapshot_a', FROZEN / 'snapshot_b')
     if changed != SOURCE['skill_changed_files']:
         raise ValueError('Skill treatment differs from its declared delta')
@@ -192,7 +201,7 @@ def verify():
         if series != series_spec(series['id'], series['pair_index'], series['pair_count']):
             raise ValueError('Invalid preregistered series/order')
     checkpoint = FROZEN / 'checkpoint'
-    if (SOURCE['kind'] in (RECOVERY, READBACK, DEPENDENCY_REUSE)) != checkpoint.is_dir():
+    if (SOURCE['kind'] in (RECOVERY, READBACK, DEPENDENCY_REUSE, FEEDBACK)) != checkpoint.is_dir():
         raise ValueError('Checkpoint presence must match the experiment kind')
     if checkpoint.exists():
         expected = json.loads((checkpoint / 'MANIFEST.json').read_text())['files']
@@ -228,7 +237,7 @@ def environment():
                TRACEWEAVE_SOURCE_GRAPH_DISK_CACHE_MAX_BYTES='536870912',
                TRACEWEAVE_SOURCE_GRAPH_SEMANTIC_SESSION='1', TRACEWEAVE_TELEMETRY='1',
                TZ='America/Los_Angeles')
-    if SOURCE['kind'] == READBACK:
+    if SOURCE['kind'] in DIAGNOSIS_ONLY:
         for name in ['CDS_LIC_FILE', 'CDS_LICENSE_FILE', 'LM_LICENSE_FILE', 'SNPSLMD_LICENSE_FILE',
                      'Jasper_ROOT', 'VERDI_HOME', 'NOVAS_HOME']:
             env.pop(name, None)
@@ -282,7 +291,7 @@ def command(arm, sandbox_user_dir, work, pins, argv, probes=False):
              '--symlink', '/opt/experiment/runtime/skill_read.py', '/opt/experiment/bin/skill-read',
              '--bind', str(work), '/work',
              '--ro-bind', str(ROOT / 'common/AGENTS.md'), '/work/AGENTS.md']
-    if SOURCE['kind'] == READBACK:
+    if SOURCE['kind'] in DIAGNOSIS_ONLY:
         args += ['--ro-bind', str(FROZEN / f'input_{arm}'), '/opt/experiment/input',
                  '--symlink', '/opt/experiment/runtime/input_read.py', '/opt/experiment/bin/input-read',
                  '--symlink', '/opt/experiment/runtime/proof_disabled.py', '/opt/experiment/bin/jg-run',
@@ -294,7 +303,7 @@ def command(arm, sandbox_user_dir, work, pins, argv, probes=False):
     else:
         args += ['--ro-bind', str(JG_ROOT), str(JG_ROOT), '--ro-bind', str(VERDI), str(VERDI),
                  '--symlink', '/opt/experiment/runtime/jg_run.py', '/opt/experiment/bin/jg-run']
-    if SOURCE['kind'] in (RECOVERY, READBACK, DEPENDENCY_REUSE):
+    if SOURCE['kind'] in (RECOVERY, READBACK, DEPENDENCY_REUSE, FEEDBACK):
         args += ['--ro-bind', str(FROZEN / 'checkpoint'), '/opt/experiment/checkpoint']
     if probes:
         args += ['--ro-bind', str(CONTROL / 'probes'), '/opt/preflight']
@@ -309,13 +318,13 @@ def preflight(arm, pins):
     work = base / 'work'
     work.mkdir()
     user = make_private_state(base / 'state')
-    probe = 'readback_smoke.py' if SOURCE['kind'] == READBACK else 'smoke.py'
+    probe = {READBACK: 'readback_smoke.py', FEEDBACK: 'feedback_smoke.py'}.get(SOURCE['kind'], 'smoke.py')
     args = command(arm, user, work, pins,
                    [str(TW / '.venv/bin/python'), f'/opt/preflight/{probe}'], probes=True)
     with (base / 'stdout.log').open('xb') as log:
         proc = subprocess.Popen(args, env=environment(), stdout=log, stderr=subprocess.STDOUT)
         try:
-            exit_code = proc.wait(timeout=120 if SOURCE['kind'] == READBACK else 90)
+            exit_code = proc.wait(timeout=120 if SOURCE['kind'] in DIAGNOSIS_ONLY else 90)
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait()
@@ -352,6 +361,10 @@ def launch(arm, pins):
         first = SOURCE['readback']['launch_order'][0]
         if arm != first and not (receipt_dir / f'launch_{first}.json').exists():
             raise ValueError(f'Preregistered order requires arm {first} first')
+    if SOURCE['kind'] == FEEDBACK:
+        first = SOURCE['feedback']['launch_order'][0]
+        if arm != first and not (receipt_dir / f'launch_{first}.json').exists():
+            raise ValueError(f'Preregistered order requires arm {first} first')
     if SOURCE['kind'] == DEPENDENCY_REUSE and arm == 'b' and not (receipt_dir / 'launch_a.json').exists():
         raise ValueError('Preregistered order requires arm a first')
     if policy['mode'] == 'manual' and not sys.stdin.isatty():
@@ -364,7 +377,7 @@ def launch(arm, pins):
                environment_sha256=hashlib.sha256(json.dumps(env, sort_keys=True).encode()).hexdigest(),
                private_session_dir=str(user / '.codex'),
                scope=('mount/PID isolation; no proof-tool mounts; network retained for model API'
-                      if SOURCE['kind'] == READBACK else
+                      if SOURCE['kind'] in DIAGNOSIS_ONLY else
                       'mount/PID isolation; network retained for model API and EDA licenses'))
     other = receipt_dir / f'launch_{"b" if arm == "a" else "a"}.json'
     if other.exists():

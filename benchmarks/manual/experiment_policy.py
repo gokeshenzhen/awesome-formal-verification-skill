@@ -8,9 +8,11 @@ RECOVERY = 'helper_recovery_ab'
 END_TO_END = 'helper_end_to_end_ab'
 READBACK = 'diagnostic_readback_ab'
 DEPENDENCY_REUSE = 'proven_dependency_reuse_ab'
+FEEDBACK = 'target_feedback_presence_ab'
+DIAGNOSIS_ONLY = (READBACK, FEEDBACK)
 PREFIXES = {PILOT: 'epoch_return_pilot_', RECOVERY: 'epoch_return_recovery_ab_',
             END_TO_END: 'epoch_return_e2e_ab_', READBACK: 'epoch_return_readback_probe_',
-            DEPENDENCY_REUSE: 'epoch_return_dependency_ab_'}
+            DEPENDENCY_REUSE: 'epoch_return_dependency_ab_', FEEDBACK: 'feedback_presence_'}
 SKILL_DELTA = {'knowledge/fpv/complexity-management/decomposition.md'}
 DEPENDENCY_DELTA = SKILL_DELTA | {'knowledge/fpv/complexity-management.md',
                                  'knowledge/fpv/workflow.md'}
@@ -41,7 +43,7 @@ def validate_snapshots(kind, first, second):
         raise ValueError('Unknown experiment kind')
     left, right = manifest(first), manifest(second)
     changed = {name for name in left.keys() | right.keys() if left.get(name) != right.get(name)}
-    if kind in (PILOT, READBACK):
+    if kind in (PILOT, READBACK, FEEDBACK):
         if changed:
             raise ValueError('This experiment requires identical skill snapshots')
     elif kind == DEPENDENCY_REUSE:
