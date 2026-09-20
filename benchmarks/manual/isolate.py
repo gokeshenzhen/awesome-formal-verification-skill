@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3.11
-"""Prepare/check/launch ONE manual arm. Never invokes an LLM non-interactively."""
+"""Launch one sealed arm; non-interactive execution requires explicit opt-in."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -8,9 +8,11 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 from experiment_policy import RECOVERY, END_TO_END, READBACK, DEPENDENCY_REUSE, validate_snapshots, series_spec
 
@@ -49,7 +51,76 @@ def now():
     return datetime.now(timezone.utc).isoformat()
 
 
+def execution_policy():
+    policy = SOURCE.get('execution', {'mode': 'manual'})
+    if policy == {'mode': 'manual'}:
+        return policy
+    if (set(policy) != {'mode', 'wall_seconds', 'authorization'} or
+            policy['mode'] != 'headless' or
+            type(policy['wall_seconds']) is not int or
+            not 30 <= policy['wall_seconds'] <= 3600 or
+            not isinstance(policy['authorization'], str) or not policy['authorization'].strip()):
+        raise ValueError('Headless execution needs recorded authorization and a 30..3600s wall cap')
+    return policy
+
+
+def model_command(policy):
+    args = ['/opt/codex/bin/codex']
+    if policy['mode'] == 'headless':
+        args += ['exec', '--skip-git-repo-check', '--json', '--color', 'never',
+                 '--output-last-message', '/work/LAST_MESSAGE.md']
+    return args + ['--strict-config', '-C', '/work', '-m', 'gpt-5.5',
+                   '-c', 'model_reasoning_effort="medium"',
+                   '请完整读取 /opt/experiment/common/TASK.md，按其中要求完成 /work 中分配的任务。']
+
+
+def stop_model(proc):
+    """Stop only this launch's process group; bwrap tears down its PID namespace."""
+    if proc.poll() is None:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait(timeout=5)
+
+
+def run_headless(args, env, directory, wall_seconds):
+    """One attempt, no resume/retry/fallback; preserve both streams and usage."""
+    start = time.monotonic()
+    timed_out = False
+    with (directory / 'events.jsonl').open('xb') as out, (directory / 'stderr.log').open('xb') as err:
+        proc = subprocess.Popen(args, env=env, stdin=subprocess.DEVNULL, stdout=out,
+                                stderr=err, start_new_session=True)
+        try:
+            proc.wait(timeout=wall_seconds)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+        finally:
+            stop_model(proc)
+    events = []
+    malformed = False
+    with (directory / 'events.jsonl').open() as stream:
+        for line in stream:
+            try:
+                events.append(json.loads(line))
+            except json.JSONDecodeError:
+                malformed = True
+    completed = [event for event in events if event.get('type') == 'turn.completed']
+    failed = [event for event in events if event.get('type') in ('turn.failed', 'error')]
+    return dict(exit_code=proc.returncode, timed_out=timed_out,
+                wall_seconds=time.monotonic() - start, malformed_events=malformed,
+                session_ids=[e['thread_id'] for e in events if e.get('type') == 'thread.started'],
+                completed_turns=len(completed), usage=[e.get('usage') for e in completed],
+                model_run_completed=(proc.returncode == 0 and not timed_out and
+                                     not malformed and bool(completed) and not failed))
+
+
 def seal():
+    execution_policy()
     if any((CONTROL / 'receipts').glob('launch_*.json')):
         raise ValueError('Cannot reseal after an arm was launched')
     binary = Path(shutil.which('codex')).resolve()
@@ -88,6 +159,7 @@ def seal():
 
 
 def verify():
+    execution_policy()
     pins = json.loads(PIN.read_text())
     for key, path in [('frozen', FROZEN), ('common', ROOT / 'common'),
                       ('runtime', ROOT / 'runtime'), ('probes', CONTROL / 'probes'), ('venv', TW / '.venv'),
@@ -261,6 +333,7 @@ def preflight(arm, pins):
 
 
 def launch(arm, pins):
+    policy = execution_policy()
     receipt_dir = CONTROL / 'receipts'
     prior = json.loads((receipt_dir / f'preflight_{arm}.json').read_text())
     if prior['exit_code'] != 0 or prior['pins_sha256'] != digest(PIN):
@@ -281,11 +354,12 @@ def launch(arm, pins):
             raise ValueError(f'Preregistered order requires arm {first} first')
     if SOURCE['kind'] == DEPENDENCY_REUSE and arm == 'b' and not (receipt_dir / 'launch_a.json').exists():
         raise ValueError('Preregistered order requires arm a first')
-    if not sys.stdin.isatty():
+    if policy['mode'] == 'manual' and not sys.stdin.isatty():
         raise ValueError('Launch the manual arm from a real terminal')
     user = CONTROL / f'private/arm_{arm}/user'
     env = environment()
     row = dict(arm=arm, started_utc=now(), pins_sha256=digest(PIN),
+               execution=policy,
                model='gpt-5.5', effort='medium', internal_cwd='/work', host_output=str(work),
                environment_sha256=hashlib.sha256(json.dumps(env, sort_keys=True).encode()).hexdigest(),
                private_session_dir=str(user / '.codex'),
@@ -302,13 +376,13 @@ def launch(arm, pins):
     make_private_state(user.parent, auth=True)
     shutil.copyfile(ROOT / 'common/AGENTS.md', work / 'AGENTS.md')
     receipt.write_text(json.dumps(row, indent=2) + '\n')
-    prompt = '请完整读取 /opt/experiment/common/TASK.md，按其中要求完成 /work 中分配的任务。'
-    args = command(arm, user, work, pins,
-                   ['/opt/codex/bin/codex', '--strict-config', '-C', '/work',
-                    '-m', 'gpt-5.5', '-c', 'model_reasoning_effort="medium"', prompt])
-    print(f'Launching manual arm {arm}; host outputs: {work}', flush=True)
+    args = command(arm, user, work, pins, model_command(policy))
+    print(f'Launching {policy["mode"]} arm {arm}; host outputs: {work}', flush=True)
     try:
-        row['exit_code'] = subprocess.call(args, env=env)
+        if policy['mode'] == 'headless':
+            row.update(run_headless(args, env, user.parent, policy['wall_seconds']))
+        else:
+            row['exit_code'] = subprocess.call(args, env=env)
     finally:
         row['ended_utc'] = now()
         try:
@@ -319,6 +393,10 @@ def launch(arm, pins):
         # Remove only the throwaway credential copy made by this launcher.
         (user / '.codex/auth.json').unlink(missing_ok=True)
     print(f'Session data preserved: {user / ".codex"}; global skill links were not changed')
+    if policy['mode'] == 'headless' and not row['model_run_completed']:
+        raise ValueError('Headless attempt did not complete; preserve evidence, do not reuse this arm')
+    if not row['inputs_unchanged_at_exit']:
+        raise ValueError('Frozen inputs changed during the run; results are invalid')
 
 
 def main():

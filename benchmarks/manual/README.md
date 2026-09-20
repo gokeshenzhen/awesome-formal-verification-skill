@@ -1,13 +1,32 @@
 # Manual experiment runtime
 
 These utilities meter JasperGold processes, record skill delivery and prepare
-isolated manual sessions. They do not invoke model inference non-interactively,
-select proof techniques, score answers, or automate A/B runs. The user starts
-independent sessions manually inside the experiment's isolation boundary. Keep
-TraceWeave inside that same boundary.
+isolated sessions. Manual launch remains the default. An explicitly authorized,
+preregistered experiment may opt into one bounded `codex exec` attempt per arm;
+the launcher does not select techniques, score answers, retry failures, or
+continue until a favorable result. Keep TraceWeave inside the same boundary.
 
 `runtime/` is the maintained source for **new** frozen experiment copies. Never
 patch an already launched experiment or rewrite its receipts to apply a fix.
+
+## Opt-in non-interactive launch
+
+Only when the user authorizes autonomous model runs, prepare a **new** experiment
+with this additional `control/source.json` field before sealing:
+
+```json
+{"execution": {"mode": "headless", "wall_seconds": 900,
+               "authorization": "User explicitly requested autonomous A/B execution"}}
+```
+
+Preregister the number/order of runs, conditions, proof budgets and outcome
+criteria separately. Seal and preflight as usual, then use `launch.sh a` or `b`.
+No TTY is needed for the opt-in mode. Missing `execution` retains the manual
+TTY requirement. Both modes use the same frozen config, skill aliases, private
+authentication copy and outer mount/PID isolation. Headless mode preserves
+JSONL events, stderr, native transcripts, usage and completion/timeout receipts;
+the disposable credential copy is removed on exit. A model process completing
+is **not** a proof or an evaluation success. Keep every failure and timed-out run.
 
 The caller mounts this directory at `/opt/experiment/runtime`, creates executable
 aliases `jg-run` and `skill-read`, and mounts a read-only
