@@ -258,7 +258,7 @@ prove -task {CAG.1} -assert -engine {N} -time_limit 100s
 ```tcl
 set peer_props {}
 for {set i 0} {$i < $N} {incr i} {
-  lappend peer_props "top.gen[$i].local_invariant"
+  lappend peer_props [format {top.gen[%d].local_invariant} $i]
 }
 proof_structure -init ROOT -from SETUP -copy_all
 proof_structure -create compositional_assume_guarantee \
