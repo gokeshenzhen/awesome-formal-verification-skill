@@ -91,8 +91,8 @@ def stop_group(proc):
             proc.wait(timeout=5)
 
 
-def execute(command, stdout_path, limit, watchdog=10.0, cleanup_grace=2.0):
-    """Capture a whole direct vendor invocation, including startup/cleanup."""
+def execute(command, stdout_path, limit, watchdog=10.0, cleanup_grace=2.0, *, env=None):
+    """Capture a vendor invocation; pass an optional environment without logging it."""
     start = time.monotonic()
     row = dict(command=command, started_utc=timestamp(), limit_seconds=limit)
     reason = None
@@ -100,7 +100,7 @@ def execute(command, stdout_path, limit, watchdog=10.0, cleanup_grace=2.0):
     finished_at = None
     with stdout_path.open('xb') as out:
         proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT,
-                                start_new_session=True)
+                                start_new_session=True, env=env)
         try:
             while proc.poll() is None:
                 elapsed = time.monotonic() - start

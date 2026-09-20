@@ -1,9 +1,11 @@
 """Fast execution-policy tests, independent of models and Jasper licenses."""
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 RUNTIME = Path(__file__).resolve().parents[1] / 'runtime'
 sys.path.insert(0, str(RUNTIME))
@@ -59,6 +61,24 @@ class ReadGate(unittest.TestCase):
 
 
 class Budget(unittest.TestCase):
+    def test_explicit_environment_is_not_in_receipt_or_parent(self):
+        marker = 'JG_REPLAY_ENV_TEST'
+        parent_marker = 'JG_REPLAY_PARENT_TEST'
+        child_value = 'synthetic-child-only-value'
+        child_code = ('import os, sys; '
+                      'print("successfully checked out licenses", flush=True); '
+                      f'sys.exit(0 if os.environ.get({marker!r}) and '
+                      f'{parent_marker!r} not in os.environ else 1)')
+        with patch.dict(os.environ, {parent_marker: 'parent-only'}):
+            before = dict(os.environ)
+            with tempfile.TemporaryDirectory() as directory:
+                row = jg_run.execute([sys.executable, '-c', child_code],
+                    Path(directory) / 'out', 2.0, env={marker: child_value})
+            self.assertEqual(os.environ, before)
+            self.assertTrue(jg_run.run_completed(row))
+            self.assertEqual(row['exit_code'], 0)
+            self.assertNotIn(child_value, json.dumps(row))
+
     def test_post_analysis_cleanup_preserves_vendor_exit(self):
         lines = ['successfully checked out license "jasper_fpv".',
                  '[<embedded>] % INFO (IPL005): Received request to exit from the console.',
