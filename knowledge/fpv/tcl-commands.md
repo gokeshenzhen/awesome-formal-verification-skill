@@ -54,11 +54,12 @@ report -summary -force -result -file proof_summary.rpt
 
 # Per-property status in a script: query field "status", NOT a `-status` switch
 # (`-status` → ERROR ESW087). General form: get_property_info -list <field> <prop>.
-foreach p [get_property_list -silent] {
+foreach p [get_property_list] {
   puts "PROP_STATUS: [get_property_info -list status $p] :: $p"
 }
 ```
 **Gotchas**:
+- Use bare `get_property_list`: it already returns a Tcl list. 🔧 VERSION-SENSITIVE — JasperGold 2025.12p002 rejects `get_property_list -silent` with `ERROR (ESW087)`; do not transfer the design-query switch to this command.
 - `report -file f` without `-force` → `ERROR (EFL012): ... file already exists`.
 - `report -details` and `get_property_info -status` do **not** exist → `ERROR (ESW087): No such switch`. Use `report -summary -result` and `get_property_info -list status`.
 - **Reading an `<assert>:precondition1` auto witness cover as a bug.** JG auto-generates an anti-vacuity witness cover (`<assertion>:precondition1`) on each assertion's antecedent. Under default reset modeling `!rst_n` is held deasserted after the initial reset, so an antecedent guarded by reset never recurs in-trace → the assertion is *vacuously* proven and its witness cover comes back `unreachable` / `unprocessed`. This is a **benign artifact**, not a defect; it does not affect the soundness of the proven assertions or your real functional covers.
@@ -94,7 +95,7 @@ foreach p [get_property_list -silent] {
 | `get_design_info [-list module\|instance\|input\|flop\|register] [-module M] [-property P] -silent` | design / COI queries | JG |
 | `get_signal_info -indexes\|-width <sig> -silent` | signal bit range / width | JG |
 | `report -summary -result -force -file <f>` | dump run summary to file (`-force` mandatory if file exists; no `-details` switch) | JG |
-| `get_property_list -silent` / `get_property_info -list status <prop>` | enumerate properties / read one property's status (field name, not `-status`) | JG |
+| `get_property_list` / `get_property_info -list status <prop>` | enumerate properties / read one property's status (field name, not `-status`) | JG |
 | `tcl_clock` (vs std `clock`); `pid` | Jasper Tcl differences | JG |
 
 For core Tcl commands (`set`, `expr`, `catch`, `proc`, list/string ops, `package require`, …) see `knowledge/shared/tcl-common.md`. For the full FPV run-file command sequence (`clear`, `analyze`, `elaborate`, `clock`, `reset`, `assume`, `assert`, `cover`, `prove`, `report`) see `workflow.md`.

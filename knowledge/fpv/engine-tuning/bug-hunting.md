@@ -178,7 +178,7 @@ until covered/CEX, then re-query it. Rank candidates by endpoint relevance,
 remaining suffix, and source-cone cost; trace length alone is insufficient.
 
 ```tcl
-foreach source [get_property_list -silent] {
+foreach source [get_property_list] {
     set status       [get_property_info -list status $source]
     set trace_id     [get_property_info -list trace_id $source]
     set trace_length [get_property_info -list trace_length $source]
@@ -188,7 +188,7 @@ foreach source [get_property_list -silent] {
 }
 
 set source <covered_or_cex_property>
-if {[lsearch -exact [get_property_list -silent] $source] < 0} {
+if {[lsearch -exact [get_property_list] $source] < 0} {
     error "recreate/load and run the source property in this session"
 }
 set status       [get_property_info -list status $source]
