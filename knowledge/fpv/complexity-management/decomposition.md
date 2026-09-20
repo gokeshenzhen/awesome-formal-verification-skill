@@ -271,7 +271,8 @@ first correct reset/setup errors and identify obvious cone-size causes.
 | No reasonable compact candidate | Diagnose the target with capped SST and inspect its state values |
 | Candidate has a reset-reachable CEX in the unchanged model | Inspect that CEX; correct, weaken, or replace the false candidate |
 | Candidate remains `undetermined`, missing support is plausible | Do not trust it as a theorem; check selection of any already-proven support, then use capped SST/refinement if needed |
-| Candidate is as hard as the target or needs a large dependency graph | Escalate to AG/CAG instead of repeating diagnostics |
+| Local data equality stalls despite proven count/index support | Check successor-source coverage using **Data-Correspondence Strengthening** below |
+| Compact strengthening remains as hard as the target or needs a large dependency graph | Escalate to AG/CAG instead of repeating diagnostics |
 
 `undetermined` does not establish that a candidate is false. A true but
 non-inductive candidate may need a stronger conjunction or separately proven
@@ -292,6 +293,39 @@ with `N=2` for a single-cycle state invariant (one predecessor plus one failing
 state); choose a longer prefix for temporal properties. A trace may be longer
 than `N`. If `N` is omitted, Jasper uses `set_sst_default_trace_length` (default
 `15` in the validated release).
+
+### Data-Correspondence Strengthening
+
+When a selected-entry or output-data equality remains hard after its control
+relations prove, inspect what supplies that data on the **next** transition.
+A head-only fact does not constrain the next stored entry when a pointer moves.
+Another index adjustment or longer proof of that same local fact may not close
+the induction step.
+
+Derive the live-data correspondence from the RTL: validity/ownership, logical
+position, and payload equality. Cover the stored entries and registered handoff
+values that can become successor sources, not just the operand selected in the
+failing cycle. Guard stale/unoccupied locations by validity; do not equate unused
+storage or forbid a legal transfer merely to remove a counterexample. Use the
+trace to identify the missing source, and the reset/update rules to generalize
+the relation beyond the observed values.
+
+Prove range, count and pointer/wrap consistency separately where convenient,
+then select that valid support for the payload obligation. Payload clauses may
+preserve one another as data moves between locations: try a **single conjunction**
+or a tool-managed joint proof instead of requiring every clause to prove alone.
+Discharge the whole conjunction before reuse; never assume the other unproven
+clauses. For small fixed storage, explicit live-position clauses are a reasonable
+trial; for large storage, use a justified symbolic representative, abstraction or
+AG/CAG rather than unbounded enumeration. Keep the original target unchanged.
+
+**Arithmetic model check [JG-specific]**: inspect analysis/proof warnings after
+adding index expressions. On JG 2025.12p002, a non-power-of-two `%` expression in
+a Tcl assertion can emit `WNL033` and be automatically blackboxed; the resulting
+CEX is not automatically feasible in the original model. Where a proven range
+gives `0 <= sum < 2*N`, sized conditional subtraction
+`sum >= N ? sum - N : sum` implements one wrap without that operator. Keep enough
+bits for the sum and prove the range; do not apply this rewrite outside it.
 
 ### Capture the Diagnostic State
 
