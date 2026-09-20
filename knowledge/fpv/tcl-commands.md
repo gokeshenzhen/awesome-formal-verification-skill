@@ -66,9 +66,19 @@ report -summary -force -result -file proof_summary.rpt
 # (`-status` → ERROR ESW087). General form: get_property_info -list <field> <prop>.
 foreach p [get_property_list] {
   puts "PROP_STATUS: [get_property_info -list status $p] :: $p"
+  # Metadata may be absent, especially for unprocessed properties. Query fields
+  # separately so one unavailable bound does not abort the whole report.
+  foreach field {validity_status run_status min_length max_length engine time trace_id} {
+    if {[catch {get_property_info -list $field $p} value]} {
+      puts "PROP_FIELD_UNAVAILABLE property=$p field=$field message={$value}"
+    } else {
+      puts "PROP_FIELD property=$p field=$field value={$value}"
+    }
+  }
 }
 ```
 **Gotchas**:
+- 🔧 VERSION-SENSITIVE — 2025.12p002 can raise `ERROR (ESW103)` for undefined metadata such as `min_length` on an unprocessed assertion. Use the field-by-field pattern for reporting; never invent `0` or `infinite` for missing data. Missing proof-gate fields must still prevent theorem reuse/signoff. A later reporting error does not erase earlier property verdicts, but the script did not complete normally.
 - Use bare `get_property_list`: it already returns a Tcl list. 🔧 VERSION-SENSITIVE — JasperGold 2025.12p002 rejects `get_property_list -silent` with `ERROR (ESW087)`; do not transfer the design-query switch to this command.
 - `report -file f` without `-force` → `ERROR (EFL012): ... file already exists`.
 - `report -details` and `get_property_info -status` do **not** exist → `ERROR (ESW087): No such switch`. Use `report -summary -result` and `get_property_info -list status`.
@@ -84,6 +94,7 @@ foreach p [get_property_list] {
 | `package require Thread`/`tdbc*` in Jasper | Those standard packages aren't shipped | install/import another way or avoid; see `tcl-common.md` |
 | `report -file f` without `-force` (file exists) | `ERROR (EFL012)` aborts the run | `report ... -force -file f` (or `rm -f f` first) |
 | `report -details` / `get_property_info -status` | No such switch → `ERROR (ESW087)` | `report -summary -result`; `get_property_info -list status <prop>` |
+| Bulk-querying bounds for every property, including unprocessed ones | An undefined field can raise `ESW103` and abort the report | Catch individual report-field queries and label unavailable data; retain strict proof gates |
 | Treating `<assert>:precondition1 unreachable` as a defect | It's JG's auto anti-vacuity witness cover on a reset-guarded antecedent | benign — see Reporting subsection |
 
 > For general Tcl anti-patterns (HDL escaping, `catch`, proc return, bare array names) see `knowledge/shared/tcl-common.md`.
