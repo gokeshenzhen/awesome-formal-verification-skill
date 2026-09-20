@@ -16,6 +16,12 @@ for the final target does not help an earlier helper proof. See
 `complexity-management/decomposition.md` → **Helper Assertions** for the shared
 obligation/support template and the tool-managed batch alternative.
 
+When a proposed helper has a reset-reachable CEX, identify which assertion
+failed. For a helper-repair task, read `complexity-management/decomposition.md`
+and use its candidate-CEX branch to inspect and revise the relation. This trace
+refutes the candidate, not necessarily the original design property; it is not
+by itself a reason to switch the task to bug hunting.
+
 For one invariant-like assertion that remains `undetermined` with no
 reset-reachable CEX, inspect whether it compares state whose relationship is
 established by reset and preserved across updates. A plausible missing relation
@@ -33,13 +39,14 @@ target; if diagnostics are unavailable or uninformative, record that outcome
 and choose the next experiment from evidence, not another blind time extension.
 
 Honor an explicit bug-search/reachability objective or a concrete reachable
-witness lead through `engine-tuning.md`. "Strongest sound conclusion" and a
-finite budget alone do not override the invariant-diagnostic branch. Record
+witness lead for that objective through `engine-tuning.md`. "Strongest sound
+conclusion" and a finite budget alone do not override the invariant-diagnostic branch. Record
 the selected route and the baseline evidence that triggered it.
 
 ```
 Property not converging?
 ├─ Relevant support already proven? Yes → check this obligation's selection → decomposition.md "Helper Assertions"
+├─ Repairing a proposed helper with a reset CEX? → decomposition.md candidate-CEX branch
 ├─ Invariant undetermined, no reset CEX, missing state relation plausible?
 │                              Yes → post-baseline triage above → decomposition.md "SST-Guided Helper Refinement"
 ├─ Have you profiled? ......... No → formal_profiler → cone-reduction.md "Profiler-Guided Stopat Mining"
@@ -102,6 +109,7 @@ Property not converging?
 | Running `prove -sst` without reading its trace | The agent sees metadata, not the missing state relation | Query `trace_id`, open the trace, and export/read its waveform |
 | Requiring SST before trying a clear compact helper | Adds work without establishing a missing fact | Independently prove the candidate first; diagnose only when needed |
 | Selecting DBH solely from "strongest conclusion" or a finite budget | Skips diagnosis of a plausible missing state relation | Apply post-baseline triage before ordinary deepening or Hunt |
+| Routing a helper-repair task to DBH just because its candidate has a CEX | Confuses a false candidate with a design-bug lead | Inspect the failed obligation; use the candidate-CEX repair branch |
 | CAG local node result as signoff | Not sound | Use propagated ROOT result only |
 | Overconstraints on baseline task | Masks real bugs | Clone: `task -create oc -source_task baseline -copy_all` |
 | Proving all IDs simultaneously | State explosion | One stable symbolic `chosen_id` |

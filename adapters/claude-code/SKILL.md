@@ -55,10 +55,15 @@ next run. A request for the "strongest sound conclusion" or a finite budget
 alone does not select bug hunting.
 
 1. **Explicit bug-search / reachability objective, or a concrete witness lead**
-   (known failure window or a relevant reset-reachable source trace): read
+   for the design property being investigated (not merely a disproved proposed
+   helper): read
    `knowledge/fpv/engine-tuning.md` and its `engine-tuning/bug-hunting.md` leaf.
    Apply the leaf's activation and `DBH_DECISION` gates.
-2. **One invariant-like assertion remains `undetermined`, no reset-reachable
+2. **Repairing a proposed helper with a reset-reachable CEX**: read
+   `knowledge/fpv/complexity-management.md`, then
+   `knowledge/fpv/complexity-management/decomposition.md` first. Use its
+   candidate-CEX branch; the presence of this trace alone does not select DBH.
+3. **One invariant-like assertion remains `undetermined`, no reset-reachable
    CEX, and a missing state relation is plausible** (for example, a comparison
    between registers updated on different paths): read
    `knowledge/fpv/complexity-management.md`, then
@@ -67,7 +72,7 @@ alone does not select bug hunting.
    before another ordinary proof-time extension or a DBH detour. The exact
    helper need not already be known to select this route; reading the diagnostic
    recipe does not require executing it when a compact candidate is available.
-3. **Other stalled proofs**: read `knowledge/fpv/complexity-management.md` for
+4. **Other stalled proofs**: read `knowledge/fpv/complexity-management.md` for
    proof-shape/capacity symptoms; read `knowledge/fpv/engine-tuning.md` for
    engine selection. Select DBH only when the investigation calls for reachable
    witnesses, not solely because status is `undetermined`.
@@ -89,6 +94,7 @@ choice; the decomposition decision tree selects a proven compact helper or
 - "Help me write an assertion for FIFO overflow" → Read `property-writing.md` + `sva-reference.md`
 - "My proof is running forever" → Read `complexity-management.md` + `engine-tuning.md`
 - "One state invariant is undetermined, no CEX; find the strongest sound conclusion" → Read `complexity-management.md` + `complexity-management/decomposition.md` first when a missing state relation is plausible
+- "A proposed helper has a CEX; repair the helper" → Read `complexity-management.md` + `complexity-management/decomposition.md`, not bug hunting solely because a trace exists
 - "Set up a JasperGold FPV run" → Read `workflow.md` + `tcl-commands.md` + `jaspergold/`
 - "414 assertions, 412 undetermined, no CEX" → Read `workflow.md` + `complexity-management.md` + `complexity-management/decomposition.md`
 - "Prove no duplicates across many FIFOs" → Read `complexity-management.md` + `complexity-management/decomposition.md`
