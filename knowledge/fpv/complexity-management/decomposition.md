@@ -447,14 +447,14 @@ Tcl dictionary. Without `-clear`, another `prove -sst` can still report an old
 attached trace; inspect the new result and metadata before calling it new feedback.
 Invalidating an SST is not proof of the candidate or target; retain normal proof gates.
 
-Before leaving this diagnostic route, record either the concrete revised
-assertion/supporting lemma and its proof attempt, or why the evidence did not
-support one (missing samples, unresolved update, uninformative trace, or budget
-limit). Complete a bounded evidence-linked trial when a plausible relation is
-available; do not substitute an engine change for that trial without a reason.
-Do not invent a helper merely to satisfy a checklist. A syntax/printing fix,
-unchanged candidate, tool call, or promise to refine is not a refinement result.
-Keep success discovered directly from RTL distinct from trace-driven discovery.
+**Budget trigger**: if proven support excludes one SST but proof still stalls, try a short
+follow-up `prove -sst` under accumulated proven support before another full ordinary-proof
+timeout. Archive/clear invalid trace associations first; new states may suggest another helper.
+This optional triage need not eliminate every SST. Reserve time for normal reset-based proof.
+
+Use informative feedback for a bounded evidence-linked trial; if none is justified or budget
+is exhausted, report that instead. Syntax fixes, unchanged retries and promises are not refinement.
+Distinguish RTL-only discovery from trace-driven revision; do not invent helpers for a checklist.
 
 Use the same `prove_with_support` procedure above for each revised candidate
 and the final target. `$candidate_support` names its already-proven dependencies;
