@@ -297,19 +297,17 @@ proof_structure -create assume_guarantee -from ROOT \
 ## SST-Guided Helper Refinement [JG-specific]
 
 > 🔧 **VERSION-SENSITIVE — validated on JasperGold 2025.12p002.** Recheck
-> `help prove` and `help visualize` before standardizing this flow on another
+> `help prove`, `help sst`, and `help visualize` before standardizing this flow on another
 > release.
 >
 > ⚠️ **NEEDS VALIDATION — command/trace semantics are tool-validated; a successful
 > first candidate or an SST call alone does not validate refinement efficacy.**
 
-**Trigger**: Use this diagnostic flow when an invariant-like assertion remains
-`undetermined` after a sane direct proof, no reset-reachable CEX exists, and a
-missing relation among state variables is plausible. Typical signals are a deep
-antecedent, slowly growing BMC bound, or a target that looks true only because
-of history not stated in the property. SST also helps bypass irrelevant
-initialization prefixes. Do not use it as a generic response to every timeout;
-first correct reset/setup errors and identify obvious cone-size causes.
+**Trigger**: Use SST when an invariant-like assertion stays `undetermined`, no
+reset-reachable CEX exists, and a missing state relation is plausible (deep
+antecedent, slow BMC progress, or unstated history). SST can bypass irrelevant
+initialization prefixes. First correct reset/setup errors and inspect cone size;
+do not use it for every timeout.
 
 ### Choose the Entry Point
 
@@ -317,6 +315,7 @@ first correct reset/setup errors and identify obvious cone-size causes.
 |---|---|
 | Clear compact candidate from RTL | Independently prove it with a capped budget; skip SST if it proves |
 | No reasonable compact candidate | Diagnose the target with capped SST and inspect its state values |
+| Diagnostic identifies a small state cluster, but no clear relation | Try capped `sst -generate -no_helper`; independently prove any generated candidates |
 | Candidate has a reset-reachable CEX in the unchanged model | Inspect that CEX; correct, weaken, or replace the false candidate |
 | Candidate remains `undetermined`, missing support is plausible | Do not trust it as a theorem; check selection of any already-proven support, then use capped SST/refinement if needed |
 | Local data equality stalls despite proven count/index support | Use the **Data-Correspondence Strengthening** section; reserve a structural trial before unchanged retries |
@@ -408,6 +407,23 @@ hypothesis to prove, not permission to constrain the environment. Prefer
 range, phase/order, mutual-exclusion, correlation, and conservation relations
 over helpers that restate the target or ban literal trace values.
 
+### Tool-Assisted Candidate Generation
+
+When the transition suggests a relation over a **small set of state signals**,
+but its expression is unclear, try a capped search instead of guessing more
+formulas. Avoid indiscriminately enumerating wide payloads or whole memories.
+
+```tcl
+set generated [sst -generate -signals {<state_signals>} -name generated_relation \
+  -file /absolute/path/generated_values.dat -time_limit <budget> -no_helper -decompose]
+puts "SST_GENERATED $generated"
+```
+
+Inspect returned `properties` using `get_property_info -list expression`.
+`-decompose` requests smaller clauses; `-no_helper` leaves candidates unmarked.
+Generation is **not proof**: prove under unchanged reset/environment, separately
+or as an audited batch, before reuse. No candidates is an unresolved search.
+
 ### Refine, Prove, Then Reuse
 
 Declare each candidate as an assertion and prove it from the same RTL,
@@ -422,6 +438,14 @@ from the unchanged setup; previously proven supporting lemmas may be used only
 with their dependencies disclosed and without circular assumptions. Keep the
 loop bounded and escalate to AG/CAG when dependencies become hard to manage or
 proofs remain as hard as the target despite selected support.
+
+After valid proven helpers are enabled, check whether they exclude the archived
+diagnostic with `sst -check -property $target -trace_id $trace_id`. Preserve the
+raw result and original waveform before optionally adding `-clear` to remove
+invalid trace associations. 🔧 2025.12p002 can return an outer list, not a direct
+Tcl dictionary. Without `-clear`, another `prove -sst` can still report an old
+attached trace; inspect the new result and metadata before calling it new feedback.
+Invalidating an SST is not proof of the candidate or target; retain normal proof gates.
 
 Before leaving this diagnostic route, record either the concrete revised
 assertion/supporting lemma and its proof attempt, or why the evidence did not
