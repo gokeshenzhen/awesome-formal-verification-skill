@@ -159,12 +159,24 @@ the remaining budget on the unchanged helper or target. SST can inform this
 trial; it is not a prerequisite when RTL already exposes the missing source.
 
 Derive the live-data correspondence from the RTL: validity/ownership, logical
-position, and payload equality. Cover the stored entries and registered handoff
-values that can become successor sources, not just the operand selected in the
-failing cycle. Guard stale/unoccupied locations by validity; do not equate unused
-storage or forbid a legal transfer merely to remove a counterexample. Use the
-trace to identify the missing source, and the reset/update rules to generalize
-the relation beyond the observed values.
+position, and payload equality. Within the bounded structural trial, **follow
+load sources**, not only storage indices:
+
+- Substitute each covered location's RTL next-state assignment into its proposed
+  equality, alongside the reference-model update. Check hold, load, move and
+  invalidation branches under their actual guards.
+- If a load takes its payload from another stored value or registered handoff,
+  add that source's guarded data correspondence and inspect its updates too.
+  Continue until sources are covered, share the same legal input/reference update,
+  or have valid proven support; prove mutually preserving clauses together.
+- Enumerating every slot of one array or proving its count/index facts does not
+  establish the payload of a later write into that array. A source left with only
+  control facts still needs a data relation or an explicit reason none is needed.
+
+Guard stale/unoccupied locations by validity; do not equate unused storage or
+forbid a legal transfer merely to remove a counterexample. Use the trace to locate
+the gap and reset/update rules to generalize beyond the observed values. This is
+a candidate-construction method, not a substitute for proving the result.
 
 Prove range, count and pointer/wrap consistency separately where convenient,
 then select that valid support for the payload obligation. Payload clauses may
