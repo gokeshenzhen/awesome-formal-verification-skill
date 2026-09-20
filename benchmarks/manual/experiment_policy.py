@@ -9,13 +9,16 @@ END_TO_END = 'helper_end_to_end_ab'
 READBACK = 'diagnostic_readback_ab'
 DEPENDENCY_REUSE = 'proven_dependency_reuse_ab'
 FEEDBACK = 'target_feedback_presence_ab'
+HELPER_ROUTING = 'helper_failure_routing_ab'
 DIAGNOSIS_ONLY = (READBACK, FEEDBACK)
 PREFIXES = {PILOT: 'epoch_return_pilot_', RECOVERY: 'epoch_return_recovery_ab_',
             END_TO_END: 'epoch_return_e2e_ab_', READBACK: 'epoch_return_readback_probe_',
-            DEPENDENCY_REUSE: 'epoch_return_dependency_ab_', FEEDBACK: 'feedback_presence_'}
+            DEPENDENCY_REUSE: 'epoch_return_dependency_ab_', FEEDBACK: 'feedback_presence_',
+            HELPER_ROUTING: 'helper_routing_'}
 SKILL_DELTA = {'knowledge/fpv/complexity-management/decomposition.md'}
 DEPENDENCY_DELTA = SKILL_DELTA | {'knowledge/fpv/complexity-management.md',
                                  'knowledge/fpv/workflow.md'}
+ROUTING_DELTA = {'adapters/claude-code/SKILL.md', 'knowledge/fpv/complexity-management.md'}
 
 
 def series_spec(prefix, index, count):
@@ -49,6 +52,9 @@ def validate_snapshots(kind, first, second):
     elif kind == DEPENDENCY_REUSE:
         if changed != DEPENDENCY_DELTA or left.keys() != right.keys():
             raise ValueError('Dependency comparison must change exactly the index, decomposition leaf and workflow')
+    elif kind == HELPER_ROUTING:
+        if changed != ROUTING_DELTA or left.keys() != right.keys():
+            raise ValueError('Helper-routing comparison must change exactly the router and complexity index')
     elif changed != SKILL_DELTA or left.keys() != right.keys():
         raise ValueError('Comparison must change only the existing decomposition leaf')
     return sorted(changed)

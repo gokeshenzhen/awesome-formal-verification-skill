@@ -174,3 +174,15 @@ checkpoint cannot contain diagnostic files, and the control attachment contains
 only its material index. Neither model arm receives proof executables; evaluate
 their proposals later with the same independent, preregistered proof budget.
 Never include evaluator interpretations or reference solutions in attachments.
+
+## Failed-helper routing comparison
+
+The `helper_failure_routing_ab` kind isolates exactly the skill router and
+complexity-index delta. Keep the same failed candidate, raw reachable CEX,
+repair request and proof budget in both arms; freeze these shared inputs under
+`common/` without evaluator interpretations. Preregister a fixed series/order
+as for end-to-end comparisons. This is conditional repair, not neutral
+invariant discovery. Score route selection, actual candidate revision, valid
+helper proof and original-target closure separately; reading the intended
+module alone is not a proof success. Other comparison kinds retain their
+original, narrower allowed deltas.

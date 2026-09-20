@@ -14,7 +14,7 @@ import sys
 import tempfile
 import time
 
-from experiment_policy import (RECOVERY, END_TO_END, READBACK, DEPENDENCY_REUSE,
+from experiment_policy import (RECOVERY, END_TO_END, READBACK, DEPENDENCY_REUSE, HELPER_ROUTING,
                                FEEDBACK, DIAGNOSIS_ONLY, validate_snapshots, series_spec)
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -196,7 +196,7 @@ def verify():
     changed = validate_snapshots(SOURCE['kind'], FROZEN / 'snapshot_a', FROZEN / 'snapshot_b')
     if changed != SOURCE['skill_changed_files']:
         raise ValueError('Skill treatment differs from its declared delta')
-    if SOURCE['kind'] == END_TO_END:
+    if SOURCE['kind'] in (END_TO_END, HELPER_ROUTING):
         series = SOURCE['series']
         if series != series_spec(series['id'], series['pair_index'], series['pair_count']):
             raise ValueError('Invalid preregistered series/order')
@@ -353,7 +353,7 @@ def launch(arm, pins):
     receipt = receipt_dir / f'launch_{arm}.json'
     if receipt.exists():
         raise ValueError('Arm was already launched; do not reuse the run')
-    if SOURCE['kind'] == END_TO_END:
+    if SOURCE['kind'] in (END_TO_END, HELPER_ROUTING):
         first = SOURCE['series']['launch_order'][0]
         if arm != first and not (receipt_dir / f'launch_{first}.json').exists():
             raise ValueError(f'Preregistered order requires arm {first} first')
