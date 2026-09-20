@@ -27,15 +27,33 @@ def license_checked_out(data):
     return b'successfully checked out license' in data
 
 
+def analysis_exit_code(data):
+    """Read an ordered, complete vendor exit sequence, including error exits.
+
+    Exact lines exclude echoed commands/comments. Missing or inconsistent
+    statuses are not enough to authorize leftover-process cleanup.
+    """
+    requested = False
+    tcl_code = None
+    code = None
+    for line in data.splitlines():
+        if re.fullmatch(
+                rb'(?:(?:\[[^\]\r\n]+\] )?% )?INFO \(IPL005\): Received request to exit from the console\.', line):
+            requested, tcl_code, code = True, None, None
+        tcl = re.fullmatch(rb'INFO \(IPL015\): The Tcl-thread exited with status (-?\d+)\.', line)
+        if tcl:
+            tcl_code = int(tcl[1]) if requested else None
+            code = None
+        analysis = re.fullmatch(rb'INFO \(IPL016\): Exiting the analysis session with status (-?\d+)\.', line)
+        if analysis:
+            reported = int(analysis[1])
+            code = reported if requested and tcl_code == reported else None
+    return code
+
+
 def analysis_finished(data):
-    lines = data.splitlines()
-    exit_requested = any(re.fullmatch(
-        rb'(?:(?:\[[^\]\r\n]+\] )?% )?INFO \(IPL005\): Received request to exit from the console\.', line)
-        for line in lines)
-    return exit_requested and all(marker in lines for marker in [
-        b'INFO (IPL015): The Tcl-thread exited with status 0.',
-        b'INFO (IPL016): Exiting the analysis session with status 0.',
-    ])
+    """Retain the original success-only meaning for existing receipts/readers."""
+    return analysis_exit_code(data) == 0
 
 
 def load_case_config(path=CONFIG):
@@ -51,9 +69,12 @@ def load_case_config(path=CONFIG):
 
 
 def run_completed(row):
+    code = row.get('analysis_exit_code')
+    if code is not None and code != 0:
+        return False
     return row['license_checkout'] and (
         (row['exit_code'] == 0 and row['stopped_reason'] is None) or
-        (row.get('analysis_finished') and row['stopped_reason'] == 'post_analysis_exit_cleanup'))
+        (code == 0 and row['stopped_reason'] == 'post_analysis_exit_cleanup'))
 
 
 def timestamp():
@@ -86,7 +107,9 @@ def execute(command, stdout_path, limit, watchdog=10.0, cleanup_grace=2.0):
                 output = stdout_path.read_bytes()
                 if not checked_out:
                     checked_out = license_checked_out(output)
-                if finished_at is None and analysis_finished(output):
+                if analysis_exit_code(output) is None:
+                    finished_at = None
+                elif finished_at is None:
                     finished_at = elapsed
                 if elapsed >= limit:
                     reason = 'wall_budget_exhausted'
@@ -107,10 +130,12 @@ def execute(command, stdout_path, limit, watchdog=10.0, cleanup_grace=2.0):
         except BaseException:
             stop_group(proc)
             raise
-    checked_out |= license_checked_out(stdout_path.read_bytes())
+    output = stdout_path.read_bytes()
+    checked_out |= license_checked_out(output)
+    code = analysis_exit_code(output)
     row.update(ended_utc=timestamp(), wall_seconds=time.monotonic() - start,
                exit_code=proc.returncode, license_checkout=checked_out, stopped_reason=reason,
-               analysis_finished=analysis_finished(stdout_path.read_bytes()))
+               analysis_exit_code=code, analysis_finished=(code == 0))
     return row
 
 
@@ -171,8 +196,9 @@ def main():
         print(json.dumps(row, indent=2))
         print(f'RAW_STDOUT {out}')
         if row['stopped_reason'] == 'post_analysis_exit_cleanup':
-            print('JG_CLEANUP_NOTICE: analysis/Tcl exited normally; leftover process was terminated. '
-                  'Preserve the vendor exit code and count all cleanup wall time; this is not a property verdict.')
+            print(f'JG_CLEANUP_NOTICE: analysis/Tcl exited with status {row["analysis_exit_code"]}; '
+                  'leftover process was terminated. Preserve both exit codes and count all cleanup wall time; '
+                  'a nonzero analysis status remains a failed run, not a property verdict.')
         if not run_completed(row) or (args.phase == 'baseline' and not row['valid_baseline']):
             raise SystemExit(2)
         raise SystemExit(0)

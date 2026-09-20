@@ -119,17 +119,37 @@ class AnalysisExit(unittest.TestCase):
                 self.assertTrue(jg_run.analysis_finished(self.log(prefix)))
 
     def test_nonzero_tcl_or_analysis_exit(self):
-        self.assertFalse(jg_run.analysis_finished(self.log(tcl=self.TCL_OK.replace(b'0.', b'1.'))))
-        self.assertFalse(jg_run.analysis_finished(self.log(analysis=self.ANALYSIS_OK.replace(b'0.', b'1.'))))
+        for output in (self.log(tcl=self.TCL_OK.replace(b'0.', b'1.')),
+                       self.log(analysis=self.ANALYSIS_OK.replace(b'0.', b'1.'))):
+            self.assertFalse(jg_run.analysis_finished(output))
+            self.assertIsNone(jg_run.analysis_exit_code(output))
+
+    def test_complete_error_exit_is_not_success(self):
+        for code in (1, 2, 255):
+            output = self.log().replace(b'status 0.', f'status {code}.'.encode())
+            self.assertEqual(jg_run.analysis_exit_code(output), code)
+            self.assertFalse(jg_run.analysis_finished(output))
+
+    def test_exit_markers_must_be_in_order(self):
+        request, tcl, analysis = self.log().splitlines()
+        for lines in ((tcl, request, analysis), (request, analysis, tcl),
+                      (analysis, request, tcl), (analysis, tcl, request),
+                      (tcl, analysis, request)):
+            self.assertIsNone(jg_run.analysis_exit_code(b'\n'.join(lines)))
 
     def test_all_three_markers_required(self):
         lines = self.log().splitlines()
         for index in range(3):
-            self.assertFalse(jg_run.analysis_finished(b'\n'.join(lines[:index] + lines[index + 1:])))
+            output = b'\n'.join(lines[:index] + lines[index + 1:])
+            self.assertFalse(jg_run.analysis_finished(output))
+            self.assertIsNone(jg_run.analysis_exit_code(output))
 
     def test_echoed_text_does_not_match(self):
         for prefix in (b'puts "', b'# ', b'example: ', b'% puts '):
-            self.assertFalse(jg_run.analysis_finished(self.log(prefix)))
+            for index in range(3):
+                lines = self.log().splitlines()
+                lines[index] = prefix + lines[index]
+                self.assertIsNone(jg_run.analysis_exit_code(b'\n'.join(lines)))
 
     def test_top_level_help_process_is_cleaned_up(self):
         output = b'successfully checked out license "jasper_fpv".\n' + self.log(b'% ')
@@ -138,10 +158,40 @@ class AnalysisExit(unittest.TestCase):
                 f'import time; print({output.decode()!r}, flush=True); time.sleep(5)'],
                 Path(directory) / 'out', 2.0, cleanup_grace=0.1)
             self.assertTrue(row['analysis_finished'])
+            self.assertEqual(row['analysis_exit_code'], 0)
             self.assertEqual(row['stopped_reason'], 'post_analysis_exit_cleanup')
             self.assertTrue(jg_run.run_completed(row))
             self.assertNotEqual(row['exit_code'], 0)
             self.assertGreater(row['wall_seconds'], 0)
+
+    def test_error_exit_is_cleaned_up_but_stays_failed(self):
+        output = b'successfully checked out license "jasper_fpv".\n' + self.log(b'% ').replace(
+            b'status 0.', b'status 1.')
+        with tempfile.TemporaryDirectory() as directory:
+            row = jg_run.execute([sys.executable, '-c',
+                f'import time; print({output.decode()!r}, flush=True); time.sleep(5)'],
+                Path(directory) / 'out', 2.0, cleanup_grace=0.1)
+            self.assertEqual(row['analysis_exit_code'], 1)
+            self.assertFalse(row['analysis_finished'])
+            self.assertEqual(row['stopped_reason'], 'post_analysis_exit_cleanup')
+            self.assertFalse(jg_run.run_completed(row))
+            self.assertNotEqual(row['exit_code'], 0)
+            self.assertLess(row['wall_seconds'], row['limit_seconds'])
+            row['phase'] = 'run'
+            self.assertAlmostEqual(jg_run.remaining([row]), jg_run.BUDGET - row['wall_seconds'])
+
+    def test_natural_process_exit_cannot_hide_analysis_error(self):
+        output = b'successfully checked out license "jasper_fpv".\n' + self.log().replace(
+            b'status 0.', b'status 1.')
+        for outer_code in (0, 1):
+            with self.subTest(outer_code=outer_code), tempfile.TemporaryDirectory() as directory:
+                row = jg_run.execute([sys.executable, '-c',
+                    f'import sys; print({output.decode()!r}, flush=True); sys.exit({outer_code})'],
+                    Path(directory) / 'out', 2.0)
+                self.assertEqual(row['analysis_exit_code'], 1)
+                self.assertEqual(row['exit_code'], outer_code)
+                self.assertIsNone(row['stopped_reason'])
+                self.assertFalse(jg_run.run_completed(row))
 
     def test_partial_exit_does_not_trigger_cleanup(self):
         output = b'successfully checked out license "jasper_fpv".\n' + self.REQUEST
@@ -150,12 +200,14 @@ class AnalysisExit(unittest.TestCase):
                 f'import time; print({output.decode()!r}, flush=True); time.sleep(5)'],
                 Path(directory) / 'out', 0.3, cleanup_grace=0.05)
             self.assertFalse(row['analysis_finished'])
+            self.assertIsNone(row['analysis_exit_code'])
             self.assertEqual(row['stopped_reason'], 'wall_budget_exhausted')
             self.assertFalse(jg_run.run_completed(row))
 
     def test_cleanup_cannot_override_missing_license(self):
         self.assertFalse(jg_run.run_completed(dict(license_checkout=False,
-            exit_code=-15, analysis_finished=True, stopped_reason='post_analysis_exit_cleanup')))
+            exit_code=-15, analysis_exit_code=0, analysis_finished=True,
+            stopped_reason='post_analysis_exit_cleanup')))
 
 
 class CaseConfig(unittest.TestCase):

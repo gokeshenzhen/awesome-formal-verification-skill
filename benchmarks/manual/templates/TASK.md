@@ -42,11 +42,12 @@ each process to the remainder, records start/exit/elapsed time, and stops a
 launch that does not check out licenses promptly. If a wrapper check fails,
 report it; do not bypass it with an absolute vendor path or rewrite the ledger.
 
-The installed JG sometimes leaves its process alive after reporting a normal
-Tcl/analysis exit. The wrapper may then perform `post_analysis_exit_cleanup`,
-but only after the console exit request and both normal-exit messages. Its
-receipt preserves the real vendor exit code and counts cleanup time. Disclose
-this separately; it is neither a property verdict nor evidence of a design bug.
+The installed JG sometimes leaves its process alive after reporting Tcl/analysis
+exit. After a console exit request and matching Tcl/analysis exit statuses, the
+wrapper may perform `post_analysis_exit_cleanup`, including on error exits.
+Receipts preserve the outer process `exit_code` and inner `analysis_exit_code`;
+a nonzero analysis status remains a failed run. Cleanup time still counts.
+Disclose cleanup separately; it is not a property verdict or evidence of a design bug.
 
 Preserve each raw JG project and its `*.stdout.log` and `*.run.json` sidecars.
 Do not modify the RTL, P0, or baseline. Do not remove legal input behavior or

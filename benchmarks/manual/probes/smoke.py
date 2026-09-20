@@ -231,10 +231,21 @@ def main():
     save('jg_preflight.json', row)
     assert run_completed(row), row
     output = (WORK / 'jg.stdout.log').read_text()
+    assert 'ENVIRONMENT_PROPERTY_LIST_OK' in output.splitlines()
     assert 'ENVIRONMENT_ASSERT_STATUS proven' in output
     assert 'ENVIRONMENT_COVER_STATUS covered' in output
+    error_row = execute([JG, '-fpv', '-batch', '-proj', '/work/jg_error_project',
+                         '-tcl', '/opt/preflight/error_exit.tcl'],
+                        WORK / 'jg_error.stdout.log', limit=20.0)
+    save('jg_error_preflight.json', error_row)
+    assert error_row['license_checkout'], error_row
+    assert error_row['analysis_exit_code'] == 1 and not error_row['analysis_finished'], error_row
+    assert not run_completed(error_row), error_row
+    assert error_row['stopped_reason'] in (None, 'post_analysis_exit_cleanup'), error_row
+    assert 'ENVIRONMENT_ERROR_CAUGHT ENVIRONMENT_EXPECTED_ERROR' in (
+        WORK / 'jg_error.stdout.log').read_text().splitlines()
     asyncio.run(probe_mcp())
-    print('PREFLIGHT PASS: isolated files; immutable inputs; Codex config; JG license/proof/cover; stdio MCP values and denied cross-reads')
+    print('PREFLIGHT PASS: isolated files; immutable inputs; Codex config; JG license/query/proof/cover and error exit; stdio MCP values and denied cross-reads')
 
 
 if __name__ == '__main__':

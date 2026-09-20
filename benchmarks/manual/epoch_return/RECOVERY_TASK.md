@@ -51,9 +51,10 @@ Do not bypass the wrapper, rewrite receipts, or invoke the vendor executable
 directly. Report wrapper failures rather than evading them.
 
 Preserve raw projects and their stdout/process receipts. A wrapper
-`post_analysis_exit_cleanup` after normal Tcl/analysis exit is process cleanup,
-not a property verdict; its elapsed time still counts. Preserve the real exit
-code and disclose cleanup separately.
+`post_analysis_exit_cleanup` after matching Tcl/analysis exit statuses is process
+cleanup, not a property verdict; its elapsed time still counts. Preserve the
+outer process `exit_code` and inner `analysis_exit_code`; a nonzero analysis
+status remains a failed run. Disclose cleanup separately.
 
 Do not modify RTL, P0, reset, parameters or baseline; do not remove legal input
 behavior or rely on unproven assumptions. Put added scripts and results under
