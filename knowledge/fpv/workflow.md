@@ -19,7 +19,7 @@ Setting up an FPV run?
    ├─ Cut a sub-block? ..... elaborate ... -bbox_m {mods} / -bbox_i {insts}
    ├─ On a cluster? ........ set_proofgrid_mode / _shell / _per_engine_max_jobs  (before prove)
    ├─ Repeat runs? ......... set_proofmaster on  (before prove)
-   ├─ Prove scope? ......... prove -property {name}  |  prove -all
+   ├─ Prove scope? ......... prove -property {name}  |  prove -all (assertions and covers)
    └─ Many undetermined? .... read complexity-management.md; for global peer
                               invariants read decomposition.md before re-racing engines
 ```
@@ -85,6 +85,7 @@ set_proofmaster_max_data_age <N>
 
 ## 10. PROVE
 prove -property {property_name}
+prove -property {cover_name}   ;# run an existing cover; not `cover -property`
 prove -all
 
 ## 11. REPORT
@@ -104,7 +105,7 @@ report -file <file_name> -detailed   ;# or -summary
 | Proof settings | `set_proofgrid_*` | only needed for cluster runs |
 | Sanity | `sanity_check`, `visualize -reset`, `check_assumptions` | always run before `prove` |
 | ProofMaster | `set_proofmaster on` | for repeated runs on the same/evolving design |
-| Prove | `prove -property {n}` / `prove -all` | one property vs everything |
+| Prove | `prove -property {n}` / `prove -all` | execute assertions or covers; `cover -name` only declares a cover |
 | Report | `report -file <f> -detailed\|-summary` | detailed vs summary output |
 
 ## Post-Prove Escalation Gate

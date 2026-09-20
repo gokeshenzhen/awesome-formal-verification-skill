@@ -13,6 +13,7 @@ Scripting JasperGold in Tcl?
 ├─ Referencing an HDL signal/bit-range/$func in a string? .. see escaping rules in tcl-common.md
 ├─ Command argument might be invalid (signal/file)? ........ catch {cmd} var  (see tcl-common.md)
 ├─ Writing a script (not interactive)? .................... use `-silent` only where the exact grammar supports it
+├─ Running an already-declared cover? .................... prove -property {cover_name}; cover declares/manages it
 ├─ Need design / COI facts in a variable? ................. get_design_info / get_signal_info ... -silent
 └─ A standard Tcl command behaving oddly? ................. check Jasper Tcl differences (clock→tcl_clock, pid)
 ```
@@ -25,6 +26,15 @@ Scripting JasperGold in Tcl?
 4. **The HDL-vs-Tcl escaping pitfall applies to every Jasper script** — brace/escape Verilog references (`sig\[0:7\]`, `\$func`). Full rules in `tcl-common.md`.
 
 ## Pattern Catalog
+
+### Execute an Existing Cover
+
+Use `cover -name reach_state {<sequence>}` to **declare** a cover; use
+`prove -property {reach_state} -time_limit 10s` to search for its witness, then
+`get_property_info reach_state -list status` to distinguish `covered`,
+`unreachable`, and unresolved results. Embedded covers use the same `prove`
+entry point. 🔧 VERSION-SENSITIVE — JasperGold 2025.12p002 rejects
+`cover -property ...` with `ERROR (ESW087)`; do not confuse declaration with execution.
 
 ### Scripted design & COI queries
 **When to use**: introspect the elaborated design inside a script.
@@ -69,6 +79,7 @@ foreach p [get_property_list] {
 | Anti-Pattern | Why It Fails | Correct Alternative |
 |-------------|-------------|-------------------|
 | Blindly appending `-silent` to an unfamiliar subcommand | Some Jasper command forms reject it | Use the exact template or installed `help`; add `-silent` only when supported |
+| `cover -property <name>` to run a declared cover | `cover` rejects `-property` in 2025.12p002 | `prove -property {<name>}`; inspect cover status afterward |
 | Assuming `clock`/`pid` behave as standard Tcl | Jasper renames `clock`→`tcl_clock`; `pid`=analysis-session PID | use `tcl_clock`; know `pid` semantics |
 | `package require Thread`/`tdbc*` in Jasper | Those standard packages aren't shipped | install/import another way or avoid; see `tcl-common.md` |
 | `report -file f` without `-force` (file exists) | `ERROR (EFL012)` aborts the run | `report ... -force -file f` (or `rm -f f` first) |

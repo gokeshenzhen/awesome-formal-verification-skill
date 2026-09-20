@@ -11,7 +11,8 @@ foreach property $properties {
   puts "ENVIRONMENT_PROPERTY $property [get_property_info -list status $property]"
 }
 puts "ENVIRONMENT_PROPERTY_LIST_OK"
-prove -all -time_limit 3s
+prove -property environment_assert -time_limit 3s
+prove -property environment_cover -time_limit 3s
 puts "ENVIRONMENT_ASSERT_STATUS [get_property_info environment_assert -list status]"
 puts "ENVIRONMENT_COVER_STATUS [get_property_info environment_cover -list status]"
 report -summary
