@@ -1,0 +1,10 @@
+{
+  "upstream": "https://github.com/ZipCPU/zipcpu",
+  "commit": "42606d2d6ef55df313772232977621b2d72f0159",
+  "path": "rtl/ex/sfifo.v",
+  "license": "Public domain dedication in the original file header, retained locally.",
+  "modification": "Replace FORMAL conditional blocks, including nested directives, with blank lines. All other bytes are unchanged.",
+  "upstream_sha256": "f97bc8f20fa52b4819f9cfd4a18cfd257370359c065760441da37dba281c0145",
+  "local_sha256": "fc07c94459343998c8d2be5b4eeb1c6406aa893d1d1ead138cf4b76d343811aa",
+  "observer": "neutral/tb.sv is a verification observer authored for this case, not upstream DUT code."
+}

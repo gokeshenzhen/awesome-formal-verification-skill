@@ -1,5 +1,8 @@
 **CTI 反哺 Helper Refinement：快递接力教学例子**
 
+需要演示“原证明卡住，经 refinement 后收敛”时，使用
+[FIFO 收敛案例](../cti-fifo-refinement/README.md)。本目录保留为归纳概念入门例子。
+
 ```text
 输入 → A：收件台 → B：暂存台 → C：出库台
 ```

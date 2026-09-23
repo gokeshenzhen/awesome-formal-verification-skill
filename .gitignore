@@ -41,4 +41,5 @@ iteration-*/
 *.skill
 /test/*
 !/test/cti-helper-refinement/
+!/test/cti-fifo-refinement/
 plan/*
