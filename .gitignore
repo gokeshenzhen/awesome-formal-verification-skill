@@ -39,5 +39,6 @@ iteration-*/
 
 # Packaged skills (generated)
 *.skill
-test
+/test/*
+!/test/cti-helper-refinement/
 plan/*
