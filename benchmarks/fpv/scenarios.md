@@ -2,6 +2,36 @@
 
 This directory contains test scenarios for validating the FPV skill modules.
 
+## Scenario: helper-structural-trial-feedback [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"In JasperGold, a selected-entry data equality timed out with its proven control
+support explicitly selected. I followed the load sources and tried a compact
+conjunction covering storage and its registered handoff. That structural trial
+is also undetermined without a reset-reachable CEX. I can think of splitting it
+back into separate equalities, but have no new state evidence. There is budget
+for diagnosis and a revised proof. What should I do next, what exact diagnostic
+commands and trace checks matter, and when can I reuse the resulting helper?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Recognize that the bounded structural trial has already been exercised
+- [ ] Obtain diagnostic state evidence before another split/join rewrite
+- [ ] Preserve and explicitly select valid proven support in the SST run
+- [ ] Confirm `tag SST`; read the predecessor, failure and RTL load-source values
+- [ ] Reserve budget to revise and normally prove the helper and original target
+- [ ] Do not assume the candidate or require retrospective SST after a first-candidate success
+
 ## Scenario: helper-selected-support-plateau [control]
 
 ### Category

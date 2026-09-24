@@ -2,6 +2,14 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "helper-structural-trial-feedback",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "In JasperGold, a selected-entry data equality timed out with its proven control support explicitly selected. I followed the load sources and tried a compact conjunction covering storage and its registered handoff. That structural trial is also undetermined without a reset-reachable CEX. I can think of splitting it back into separate equalities, but have no new state evidence. There is budget for diagnosis and a revised proof. What should I do next, what exact diagnostic commands and trace checks matter, and when can I reuse the resulting helper?",
+      "expect_concept": ["structural|conjunction", "split|join|formulation", "diagnos|SST", "waveform|signal|transition", "budget|reserv", "proven|validity"],
+      "expect_exact": ["get_property_info", "-sst", "tag SST", "set_proven_directive"]
+    },
+    {
       "id": "helper-selected-support-plateau",
       "type": "control",
       "module": "complexity-management",

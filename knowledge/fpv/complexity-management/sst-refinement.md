@@ -17,12 +17,13 @@ do not use it for every timeout.
 
 | Evidence available now | Next experiment |
 |---|---|
-| Clear compact candidate from RTL | Independently prove it with a capped budget; skip SST if it proves |
+| First compact candidate from RTL | Independently prove it with a capped budget; skip SST if it proves |
 | No reasonable compact candidate | Diagnose the target with capped SST and inspect its state values |
 | Diagnostic identifies a small state cluster, but no clear relation | Try capped `sst -generate -no_helper`; independently prove any generated candidates |
 | Candidate has a reset-reachable CEX in the unchanged model | Inspect that CEX; correct, weaken, or replace the false candidate |
 | Candidate remains `undetermined`, missing support is plausible | Do not trust it as a theorem; check selection of any already-proven support, then use capped SST/refinement if needed |
-| Local data equality stalls despite proven count/index support | Use **Data-Correspondence Strengthening** in `decomposition.md`; reserve a structural trial before unchanged retries |
+| Local data equality stalls despite proven count/index support; structural strengthening not yet tried | Use one bounded **Data-Correspondence Strengthening** trial in `decomposition.md` |
+| Structural strengthening also stalls with intended support selected, no reachable CEX | Capture capped SST for that candidate and read its transition before another split/join rewrite; changing the expression does not restart the first-candidate branch |
 | Compact strengthening remains as hard as the target or needs a large dependency graph | Escalate to AG/CAG instead of repeating diagnostics |
 
 Revisit this table after each candidate result. Record the actual branch and

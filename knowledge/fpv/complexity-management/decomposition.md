@@ -11,13 +11,15 @@ requires structure:
 Direct proof stalls?
 ├─ Proven support omitted from selection? ... Yes → correct selection for the CURRENT obligation
 │    helper or final target → "Helper Assertions" below
-├─ Can one/few inductive invariants summarize
-│  the missing local or global fact? ........ Yes → bounded helper trial
-│    select support → prove obligation → gate on proven → next obligation
-├─ Local data equality still undetermined with valid selected support?
-│    → Data-Correspondence Strengthening before another unchanged proof
+├─ Local data equality undetermined; structural strengthening not yet tried?
+│    → one bounded Data-Correspondence Strengthening trial
+├─ Structural candidate still undetermined with valid selected support?
+│    → capped SST/refinement; inspect states before another formulation
 ├─ Candidate CEX / undetermined? ............ Yes → do not trust as a theorem; classify feedback
 │    reachable CEX → revise; missing relation → capped SST/refinement below
+├─ No failed candidate yet; can one/few inductive invariants summarize
+│  the missing local or global fact? ........ Yes → bounded first helper trial
+│    select support → prove obligation → gate on proven → next obligation
 ├─ Dependency graph hard to audit? .......... Yes → proof_structure AG
 ├─ Helpers are as hard as the target? ....... Yes → proof_structure CAG/AG
 ├─ Many symmetric peer obligations with no
@@ -190,6 +192,13 @@ A head-only fact does not constrain the next stored entry when a pointer moves.
 After a capped local trial, reserve a bounded structural trial before spending
 the remaining budget on the unchanged helper or target. SST can inform this
 trial; it is not a prerequisite when RTL already exposes the missing source.
+If this structural candidate also stays undetermined with its intended support
+selected and no reachable CEX, diagnose it with capped SST before alternating
+between more split and joined formulations. A new expression does not restart
+the first-candidate branch. Preserve the candidate and read its failing
+transition, then decide which relation or support to change. If diagnostics
+are unavailable or uninformative, record that result and choose a bounded
+alternative from evidence; reserve time for the revised proof and final target.
 
 Derive the live-data correspondence from the RTL: validity/ownership, logical
 position, and payload equality. Within the bounded structural trial, **follow
