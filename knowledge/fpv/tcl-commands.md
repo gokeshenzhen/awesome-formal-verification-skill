@@ -27,6 +27,20 @@ Scripting JasperGold in Tcl?
 
 ## Pattern Catalog
 
+### Declare a Clocked Tcl Assertion
+
+Put the SVA clock and `disable iff` directly inside the Tcl braces:
+
+```tcl
+assert -helper -name h_candidate {@(posedge clk) disable iff (!rst_n) (valid |-> data == expected)}
+```
+
+Do not wrap the whole clocked property as `{(@(posedge clk) disable iff ... )}`;
+JasperGold 2025.12p002 rejects that form with `ENL063`. Parenthesize the Boolean
+or sequence body, not the leading clock/reset clauses. A state-only assertion
+such as `assert -name h_state {a == b}` uses the configured sampler; preserve
+the task's intended clock/reset semantics when choosing either form.
+
 ### Execute an Existing Cover
 
 Use `cover -name reach_state {<sequence>}` to **declare** a cover; use

@@ -2,6 +2,22 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "helper-trial-result-budget-branch",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A JasperGold baseline has already timed out on an invariant-like target. I have a plausible compact helper, but it has not been proved. My next Tcl script queues a long helper trial followed unconditionally by a longer target retry with -with_proven, spending the remaining budget. If the helper is undetermined and has no reset-reachable CEX, is that a useful recovery plan? Give the result-dependent next steps, budget reservation, diagnostic evidence, and proof gates. Must a helper that succeeds immediately still undergo diagnostics?",
+      "expect_concept": ["branch|conditional", "no new|no.*proven|not.*proven", "reserv|allocat", "diagnos|SST", "waveform|signal values", "revis|strengthen", "not.*(mandatory|required|necessary)|skip|refinement_not_exercised"],
+      "expect_exact": ["get_property_info", "-sst", "tag SST", "proven"]
+    },
+    {
+      "id": "tcl-clocked-helper-syntax",
+      "type": "control",
+      "module": "tcl-commands",
+      "prompt": "In JasperGold 2025.12p002, assert -helper -name h {(@(posedge clk) disable iff (!rst_n) (valid |-> data == expected))} fails near disable. The reset polarity is intentional. How should I repair the Tcl declaration without changing the property, and does this syntax repair count as a semantic helper refinement?",
+      "expect_concept": ["parenthes|parenthesis", "clock", "not.*refinement|syntax.*not|no.*semantic"],
+      "expect_exact": ["assert -helper -name", "disable iff", "ENL063"]
+    },
+    {
       "id": "helper-proven-support-selection",
       "type": "control",
       "module": "complexity-management",

@@ -2,6 +2,65 @@
 
 This directory contains test scenarios for validating the FPV skill modules.
 
+## Scenario: helper-trial-result-budget-branch [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"A JasperGold baseline has already timed out on an invariant-like target. I have
+a plausible compact helper, but it has not been proved. My next Tcl script queues
+a long helper trial followed unconditionally by a longer target retry with
+-with_proven, spending the remaining budget. If the helper is undetermined and
+has no reset-reachable CEX, is that a useful recovery plan? Give the
+result-dependent next steps, budget reservation, diagnostic evidence, and proof
+gates. Must a helper that succeeds immediately still undergo diagnostics?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Branch on actual helper status; an unproved helper adds no theorem to `-with_proven`
+- [ ] Reserve diagnosis, revision and final-proof time before launching the trial
+- [ ] Check selected support, then use capped SST when a missing relation remains plausible
+- [ ] Read actual transition values and link them to a semantic revision, not just a command
+- [ ] Prove the new obligations under unchanged setup before reuse in the original target
+- [ ] Accept a sound first-candidate success without manufacturing retrospective diagnostics
+
+### Anti-Patterns to Avoid
+
+- Prequeueing unchanged target retries regardless of candidate outcome
+- Adding benchmark-specific signals, formulas or desired waveform values
+- Treating token checks as evidence of autonomous refinement and convergence
+
+## Scenario: tcl-clocked-helper-syntax [control]
+
+### Category
+
+tcl-commands
+
+### User Prompt
+
+"In JasperGold 2025.12p002, assert -helper -name h {(@(posedge clk) disable iff
+(!rst_n) (valid |-> data == expected))} fails near disable. The reset polarity
+is intentional. How should I repair the Tcl declaration without changing the
+property, and does this syntax repair count as a semantic helper refinement?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/tcl-commands.md
+
+### Expected Key Points
+
+- [ ] Put the clock and disable clauses directly inside Tcl braces
+- [ ] Remove the parentheses around the entire clocked property; preserve the body and reset
+- [ ] Identify ENL063 as a declaration error; do not count a syntax repair as refinement
+
 ## Scenario: sst-partial-transition-readback [control]
 
 ### Category
@@ -22,6 +81,7 @@ attempt, and what would count as a completed refinement?"
 
 - knowledge/fpv/complexity-management.md
 - knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
 
 ### Expected Key Points
 

@@ -27,7 +27,7 @@ reset-reachable CEX, inspect whether it compares state whose relationship is
 established by reset and preserved across updates. A plausible missing relation
 is enough; do not require a finished helper before selecting this branch.
 After excluding reset/setup errors and obvious capacity causes, read
-`complexity-management/decomposition.md` → **SST-Guided Helper Refinement**.
+`complexity-management/sst-refinement.md`.
 If a clear compact candidate is available, try proving it with any selected
 already-proven support first;
 do not require a diagnostic trace before a successful first candidate. Use a
@@ -48,7 +48,7 @@ Property not converging?
 ├─ Relevant support already proven? Yes → check this obligation's selection → decomposition.md "Helper Assertions"
 ├─ Repairing a proposed helper with a reset CEX? → decomposition.md candidate-CEX branch
 ├─ Invariant undetermined, no reset CEX, missing state relation plausible?
-│                              Yes → post-baseline triage above → decomposition.md "SST-Guided Helper Refinement"
+│                              Yes → post-baseline triage above → sst-refinement.md
 ├─ Have you profiled? ......... No → formal_profiler → cone-reduction.md "Profiler-Guided Stopat Mining"
 ├─ Large counters in cone? .... Yes → abstraction.md "Counter Abstraction"
 ├─ Large memories in cone? .... Yes → abstraction.md "Memory Abstraction"
@@ -64,7 +64,7 @@ Property not converging?
 ├─ Single property too hard? .. Yes → decomposition.md "Proof Decomposition (AG/CAG)"
 ├─ Need lemma scaffolding? .... Yes → decomposition.md "Helper Assertions"
 ├─ Stuck before interesting states?
-│                              Yes → decomposition.md "SST-Guided Helper Refinement"
+│                              Yes → sst-refinement.md
 ├─ One property far harder? ... Yes → targeted-reductions.md "Per-Property Simplification"
 ├─ Multi-clock robustness? .... Yes → targeted-reductions.md "Clock Ratio Management"
 └─ False CEX / missed bugs? ... Yes → "Under/Over-Constraint Management" (below)
@@ -76,7 +76,8 @@ Property not converging?
 |---|---|
 | [`complexity-management/abstraction.md`](complexity-management/abstraction.md) | Counter abstraction (auto + manual 4-step), Initial Value Abstraction (IVA), Memory abstraction, Synchronizer abstraction |
 | [`complexity-management/cone-reduction.md`](complexity-management/cone-reduction.md) | Free variables / NDC, **Configuration cutpoints + legality assumptions** (`stopat`, `setup_ndc`), Profiler-guided stopat mining, Parameter reduction |
-| [`complexity-management/decomposition.md`](complexity-management/decomposition.md) | Proof decomposition (AG / CAG / multi-stage), helper assertions, SST-guided helper refinement |
+| [`complexity-management/decomposition.md`](complexity-management/decomposition.md) | Proof decomposition (AG / CAG / multi-stage), helper assertions, data correspondence |
+| [`complexity-management/sst-refinement.md`](complexity-management/sst-refinement.md) | Candidate-result branching, SST capture/readback, helper refinement and proof gates |
 | [`complexity-management/targeted-reductions.md`](complexity-management/targeted-reductions.md) | **Per-property simplification** (`set_per_property_simplification`), Clock ratio management |
 
 ## Core Rules
