@@ -2,6 +2,62 @@
 
 This directory contains test scenarios for validating the FPV skill modules.
 
+## Scenario: sst-proven-support-selection [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"A payload helper is undetermined despite an explicitly selected, valid proven
+control invariant. I start a fresh JasperGold diagnostic and run prove -property
+h_payload -sst 2 without recreating or selecting that support. Its SST trace
+violates the control invariant. Should I invent another helper from this trace?
+Give the next diagnostic setup, exact support selection shape, and evidence
+needed before interpreting it."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Recreate and validly prove the support in the current unchanged task
+- [ ] Select target and support together for `prove -sst`; record their names
+- [ ] Account for all enabled helper/SST properties' prefix roles, not just the explicit list
+- [ ] Do not duplicate a known invariant simply because an unsupported diagnostic violates it
+- [ ] Confirm `tag SST` and read concrete transition values; normal proof gates still apply
+
+## Scenario: helper-refinement-engine-control [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"After reading a JasperGold SST waveform, I added a plausible state invariant
+and proved it under the unchanged environment. For the payload helper retry I
+also replaced the original mixed engine portfolio with the smaller portfolio
+that was fast on the control lemmas. The payload helper is still undetermined.
+Does this refute the refinement? What bounded comparison should I run before
+abandoning it, which settings should be preserved, and what must still be proved?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management/sst-refinement.md
+- knowledge/fpv/complexity-management/decomposition.md
+
+### Expected Key Points
+
+- [ ] Do not infer a false relation or ineffective refinement from an inconclusive run
+- [ ] Restore the original ordinary engine portfolio and limit for a comparable refined trial
+- [ ] Change engine choice separately; a control-lemma winner may be poor for payload reasoning
+- [ ] Record expressions, selected proven support, engine mode and time limits before/after
+- [ ] Prove the helper and original target normally within the total budget
+- [ ] Keep SST's diagnostic engine choice separate from the ordinary proof portfolio
+
 ## Scenario: helper-trial-result-budget-branch [control]
 
 ### Category

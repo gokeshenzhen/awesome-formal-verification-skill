@@ -2,6 +2,22 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "sst-proven-support-selection",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A payload helper is undetermined despite an explicitly selected, valid proven control invariant. I start a fresh JasperGold diagnostic and run prove -property h_payload -sst 2 without recreating or selecting that support. Its SST trace violates the control invariant. Should I invent another helper from this trace? Give the next diagnostic setup, exact support selection shape, and evidence needed before interpreting it.",
+      "expect_concept": ["reprov|recreat|same.*task", "valid|validity", "select|support", "known|already", "enabled.*(helper|SST)|prefix", "not.*(proof|reachable)|diagnostic"],
+      "expect_exact": ["get_property_info", "prove -property", "-sst", "set_proven_directive true", "tag SST"]
+    },
+    {
+      "id": "helper-refinement-engine-control",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "After reading a JasperGold SST waveform, I added a plausible state invariant and proved it under the unchanged environment. For the payload helper retry I also replaced the original mixed engine portfolio with the smaller portfolio that was fast on the control lemmas. The payload helper is still undetermined. Does this refute the refinement? What bounded comparison should I run before abandoning it, which settings should be preserved, and what must still be proved?",
+      "expect_concept": ["not.*(refut|false)|does not.*(refut|false)", "restor|original.*portfolio|previous.*portfolio", "separate|one.*(change|variable)|comparable", "control.*payload|payload.*control", "support", "budget|limit", "target"],
+      "expect_exact": ["-engine_mode", "-time_limit", "proven"]
+    },
+    {
       "id": "helper-trial-result-budget-branch",
       "type": "control",
       "module": "complexity-management",

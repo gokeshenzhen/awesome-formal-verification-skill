@@ -117,6 +117,11 @@ and use the remaining investigation budget on the chosen evidence-producing
 step. If stopping early, identify the concrete blocker or explain why no
 useful investigation fits; merely reporting the same timeout is not that reason.
 
+For the first feedback-driven retry, preserve the stalled obligation's ordinary
+engine portfolio and limit while changing its relation/support. Judge engine
+changes separately; a good control-lemma engine is not necessarily a good
+payload engine. See `sst-refinement.md` → **Refine, Prove, Then Reuse**.
+
 For an existing assertion, resolve its exact name before using the same template:
 
 ```tcl

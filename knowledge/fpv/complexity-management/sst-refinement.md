@@ -62,11 +62,26 @@ Do not prewrite the final proof branch as though the candidate had succeeded.
 Do not stop at the console message. Retrieve the stored SST trace and export its
 signal values so an agent can reason from the actual states:
 
+Carry the stalled ordinary proof's already-proven support into the diagnostic.
+Otherwise SST may merely violate a relation you already know. Verify each
+support in the same unchanged task and select it alongside the target; use an
+empty support list only when none is available. Record the selected names and
+other enabled helper/SST properties: SST also gives those properties prefix
+roles, so the explicit list alone is not an exclusive diagnostic constraint list.
+
 ```tcl
 set target <property_name>
 set sst_n 2
+set sst_support {<already_proven_support_names>}
+foreach h $sst_support {
+  lassign [get_property_info $h -list {status validity_status}] s v
+  if {$s ne "proven" || $v ne "proven"} {error "unproved diagnostic support $h"}
+}
+set sst_selected [linsert $sst_support 0 $target]
+puts "SST_SELECTED $sst_selected"
+set_proven_directive true
 
-set sst_result [prove -property $target -sst $sst_n -prefer_quiet \
+set sst_result [prove -property $sst_selected -sst $sst_n -prefer_quiet \
   -engine_mode B -time_limit <diagnostic_budget>]
 puts "SST_RETURN $sst_result"
 
@@ -141,6 +156,22 @@ Generation is **not proof**: prove under unchanged reset/environment, separately
 or as an audited batch, before reuse. No candidates is an unresolved search.
 
 ### Refine, Prove, Then Reuse
+
+**Keep the first revised trial comparable.** Preserve the previous ordinary
+proof's engine portfolio and time limit when first testing a changed relation
+or newly proven support. A stalled engine may close immediately once the
+missing invariant is available. Do not simultaneously strengthen the helper and
+replace that portfolio with only the engines that were fast on control lemmas;
+control and payload obligations need not favor the same engines.
+
+Record the before/after expression, selected support, `-engine_mode`,
+`-time_limit`, and per-property limits. If the comparable retry still stalls,
+vary the engines in a separate bounded trial. If a smaller portfolio fails,
+restore the earlier one before rejecting a trace-supported relation. The
+`-engine_mode B` in the SST recipe is for diagnosis, not a replacement for the
+ordinary proof portfolio. Keep this comparison within the task's total budget.
+If the old limit no longer fits, prioritize one obligation and disclose the
+shorter allowance; retain the portfolio instead of changing both variables.
 
 Declare each candidate as an assertion and prove it from the same RTL,
 clock, reset, and legal environment as the target. Do not add an assumption to
