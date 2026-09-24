@@ -7,7 +7,7 @@
       "module": "complexity-management",
       "prompt": "A JasperGold baseline has already timed out on an invariant-like target. I have a plausible compact helper, but it has not been proved. My next Tcl script queues a long helper trial followed unconditionally by a longer target retry with -with_proven, spending the remaining budget. If the helper is undetermined and has no reset-reachable CEX, is that a useful recovery plan? Give the result-dependent next steps, budget reservation, diagnostic evidence, and proof gates. Must a helper that succeeds immediately still undergo diagnostics?",
       "expect_concept": ["branch|conditional", "no new|no.*proven|not.*proven", "reserv|allocat", "diagnos|SST", "waveform|signal values", "revis|strengthen", "not.*(mandatory|required|necessary)|skip|refinement_not_exercised"],
-      "expect_exact": ["get_property_info", "-sst", "tag SST", "proven"]
+      "expect_exact": ["HELPER_DECISION", "get_property_info", "-sst", "tag SST", "proven"]
     },
     {
       "id": "tcl-clocked-helper-syntax",

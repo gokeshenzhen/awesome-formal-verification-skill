@@ -10,6 +10,10 @@ Complexity management is the core discipline that determines whether formal proo
 
 ### Post-Baseline Triage [JG-specific]
 
+Reapply this triage after every inconclusive helper trial, including before
+preparing the final script. Use the latest obligation result, not only the
+original baseline; an unchanged expression or new filename is not new evidence.
+
 If relevant support is already proven but a higher-level helper or final target
 stalls, first check that obligation's `prove` selection. Support selected only
 for the final target does not help an earlier helper proof. See

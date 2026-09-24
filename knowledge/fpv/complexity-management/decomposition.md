@@ -107,6 +107,16 @@ Do not let a speculative candidate plus a prequeued target retry consume the
 entire recovery budget. Keep scripts/expressions from each attempt; syntax
 repairs are not semantic helper revisions.
 
+Record a `HELPER_DECISION` before the next run: obligation, status/validity,
+selected proven support, next action and its evidence, remaining budget, and
+time reserved for diagnosis/revision and final proof. For an `undetermined`
+candidate with plausible missing state support, select a short diagnostic
+before an unchanged retry unless new proof evidence justifies that retry.
+Preparing `final.tcl` is not an exemption: retain the current script for replay
+and use the remaining investigation budget on the chosen evidence-producing
+step. If stopping early, identify the concrete blocker or explain why no
+useful investigation fits; merely reporting the same timeout is not that reason.
+
 For an existing assertion, resolve its exact name before using the same template:
 
 ```tcl

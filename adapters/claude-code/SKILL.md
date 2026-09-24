@@ -50,9 +50,11 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 
 ### Mandatory Escalation Routing
 
-After a baseline, choose the first applicable route below before writing the
-next run. A request for the "strongest sound conclusion" or a finite budget
-alone does not select bug hunting.
+After a baseline or an inconclusive helper trial, choose the first applicable
+route below before writing the next run. Reapply this routing when preparing a
+final script; a filename does not change the unresolved proof shape. A request
+for the "strongest sound conclusion" or a finite budget alone does not select
+bug hunting.
 
 1. **Explicit bug-search / reachability objective, or a concrete witness lead**
    for the design property being investigated (not merely a disproved proposed

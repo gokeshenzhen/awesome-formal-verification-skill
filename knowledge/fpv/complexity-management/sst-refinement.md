@@ -25,6 +25,11 @@ do not use it for every timeout.
 | Local data equality stalls despite proven count/index support | Use **Data-Correspondence Strengthening** in `decomposition.md`; reserve a structural trial before unchanged retries |
 | Compact strengthening remains as hard as the target or needs a large dependency graph | Escalate to AG/CAG instead of repeating diagnostics |
 
+Revisit this table after each candidate result. Record the actual branch and
+reserved diagnosis/revision budget in `HELPER_DECISION` (see `decomposition.md`)
+before writing another run, including a final replay script. Reading this leaf
+without acting on the resulting evidence does not complete the diagnostic step.
+
 `undetermined` does not establish that a candidate is false. A true but
 non-inductive candidate may need a stronger conjunction or separately proven
 support, not weakening. If the model is abstracted, first classify whether a

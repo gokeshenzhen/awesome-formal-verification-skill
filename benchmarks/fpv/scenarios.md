@@ -26,6 +26,7 @@ gates. Must a helper that succeeds immediately still undergo diagnostics?"
 ### Expected Key Points
 
 - [ ] Branch on actual helper status; an unproved helper adds no theorem to `-with_proven`
+- [ ] Record `HELPER_DECISION` before the next run, including final-script preparation; a new filename is not a new strategy
 - [ ] Reserve diagnosis, revision and final-proof time before launching the trial
 - [ ] Check selected support, then use capped SST when a missing relation remains plausible
 - [ ] Read actual transition values and link them to a semantic revision, not just a command
