@@ -14,9 +14,11 @@ Reapply this triage after every inconclusive helper trial, including before
 preparing the final script. Use the latest obligation result, not only the
 original baseline; an unchanged expression or new filename is not new evidence.
 
-If relevant support is already proven but a higher-level helper or final target
-stalls, first check that obligation's `prove` selection. Support selected only
-for the final target does not help an earlier helper proof. See
+If relevant proven support is missing from an obligation's `prove` selection,
+correct the selection and retry. Once the intended support is already selected,
+continue to the feedback branches below; its mere existence is not a reason to
+repeat that run. Support selected only for the final target does not help an
+earlier helper proof. See
 `complexity-management/decomposition.md` → **Helper Assertions** for the shared
 obligation/support template and the tool-managed batch alternative.
 
@@ -49,7 +51,7 @@ the selected route and the baseline evidence that triggered it.
 
 ```
 Property not converging?
-├─ Relevant support already proven? Yes → check this obligation's selection → decomposition.md "Helper Assertions"
+├─ Proven support missing from this obligation's selection? Yes → correct selection → decomposition.md "Helper Assertions"
 ├─ Repairing a proposed helper with a reset CEX? → decomposition.md candidate-CEX branch
 ├─ Invariant undetermined, no reset CEX, missing state relation plausible?
 │                              Yes → post-baseline triage above → sst-refinement.md

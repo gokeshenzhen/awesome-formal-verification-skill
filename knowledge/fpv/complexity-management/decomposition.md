@@ -9,7 +9,7 @@ requires structure:
 
 ```
 Direct proof stalls?
-├─ Relevant support already proven? ......... Yes → check selection for the CURRENT obligation
+├─ Proven support omitted from selection? ... Yes → correct selection for the CURRENT obligation
 │    helper or final target → "Helper Assertions" below
 ├─ Can one/few inductive invariants summarize
 │  the missing local or global fact? ........ Yes → bounded helper trial
@@ -39,9 +39,10 @@ they do not by themselves require CAG.
 ## Helper Assertions (Lemmas) [JG-specific]
 
 **When to use**: Try a capped helper proof when a compact invariant can summarize
-the missing fact. If relevant lemmas are already proven but a higher-level
-helper or target stalls, check that call's selected support before changing the
-expression or extending time.
+the missing fact. Correct any omission of relevant proven support first. If an
+invariant-like helper still stalls with the intended support selected, read
+`sst-refinement.md` before scheduling its next trial. A proven sibling does not
+discharge this unresolved relation.
 
 > 🔧 **VERSION-SENSITIVE — selection semantics validated on JasperGold
 > 2025.12p002.** Check `help assert`, `help prove`, and
@@ -112,9 +113,12 @@ selected proven support, next action and its evidence, remaining budget, and
 time reserved for diagnosis/revision and final proof. For an `undetermined`
 candidate with plausible missing state support, select a short diagnostic
 before an unchanged retry unless new proof evidence justifies that retry.
-Preparing `final.tcl` is not an exemption: retain the current script for replay
-and use the remaining investigation budget on the chosen evidence-producing
-step. If stopping early, identify the concrete blocker or explain why no
+After a target retry with newly proven partial support also stalls, diagnose
+the remaining helper relations. Repeating the same expressions and support
+with a shorter limit does not validate closure; reserve such a replay for a
+concrete reproducibility question. Retain the current script for delivery and
+spend the investigation budget on new evidence. If stopping early, identify
+the concrete blocker or explain why no
 useful investigation fits; merely reporting the same timeout is not that reason.
 
 For the first feedback-driven retry, preserve the stalled obligation's ordinary

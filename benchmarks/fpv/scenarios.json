@@ -2,6 +2,14 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "helper-selected-support-plateau",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "In an unchanged JasperGold task, one local helper is validly proven while two invariant-like data helpers remain undetermined without a reset-reachable counterexample. I explicitly selected the proven helper for the original target, but that target trial also timed out. I have enough budget for a short investigation and revision. Should I spend it replaying the same expressions and support with a shorter limit merely because I am preparing final.tcl? Give the next decision, exact diagnostic commands, and the proof gates needed before claiming closure.",
+      "expect_concept": ["remaining.*helper|unresolved.*relation|stalled.*helper", "same.*support|unchanged|shorter.*(replay|limit)", "diagnos|refin", "waveform|signal values", "proven|validity"],
+      "expect_exact": ["get_property_info", "-sst", "tag SST"]
+    },
+    {
       "id": "sst-proven-support-selection",
       "type": "control",
       "module": "complexity-management",

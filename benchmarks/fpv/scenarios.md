@@ -2,6 +2,37 @@
 
 This directory contains test scenarios for validating the FPV skill modules.
 
+## Scenario: helper-selected-support-plateau [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"In an unchanged JasperGold task, one local helper is validly proven while two
+invariant-like data helpers remain undetermined without a reset-reachable
+counterexample. I explicitly selected the proven helper for the original
+target, but that target trial also timed out. I have enough budget for a short
+investigation and revision. Should I spend it replaying the same expressions
+and support with a shorter limit merely because I am preparing final.tcl?
+Give the next decision, exact diagnostic commands, and the proof gates needed
+before claiming closure."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Recognize that intended support is already selected; leave the selection-fix branch
+- [ ] A proven sibling does not discharge the remaining data relations
+- [ ] Diagnose the stalled invariant-like helper; preserve valid support in the diagnostic
+- [ ] Read actual trace values before revising; prove revised dependencies and original target
+- [ ] A shorter unchanged replay does not validate closure; reserve replay for a concrete reproducibility question
+- [ ] Accept a successful first candidate without requiring retrospective diagnostics
+
 ## Scenario: sst-proven-support-selection [control]
 
 ### Category
