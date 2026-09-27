@@ -8,6 +8,13 @@ How to pick, combine, and tune JasperGold proof engines, and how to react when a
 
 ## Quick Decision Tree
 
+For an existing baseline/helper result, first apply
+[`complexity-management.md` → **Post-Baseline Triage**](complexity-management.md#post-baseline-triage-jg-specific).
+It owns outcome identity, task scope, setup/capacity, and support priority;
+`complexity-management/decomposition.md` owns helper/structural/AG-CAG selection.
+Use the engine tree below for an initial configuration or the search/engine
+experiment selected by that triage, not to bypass candidate feedback.
+
 ```
 Proof not converging / choosing engines?
 ├─ First run / don't know what to use? ......... leave Proof Orchestration ON (default)
@@ -56,18 +63,14 @@ Proof not converging / choosing engines?
 
 ### DBH Escalation Boundary
 
-Select the investigation route before applying this search gate. For one
-invariant-like target with no reset-reachable CEX and a plausible missing state
-relation, use **Post-Baseline Triage** in `complexity-management.md` first,
-unless the user explicitly requests bug search/reachability or a concrete
-witness lead justifies that search. A finite budget or "strongest sound
-conclusion" alone does not require DBH. An SST diagnostic is outside the
-reset-reachable trace-search gate below.
-
-This triage permits a capped independent proof of an available compact helper
-before SST. Do not force trace generation when that first candidate proves;
-diagnose a missing candidate or an unproven candidate according to the
-decomposition leaf.
+Enter this search gate after **Post-Baseline Triage** selects an explicit
+bug-search/reachability objective or concrete witness lead for the original
+objective. A helper CEX alone, a finite budget, or "strongest sound conclusion"
+does not activate DBH. If the current original target already has a genuine CEX,
+report and investigate it rather than require another Hunt to establish failure.
+For unresolved invariant proof closure, follow the decomposition method decision
+(including first-candidate, structural, and dependency branches); SST diagnostics
+are outside the reset-reachable trace-search gate below.
 
 Classify the baseline before escalating. A trace-only engine such as B stopped by
 `-max_trace_length` performed bounded trace search, not a meaningful exhaustive

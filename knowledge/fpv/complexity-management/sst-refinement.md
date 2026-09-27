@@ -7,27 +7,36 @@
 > ⚠️ **NEEDS VALIDATION — command/trace semantics are tool-validated; a successful
 > first candidate or an SST call alone does not validate refinement efficacy.**
 
-**Trigger**: Use SST when an invariant-like assertion stays `undetermined`, no
-reset-reachable CEX exists, and a missing state relation is plausible (deep
-antecedent, slow BMC progress, or unstated history). SST can bypass irrelevant
-initialization prefixes. First correct reset/setup errors and inspect cone size;
-do not use it for every timeout.
+**Trigger**: Use SST when the method decision in `decomposition.md` selects
+diagnosis of an invariant-like assertion that stays `undetermined`, has no
+reset-reachable CEX, and plausibly lacks a state relation (deep antecedent, slow
+BMC progress, or unstated history). SST can bypass irrelevant initialization
+prefixes. Apply the index's setup/capacity and support gates first; do not use it
+for every timeout.
 
 ### Choose the Entry Point
 
-| Evidence available now | Next experiment |
-|---|---|
-| First compact candidate from RTL | Independently prove it with a capped budget; skip SST if it proves |
-| No reasonable compact candidate | Diagnose the target with capped SST and inspect its state values |
-| Diagnostic identifies a small state cluster, but no clear relation | Try capped `sst -generate -no_helper`; independently prove any generated candidates |
-| Candidate has a reset-reachable CEX in the unchanged model | Inspect that CEX; correct, weaken, or replace the false candidate |
-| Candidate remains `undetermined`, missing support is plausible | Do not trust it as a theorem; check selection of any already-proven support, then use capped SST/refinement if needed |
-| Local data equality stalls despite proven count/index support; structural strengthening not yet tried | Use one bounded **Data-Correspondence Strengthening** trial in `decomposition.md` |
-| Structural strengthening also stalls with intended support selected, no reachable CEX | Capture capped SST for that candidate and read its transition before another split/join rewrite; changing the expression does not restart the first-candidate branch |
-| Compact strengthening remains as hard as the target or needs a large dependency graph | Escalate to AG/CAG instead of repeating diagnostics |
+If entering this leaf directly, apply
+[`../complexity-management.md` → **Post-Baseline Triage**](../complexity-management.md#post-baseline-triage-jg-specific)
+and [`decomposition.md` → **Helper vs. Proof Structure Decision**](decomposition.md#helper-vs-proof-structure-decision)
+before selecting a diagnostic. Those sections own outcome and method priority:
+valid success advances without SST; a real candidate CEX uses **Candidate-CEX
+Repair**; obvious capacity or omitted support is handled before diagnosis;
+justified AG/CAG and an untried compact structural strengthening take precedence
+over generic missing-relation SST. The following table applies **only after
+diagnosis was selected**, not to every Unknown result.
 
-Revisit this table after each candidate result. Record the actual branch and
-reserved diagnosis/revision budget in `HELPER_DECISION` (see `decomposition.md`)
+| Diagnostic situation | Next action |
+|---|---|
+| Current diagnostic trace already available but not yet read | Read the transition before another diagnostic call or candidate revision |
+| No reasonable compact candidate for the unresolved invariant | Diagnose the target with capped SST and inspect its state values |
+| Selected diagnostic for a stalled candidate, including structural strengthening | Capture capped SST for that candidate with its intended valid support; read its transition before another formula or split/join rewrite |
+| Diagnostic identifies a small state cluster, but no clear relation | Try capped `sst -generate -no_helper`; independently prove any generated candidates |
+| No trace or no useful information from SST | Inspect native result/trace metadata as below; record the lack of information and use the decomposition decision's no-information branch, not an automatic repeat |
+
+Reapply outcome triage and the decomposition method decision after each candidate
+result. Record the actual branch and reserved diagnosis/revision budget in
+`HELPER_DECISION` (see `decomposition.md`)
 before writing another run, including a final replay script. Reading this leaf
 without acting on the resulting evidence does not complete the diagnostic step.
 
@@ -53,7 +62,7 @@ than `N`. If `N` is omitted, Jasper uses `set_sst_default_trace_length` (default
 
 ### Capture the Diagnostic State
 
-After a candidate trial stalls, diagnose that candidate before spending another
+When the method decision selects candidate diagnosis, do it before spending another
 full timeout on an unchanged target with no newly proven support. Reserve time
 to read the trace, revise the relation, and run ordinary reset-based proofs.
 If setup/support can be retained in the same Jasper session, a capped diagnostic
@@ -184,8 +193,9 @@ state values, the newly proposed relation, and the new expression. Exclude an
 impossible state family, not just the literal trace values. Prove each revision
 from the unchanged setup; previously proven supporting lemmas may be used only
 with their dependencies disclosed and without circular assumptions. Keep the
-loop bounded and escalate to AG/CAG when dependencies become hard to manage or
-proofs remain as hard as the target despite selected support.
+loop bounded; reapply the decomposition decision for dependency/scale escalation
+when dependencies become hard to manage or supported strengthening remains hard
+after feedback analysis with no useful compact next relation.
 
 After valid proven helpers are enabled, check whether they exclude the archived
 diagnostic with `sst -check -property $target -trace_id $trace_id`. Preserve the

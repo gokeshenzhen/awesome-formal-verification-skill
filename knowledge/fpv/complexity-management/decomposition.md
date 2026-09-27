@@ -4,31 +4,30 @@
 
 ## Helper vs. Proof Structure Decision
 
-Use the lightest sound decomposition first, then escalate when signoff or scale
-requires structure:
+Apply [`../complexity-management.md` → **Post-Baseline Triage**](../complexity-management.md#post-baseline-triage-jg-specific)
+first if the latest evidence has not been classified. It handles scope, completed
+results, original-target CEX, search objectives, setup/capacity, and omitted
+support. For proof closure, a valid first helper goes to **Helper Assertions**
+for reuse; a genuine helper CEX goes to **Candidate-CEX Repair** below.
+Neither needs an SST trial.
 
-```
-Direct proof stalls?
-├─ Proven support omitted from selection? ... Yes → correct selection for the CURRENT obligation
-│    helper or final target → "Helper Assertions" below
-├─ Local data equality undetermined; structural strengthening not yet tried?
-│    → one bounded Data-Correspondence Strengthening trial
-├─ Structural candidate still undetermined with valid selected support?
-│    → capped SST/refinement; inspect states before another formulation
-├─ Candidate CEX / undetermined? ............ Yes → do not trust as a theorem; classify feedback
-│    reachable CEX → revise; missing relation → capped SST/refinement below
-├─ No failed candidate yet; can one/few inductive invariants summarize
-│  the missing local or global fact? ........ Yes → bounded first helper trial
-│    select support → prove obligation → gate on proven → next obligation
-├─ Dependency graph hard to audit? .......... Yes → proof_structure AG
-├─ Helpers are as hard as the target? ....... Yes → proof_structure CAG/AG
-├─ Many symmetric peer obligations with no
-│  compact inductive summary? ................ Yes → proof_structure CAG
-├─ Need auditable signoff? .................. Yes → proof_structure ROOT result
-├─ Local helper proof could be mistaken
-│  for top proof? ........................... Yes → proof_structure ROOT result
-└─ Many peer properties / components? ....... Yes → CAG / partition
-```
+This section owns method selection for the **remaining unresolved proof**.
+With no genuine CEX, a sound setup, no overriding capacity issue, and the intended
+valid support selected, apply the **first matching** method below. Reapply the
+outcome triage after each trial; do not classify every new expression as a first
+candidate. A mere timeout is not evidence of a large dependency graph.
+If the latest feedback is an SST attempt, finish its readback or no-information
+branch in `sst-refinement.md` before choosing another run.
+
+| Priority / evidence | Next action |
+|---|---|
+| Explicit assume/guarantee or ROOT signoff required; dependency graph hard to audit; many peer obligations with no compact summary; or supported strengthening remains as hard as the target after feedback analysis with no useful compact next relation | Use **Proof Decomposition (AG / CAG)**: AG for staged dependencies, CAG for distributed peer relations, or partition. Require propagated `ROOT`; SST is not a prerequisite |
+| Diagnostic unavailable/uninformative, with no new candidate, support, or evidence justifying renewed diagnosis | Choose a bounded non-diagnostic alternative with a concrete reason, or report unresolved if none fits the budget; do not repeat the same diagnostic solely because status is still Unknown |
+| Local selected-entry/output-data equality is `undetermined`; proven count/index/control support is selected; RTL exposes a compact structural strengthening not yet tried | Use one capped **Data-Correspondence Strengthening** trial before generic SST |
+| That structural candidate remains `undetermined` and missing state support is plausible | Diagnose that candidate with capped SST and read its transition before another split/join formulation |
+| No failed candidate yet and one/few compact local or global invariants summarize the missing fact | Prove the first candidate with selected support and a capped budget; advance if validly proven |
+| Invariant-like obligation has a plausible missing state relation and either no reasonable compact candidate or another candidate still `undetermined` despite selected support | Diagnose the target (no candidate) or stalled candidate with capped SST; read the actual states before revising |
+| None of the above has evidence | Use the index's profiling/reduction routes or a justified engine experiment; identify the missing evidence instead of forcing SST or AG/CAG |
 
 **Proven helpers are a proof method, not a modeling assumption**, when each
 helper is proven from the same RTL and legal environment setup before theorem
@@ -38,13 +37,25 @@ chain does not require AG/CAG merely because it has several levels. The words
 `global`, `uniqueness`, `conservation`, or `peer` identify a complexity risk;
 they do not by themselves require CAG.
 
+### Candidate-CEX Repair
+
+Use this branch only after confirming that the violated obligation is the
+candidate and the trace is reset-reachable in the same legal model. Read the
+actual predecessor/failing states and RTL update guards and sources; use
+`sst-refinement.md` → **Read the Transition, Not Just the Failure** for the
+readback discipline, without issuing SST for this CEX. Correct, weaken, or
+replace the false relation, then prove the revision with its selected valid
+support. Do not constrain away legal behavior. A helper CEX refutes that helper,
+not automatically the original target; adding an omitted true theorem cannot
+repair it. If feasibility is uncertain due to abstraction/setup, return to
+evidence classification instead of weakening the candidate blindly.
+
 ## Helper Assertions (Lemmas) [JG-specific]
 
-**When to use**: Try a capped helper proof when a compact invariant can summarize
-the missing fact. Correct any omission of relevant proven support first. If an
-invariant-like helper still stalls with the intended support selected, read
-`sst-refinement.md` before scheduling its next trial. A proven sibling does not
-discharge this unresolved relation.
+**When to use**: Prove or reuse a helper selected by the method decision above.
+For an unresolved obligation not refuted by a genuine CEX, correct omitted valid
+support first. If it still stalls with that support selected, reapply the method
+decision; a proven sibling does not discharge this unresolved relation.
 
 > 🔧 **VERSION-SENSITIVE — selection semantics validated on JasperGold
 > 2025.12p002.** Check `help assert`, `help prove`, and
@@ -92,17 +103,17 @@ prove_with_support $target {h_local h_summary} $target_budget
 ```
 
 An inconclusive result stops sequential theorem reuse along that chain, not all
-further investigation. Classify the result using the refinement flow below;
-do not require failure or SST before accepting a proven first candidate. Do not
-add an assumption merely to make a helper pass.
+further investigation. Classify the result using the triage and method decision
+above; do not require failure or SST before accepting a proven first candidate.
+Do not add an assumption merely to make a helper pass.
 
 **Branch before spending the next budget.** Do not queue an unconditional long
 target retry immediately after a trial helper. If the helper is still
 `undetermined`, `-with_proven` gains no new theorem from it. Record its result,
-check support selection, then choose the next experiment. For a plausible
-missing state relation, read `sst-refinement.md` and reserve a capped diagnostic
-and revised-helper proof before another unchanged target attempt. Otherwise,
-record why this route is unsuitable and use the decision tree above.
+check support selection, then use the method decision above. When it selects
+diagnosis, read `sst-refinement.md` and reserve a capped diagnostic and
+revised-helper proof before another unchanged target attempt. Keep the structural
+trial and dependency/scale branches available; record the evidence for the choice.
 
 Before launching a trial, allocate separate time for that trial, possible
 diagnosis, revised obligations, and the final target, including tool startup.
@@ -113,11 +124,11 @@ repairs are not semantic helper revisions.
 Record a `HELPER_DECISION` before the next run: obligation, status/validity,
 selected proven support, next action and its evidence, remaining budget, and
 time reserved for diagnosis/revision and final proof. For an `undetermined`
-candidate with plausible missing state support, select a short diagnostic
-before an unchanged retry unless new proof evidence justifies that retry.
-After a target retry with newly proven partial support also stalls, diagnose
-the remaining helper relations. Repeating the same expressions and support
-with a shorter limit does not validate closure; reserve such a replay for a
+candidate, apply the method priority above; when it selects missing-relation
+diagnosis, do that before an unchanged retry unless new proof evidence justifies
+the retry. After a target retry with newly proven partial support also stalls,
+reclassify the remaining relations using the same decision. Repeating the same
+expressions and support with a shorter limit does not validate closure; reserve such a replay for a
 concrete reproducibility question. Retain the current script for delivery and
 spend the investigation budget on new evidence. If stopping early, identify
 the concrete blocker or explain why no
@@ -186,15 +197,18 @@ prove -property {top.v_top.ast_has_same_id_on_ID} -time_limit 2m -with_helpers
 
 ## Data-Correspondence Strengthening
 
-When a selected-entry or output-data equality remains hard after its control
-relations prove, inspect what supplies that data on the **next** transition.
+Use this pattern when the method decision above selects a structural trial,
+after setup/capacity and support checks. When a selected-entry or output-data
+equality remains hard after its control relations prove and are selected,
+inspect what supplies that data on the **next** transition.
 A head-only fact does not constrain the next stored entry when a pointer moves.
 After a capped local trial, reserve a bounded structural trial before spending
 the remaining budget on the unchanged helper or target. SST can inform this
 trial; it is not a prerequisite when RTL already exposes the missing source.
 If this structural candidate also stays undetermined with its intended support
-selected and no reachable CEX, diagnose it with capped SST before alternating
-between more split and joined formulations. A new expression does not restart
+selected and no reachable CEX, reapply the method decision. Unless evidence now
+requires the dependency/scale branch, diagnose missing state support with capped
+SST before alternating between more split and joined formulations. A new expression does not restart
 the first-candidate branch. Preserve the candidate and read its failing
 transition, then decide which relation or support to change. If diagnostics
 are unavailable or uninformative, record that result and choose a bounded
@@ -250,8 +264,8 @@ strategy-reuse mechanism; it does not create assume-guarantee obligations or a
 ROOT signoff node. If direct proof plus ProofMaster leaves most assertions
 undetermined, change the proof shape instead of only extending time limits.
 
-**CAG trigger pattern**: use `proof_structure -create
-compositional_assume_guarantee` when a global invariant is distributed over many
+**CAG trigger pattern**: after the method decision selects decomposition, use
+`proof_structure -create compositional_assume_guarantee` when a global invariant is distributed over many
 symmetric peers and no compact helper converges, such as pairwise uniqueness,
 mutual exclusion, or no-duplicate properties across many queues, FIFOs,
 arbiters, banks, or tiles. CAG is also preferred when the helper graph itself is
@@ -270,8 +284,8 @@ prove_with_support h_leaf {} $helper_budget
 prove_with_support h_top {h_leaf} $helper_budget
 prove_with_support target_prop {h_leaf h_top} $target_budget
 ```
-Escalate this helper chain into `proof_structure` when its dependencies become
-hard to manage, proofs remain hard despite support, or a ROOT report is required.
+Escalate this helper chain into `proof_structure` under the method decision's
+dependency/scale/signoff conditions, not solely because one trial timed out.
 
 **Template** (Assume-Guarantee):
 ```tcl
@@ -338,12 +352,19 @@ proof_structure -create assume_guarantee -from ROOT \
 
 ## SST-Guided Helper Refinement [JG-specific]
 
-Read [`sst-refinement.md`](sst-refinement.md) for the candidate-result decision,
-SST capture and waveform inspection, refinement, and normal-proof gates.
-Use that route when no compact candidate is clear, or a capped candidate proof
-remains `undetermined` and missing state support is plausible. A candidate CEX
-instead calls for reachable-trace analysis. A successful first candidate needs
-no retrospective SST; report `refinement_not_exercised`.
+When the method decision selects diagnosis, read [`sst-refinement.md`](sst-refinement.md)
+for SST capture, waveform inspection, evidence-linked revision, and normal-proof
+gates. That leaf does not override the first structural trial or justified AG/CAG
+choice. A candidate CEX uses **Candidate-CEX Repair** above. A successful first
+candidate needs no retrospective SST; report `refinement_not_exercised`.
+
+## Anti-Patterns
+
+- Repairing selection instead of analyzing a genuine candidate CEX.
+- Letting generic Unknown-to-SST routing override the first structural trial.
+- Treating every timeout as a mandatory AG/CAG escalation, or requiring SST when
+  explicit dependency/scale/signoff evidence already selects proof structure.
+- Trusting helper classification or local AG/CAG node results as target signoff.
 
 ## See Also
 - Shrinking the cone before decomposing (stopat/cutpoints/free vars): `cone-reduction.md`

@@ -10,67 +10,82 @@ Complexity management is the core discipline that determines whether formal proo
 
 ### Post-Baseline Triage [JG-specific]
 
-Reapply this triage after every inconclusive helper trial, including before
-preparing the final script. Use the latest obligation result, not only the
-original baseline; an unchanged expression or new filename is not new evidence.
+Use this section for outcome, objective, and capacity triage;
+[`complexity-management/decomposition.md`](complexity-management/decomposition.md#helper-vs-proof-structure-decision)
+owns helper/structural/AG-CAG method selection, and
+[`complexity-management/sst-refinement.md`](complexity-management/sst-refinement.md#choose-the-entry-point)
+owns diagnostic capture, readback, and revision. Reapply triage after each result,
+including before preparing a final script. A new filename or unchanged expression
+is not new evidence. Record the selected route and the latest evidence for it.
 
-If relevant proven support is missing from an obligation's `prove` selection,
-correct the selection and retry. Once the intended support is already selected,
-continue to the feedback branches below; its mere existence is not a reason to
-repeat that run. Support selected only for the final target does not help an
-earlier helper proof. See
-`complexity-management/decomposition.md` → **Helper Assertions** for the shared
-obligation/support template and the tool-managed batch alternative.
+Keep the requested scope: explanation/review tasks need analysis, and authoring
+tasks need the requested properties/scripts and appropriate checks; neither
+automatically starts a proof campaign. For an authorized investigation, apply
+the following gates **in order**, returning here after each new result:
 
-When a proposed helper has a reset-reachable CEX, identify which assertion
-failed. For a helper-repair task, read `complexity-management/decomposition.md`
-and use its candidate-CEX branch to inspect and revise the relation. This trace
-refutes the candidate, not necessarily the original design property; it is not
-by itself a reason to switch the task to bug hunting.
+1. **Identify the evidence.** Match the obligation (original target or helper),
+   current model, native status/validity, and trace type. Resolve missing results,
+   tool errors, or uncertain model/trace identity before choosing a proof method.
+   In an abstracted or suspect setup, establish original-RTL feasibility before
+   calling a trace a genuine reset-reachable CEX. An SST is diagnostic only.
+2. **Accept valid success.** If the original targets and required obligations
+   are closed, use `workflow.md` → **Post-Prove Escalation Gate** to report them.
+   If only a helper proved in a proof-closure task, select it for the next
+   obligation using **Helper Assertions** in the decomposition leaf; do not
+   equate it with target success. For a pending search objective, retain that
+   helper result and continue to the objective gate. A successful first candidate
+   needs no retrospective SST; report `refinement_not_exercised` for that candidate.
+3. **Handle a genuine CEX before support repair.** For a helper, use the
+   decomposition leaf's **Candidate-CEX Repair** branch. For an original target,
+   report that target refuted in its legal model and investigate RTL/property/
+   environment intent. Proven support cannot remove a legal execution that
+   falsifies the candidate. Do not turn a helper CEX alone into a design-bug lead.
+4. **Honor the search objective.** For explicit bug-search/reachability or a
+   concrete witness lead for the original objective, use `engine-tuning.md` →
+   **DBH Escalation Boundary**. Do not impose helper closure on a search task.
+   "Strongest sound conclusion" or a finite budget alone does not select DBH.
+5. **Triage setup/capacity for unresolved proof closure.** For `undetermined`
+   with no genuine CEX, correct reset/setup errors and handle obvious capacity
+   symptoms using the map below before selecting a missing-relation diagnostic.
+   A large memory/counter cause takes priority over a speculative state relation.
+6. **Repair omitted support for this unresolved obligation.** Check valid proven
+   support and its actual `prove` selection using **Helper Assertions**. Correct
+   an omission and retry; support selected only for the final target cannot help
+   an earlier helper. If already selected, continue rather than repeat that run.
+7. **Choose the proof method from the remaining evidence.** For an invariant-like
+   target/helper whose state may be related by reset and subsequent updates,
+   a plausible missing state relation is enough to read **Helper vs. Proof
+   Structure Decision** in the decomposition leaf; a finished helper is not
+   required. That decision gives structural trials and justified AG/CAG priority
+   over generic SST, permits a clear first candidate, and diagnoses missing or
+   stalled candidates when appropriate. Use the other symptom routes below or
+   evidence-based engine selection when this proof shape does not apply.
 
-For one invariant-like assertion that remains `undetermined` with no
-reset-reachable CEX, inspect whether it compares state whose relationship is
-established by reset and preserved across updates. A plausible missing relation
-is enough; do not require a finished helper before selecting this branch.
-After excluding reset/setup errors and obvious capacity causes, read
-`complexity-management/sst-refinement.md`.
-If a clear compact candidate is available, try proving it with any selected
-already-proven support first;
-do not require a diagnostic trace before a successful first candidate. Use a
-capped SST diagnostic when no candidate is available, or when an unproven
-candidate plausibly lacks supporting state relations. Inspect any resulting
-waveform before refining. A reset-reachable candidate CEX instead calls for
-reachable-trace analysis. Reserve time for helper proof and the original
-target; if diagnostics are unavailable or uninformative, record that outcome
-and choose the next experiment from evidence, not another blind time extension.
+### Symptom Routes After Triage
 
-Honor an explicit bug-search/reachability objective or a concrete reachable
-witness lead for that objective through `engine-tuning.md`. "Strongest sound
-conclusion" and a finite budget alone do not override the invariant-diagnostic branch. Record
-the selected route and the baseline evidence that triggered it.
+Use this map within the gates above, not as a competing priority order. In
+particular, resolve setup/obvious capacity before the missing-relation route.
 
 ```
 Property not converging?
-├─ Proven support missing from this obligation's selection? Yes → correct selection → decomposition.md "Helper Assertions"
-├─ Repairing a proposed helper with a reset CEX? → decomposition.md candidate-CEX branch
-├─ Invariant undetermined, no reset CEX, missing state relation plausible?
-│                              Yes → post-baseline triage above → sst-refinement.md
-├─ Have you profiled? ......... No → formal_profiler → cone-reduction.md "Profiler-Guided Stopat Mining"
+├─ X-state / reset issues? .... Yes → abstraction.md "Initial Value Abstraction (IVA)"
 ├─ Large counters in cone? .... Yes → abstraction.md "Counter Abstraction"
 ├─ Large memories in cone? .... Yes → abstraction.md "Memory Abstraction"
 ├─ Raw mem proof stalled? ..... Yes → abstraction.md "Memory Abstraction" trigger checklist
 │     (big array flops + arbitrary-address assertion + precond cover hits + no CEX → abstract, don't re-race engines)
-├─ X-state / reset issues? .... Yes → abstraction.md "Initial Value Abstraction (IVA)"
 ├─ Synchronizers in path? ..... Yes → abstraction.md "Synchronizer Abstraction"
 ├─ Config logic dominates? .... Yes → cone-reduction.md "Configuration Cutpoints with Legality Assumptions"
 ├─ Multi-instance / symmetric?  Yes → cone-reduction.md "Free Variables / NDC"
 ├─ Many irrelevant signals? ... Yes → cone-reduction.md "Profiler-Guided Stopat Mining"
 ├─ Design too large overall? .. Yes → cone-reduction.md "Parameter Reduction"
+├─ Invariant undetermined, no reset CEX, missing state relation plausible?
+│                              Yes → decomposition.md "Helper vs. Proof Structure Decision"
+├─ Have you profiled? ......... No → formal_profiler → cone-reduction.md "Profiler-Guided Stopat Mining"
 ├─ Many peer/global invariants? Yes → decomposition.md "Helper vs. Proof Structure Decision"
-├─ Single property too hard? .. Yes → decomposition.md "Proof Decomposition (AG/CAG)"
+├─ Single property too hard? .. Yes → decomposition.md "Helper vs. Proof Structure Decision"
 ├─ Need lemma scaffolding? .... Yes → decomposition.md "Helper Assertions"
 ├─ Stuck before interesting states?
-│                              Yes → sst-refinement.md
+│                              Yes → decomposition.md diagnostic eligibility → sst-refinement.md
 ├─ One property far harder? ... Yes → targeted-reductions.md "Per-Property Simplification"
 ├─ Multi-clock robustness? .... Yes → targeted-reductions.md "Clock Ratio Management"
 └─ False CEX / missed bugs? ... Yes → "Under/Over-Constraint Management" (below)
@@ -95,7 +110,7 @@ Property not converging?
 5. **`stopat`/cutpoints alone are never sufficient.** Always add legality assumptions (`assume -constant`, `assume -bound 1`, `setup_ndc`, or transition constraints) after cutting a signal.
 6. **Separate helper classification from proven support.** [JG-specific] `assert -set_helper` marks an assertion as a helper; it neither proves it nor unconditionally assumes it. Gate sequential theorem reuse on a valid `proven` result under the same setup, and explicitly select the intended support. Batch helper proof is also valid; report which obligations it actually closes.
 7. **Classify SST traces before interpreting them.** A JasperGold SST trace is an arbitrary-state diagnostic witness, not a reset-reachable CEX or an exposed IC3/PDR CTI; the target remains `undetermined`. Retrieve its `trace_id`, confirm `tag SST`, inspect/export the waveform, and use it only to propose candidate invariants.
-8. **Choose helpers by proof shape, not by property label.** Try compact local or global invariants, including small acyclic chains with proven support. Switch to `proof_structure` when proofs remain hard despite support, dependencies are hard to manage, peer obligations have no compact summary, reviewer-audited signoff requires explicit obligations, or a propagated `ROOT` result is required.
+8. **Choose helpers by proof shape, not by property label.** Follow the decomposition leaf's method decision after triage. Try compact local or global invariants, including small acyclic chains with proven support; use `proof_structure` for justified dependency/scale/signoff needs. A timeout alone does not choose AG/CAG or SST.
 9. **Separate model setup from proof decomposition.** Create a `SETUP` task first, then derive `ROOT` from it.
 10. **For `proof_structure`, sign off ROOT, not just local AG/CAG nodes.** Require the propagated ROOT status; this does not require a ROOT task for ordinary helper proofs.
 11. **Detect overconstraint actively.** Use `check_assumptions -dead_end` and reachability covers to ensure assumptions don't block real behavior.

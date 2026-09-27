@@ -8,6 +8,14 @@ The chronological command sequence of a JasperGold FPV run: from `clear -all` th
 
 ## Quick Decision Tree
 
+Match the task scope before executing this flow: explain/review when asked to
+analyze, author the requested properties/scripts when asked to write, and run
+proof experiments within the authorized investigation. Consult
+`complexity-management.md` → **Post-Baseline Triage** for feedback-driven routing.
+Start with meaningful properties and add scope incrementally; proving a trivial
+property does not establish the intended behavior. Distinguish exhaustive proof
+from bounded or non-exhaustive search using the native result and proof scope.
+
 ```
 Setting up an FPV run?
 └─ Follow the fixed stage order:
@@ -20,8 +28,8 @@ Setting up an FPV run?
    ├─ On a cluster? ........ set_proofgrid_mode / _shell / _per_engine_max_jobs  (before prove)
    ├─ Repeat runs? ......... set_proofmaster on  (before prove)
    ├─ Prove scope? ......... prove -property {name}  |  prove -all (assertions and covers)
-   └─ Many undetermined? .... read complexity-management.md; for global peer
-                              invariants read decomposition.md before re-racing engines
+   └─ Any proof feedback? ... use Post-Prove Escalation Gate below; for unresolved
+                              obligations apply complexity-management.md triage
 ```
 
 ## Core Rules
@@ -35,7 +43,7 @@ Setting up an FPV run?
 7. **Configure ProofGrid before proving** when running on a cluster; enable **ProofMaster** for repeated runs on the same/evolving design.
 8. **After direct prove, review status before reporting success.** If more than 10% of assertions or more than 20 assertions remain `undetermined` with no counterexample, treat this as a complexity/proof-shape problem.
 9. **Do not use ProofMaster as proof decomposition.** ProofMaster reuses proof cache and strategies; it does not create AG/CAG obligations or a propagated `ROOT` signoff node.
-10. **Escalate global peer invariants to a decomposition decision.** For no-duplicate, uniqueness, conservation, mutual exclusion, placement, token ownership, or many generated queue/FIFO/bank/tile/arbitration assertions, read `complexity-management/decomposition.md`. Try a compact independently proven helper when one invariant summarizes the missing fact; use AG/CAG or partition when it does not, and require propagated `ROOT` status for proof-structure signoff.
+10. **Escalate global peer invariants to a decomposition decision.** For no-duplicate, uniqueness, conservation, mutual exclusion, placement, token ownership, or many generated queue/FIFO/bank/tile/arbitration assertions, apply complexity triage, then `complexity-management/decomposition.md` → **Helper vs. Proof Structure Decision**. That leaf owns helper versus AG/CAG/partition selection; require propagated `ROOT` status for proof-structure signoff.
 11. **A run file is a template** — fill `<placeholders>` with real design files/config and your proof strategy.
 
 ## The Canonical FPV Run File
@@ -110,18 +118,19 @@ report -file <file_name> -detailed   ;# or -summary
 
 ## Post-Prove Escalation Gate
 
-Always inspect the first direct proof result before spending more time on the
-same proof shape:
+Inspect the latest result after direct proof, each helper trial, and each target
+retry. Apply [`complexity-management.md` → **Post-Baseline Triage**](complexity-management.md#post-baseline-triage-jg-specific)
+before selecting another experiment; the following is a summary of that routing:
 
 ```
-Direct prove result?
-├─ CEX found? ................ Debug RTL/property/constraints
-├─ Mostly proven? ............ Tune engines or isolate the remaining properties
-├─ Many undetermined? ........ Read complexity-management.md
-│   ├─ Compact local/global
-│   │  inductive summary? ...... Prove; gate; select proven support; prove targets
-│   └─ Distributed peer graph? Read decomposition.md; build proof_structure AG/CAG
-└─ Repeated similar run? ..... ProofMaster may help, but does not replace AG/CAG
+Latest obligation result?
+├─ Evidence/model/trace identity unclear? → resolve it through complexity triage
+├─ Original targets and required obligations validly closed? → report completion
+├─ Only helper proven? ........ closure: select for next obligation; search: objective gate
+├─ Genuine reachable CEX? ..... distinguish helper repair from original-target investigation
+└─ Unresolved? ............... complexity triage for objective/setup/capacity/support
+   ├─ Helper/missing relation/dependencies? → decomposition.md method decision
+   └─ Search or engine experiment selected? → engine-tuning.md
 ```
 
 For sequential helper reuse, treat every helper and the final target as an
@@ -134,10 +143,19 @@ list selects exact support. A small acyclic chain need not become AG/CAG.
 Alternatively, `-with_helpers` may prove several helpers together; disclose the selected
 set and closed obligations, not a fictitious sequential dependency order. See
 `complexity-management/decomposition.md` → **Helper Assertions** for templates.
-Report the original targets' own results. If no compact helper converges,
-create a `SETUP` task, initialize a `ROOT` proof tree, build the relevant AG/CAG
-or partition operation, and report the propagated `ROOT` status. Local node
-results inside a proof structure are intermediate evidence, not signoff.
+Report the original targets' own valid results under the stated legal model and
+the required support or jointly closed obligations. Accept a directly proven
+baseline without inventing refinement; a successful first helper advances the
+proof and is marked `refinement_not_exercised`, not task completion by itself.
+When a helper does not converge, return to triage and the decomposition decision;
+neither a high proven fraction nor a helper timeout chooses the next method.
+The 10% / 20-assertion thresholds flag broad complexity; they do not exempt a
+single remaining invariant from triage. ProofMaster may help repeated runs but
+does not replace feedback classification or AG/CAG.
+If the decision selects proof structure, create `SETUP`, initialize `ROOT`, build
+the AG/CAG or partition operation, and report propagated `ROOT`. Local node
+results are intermediate evidence, not signoff. Preserve unresolved results;
+diagnostics or bounded results alone do not establish full proof.
 
 ## Anti-Pattern Reference
 
@@ -148,7 +166,7 @@ results inside a proof structure are intermediate evidence, not signoff.
 | `prove` before `assume`/`assert`/`cover` | Nothing constrained or declared | Constrain + declare properties first |
 | Proving without sanity/assumption checks | Broken or over-constrained setup → vacuous/false results | Run `sanity_check` + `visualize -reset` + `check_assumptions` first |
 | Proving a huge design with no black-boxing/stopat | State-space explosion | Black-box (`-bbox_*`) or `stopat` heavy sub-blocks at setup |
-| Re-running direct `prove -all` after many `undetermined` results | Same proof shape keeps hitting capacity | Switch to complexity management; try one gated compact helper or use AG/CAG for a distributed peer graph |
+| Re-running direct `prove -all` after many `undetermined` results | Same proof shape keeps hitting capacity | Apply complexity triage and the decomposition method decision before another run |
 | Treating helper classification as proven evidence | An undetermined helper can be mistaken for a valid lemma | Gate sequential theorem reuse on valid `proven` status; verify actual selection |
 | Treating ProofMaster as AG/CAG | Cache reuse does not decompose obligations | Use `proof_structure` and check propagated `ROOT` |
 

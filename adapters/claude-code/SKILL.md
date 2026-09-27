@@ -50,46 +50,20 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 
 ### Mandatory Escalation Routing
 
-After a baseline or an inconclusive helper trial, choose the first applicable
-route below before writing the next run. Reapply this routing when preparing a
-final script; a filename does not change the unresolved proof shape. A request
-for the "strongest sound conclusion" or a finite budget alone does not select
-bug hunting.
+After a baseline or helper result, including when preparing a final script,
+read `knowledge/fpv/complexity-management.md` → **Post-Baseline Triage** first.
+It owns task scope, outcome identity, and branch priority. Use the following
+discovery routes for additional reading; they do not override that triage.
 
-1. **Explicit bug-search / reachability objective, or a concrete witness lead**
-   for the design property being investigated (not merely a disproved proposed
-   helper): read
-   `knowledge/fpv/engine-tuning.md` and its `engine-tuning/bug-hunting.md` leaf.
-   Apply the leaf's activation and `DBH_DECISION` gates.
-2. **Repairing a proposed helper with a reset-reachable CEX**: read
-   `knowledge/fpv/complexity-management.md`, then
-   `knowledge/fpv/complexity-management/decomposition.md` first. Use its
-   candidate-CEX branch; the presence of this trace alone does not select DBH.
-3. **One invariant-like assertion remains `undetermined`, no reset-reachable
-   CEX, and a missing state relation is plausible** (for example, a comparison
-   between registers updated on different paths): read
-   `knowledge/fpv/complexity-management.md`, then
-   `knowledge/fpv/complexity-management/decomposition.md` **first**. Follow the
-   index's post-baseline triage and the leaf's compact-helper/diagnostic decision
-   before another ordinary proof-time extension or a DBH detour. The exact
-   helper need not already be known to select this route; reading the diagnostic
-   recipe does not require executing it when a compact candidate is available.
-4. **Other stalled proofs**: read `knowledge/fpv/complexity-management.md` for
-   proof-shape/capacity symptoms; read `knowledge/fpv/engine-tuning.md` for
-   engine selection. Select DBH only when the investigation calls for reachable
-   witnesses, not solely because status is `undetermined`.
-
-When a JasperGold/formal run leaves many properties `undetermined` after a sane
-direct `prove`, do not continue only with longer time limits, engine racing,
-ProofMaster, or ad-hoc local helpers. Read `knowledge/fpv/complexity-management.md`.
-
-If the hard assertions are global invariants over many peers or generated
-instances — especially no-duplicate, uniqueness, conservation, mutual exclusion,
-placement, token ownership, queues/FIFOs/banks/tiles/arbiters — also read
-`knowledge/fpv/complexity-management/decomposition.md` before choosing the next
-proof shape. Treat these labels as routing triggers, not as a mandatory CAG
-choice; the decomposition decision tree selects a proven compact helper or
-`proof_structure` AG/CAG/partition and defines the required signoff gate.
+| Task / latest feedback | Read after triage |
+|---|---|
+| Explicit bug-search/reachability or a concrete witness lead for the original design objective | `knowledge/fpv/engine-tuning.md`, then its `engine-tuning/bug-hunting.md` leaf for activation and `DBH_DECISION` |
+| Proposed helper has a CEX; repair the candidate | `knowledge/fpv/complexity-management/decomposition.md` → **Candidate-CEX Repair** |
+| One invariant-like assertion is `undetermined`, no reset-reachable CEX, missing state relation plausible (such as registers updated on different paths), even without an initial helper | `knowledge/fpv/complexity-management/decomposition.md` → **Helper vs. Proof Structure Decision** |
+| Data helper stalls, support may be missing, or structural strengthening has already been tried | `knowledge/fpv/complexity-management/decomposition.md`; follow its diagnostic route to `sst-refinement.md` when selected |
+| Global/peer/generated invariants: no-duplicate, uniqueness, conservation, mutual exclusion, placement, token ownership, queues/FIFOs/banks/tiles/arbiters | `knowledge/fpv/complexity-management/decomposition.md` for compact-helper versus AG/CAG/partition selection |
+| Other stalled proofs, including many `undetermined` results after direct `prove` or ProofMaster | `knowledge/fpv/complexity-management.md` symptom routes; `knowledge/fpv/engine-tuning.md` for the selected engine experiment |
+| Completed proof or helper result to report | `knowledge/fpv/workflow.md` → **Post-Prove Escalation Gate** |
 
 ### Routing Examples
 
@@ -102,11 +76,3 @@ choice; the decomposition decision tree selects a proven compact helper or
 - "Prove no duplicates across many FIFOs" → Read `complexity-management.md` + `complexity-management/decomposition.md`
 - "Convert this JasperGold script to VC Formal" → Read `tcl-commands.md` + both tool-specific dirs
 - "Run deep bug hunting / DBH beyond this stalled bound" → Read `engine-tuning.md`, then `engine-tuning/bug-hunting.md`
-
-## Key Principles
-
-1. **Formal verification is exhaustive** — unlike simulation, it proves properties hold for ALL inputs. Guide users to leverage this strength.
-2. **Complexity is the enemy** — most FPV failures are capacity issues, not property errors. Always consider complexity implications.
-3. **Properties should be meaningful** — a proven trivial property gives false confidence. Push for properties that capture real design intent.
-4. **Incremental verification** — start simple, add complexity gradually. Don't try to prove everything at once.
-5. **Tool awareness** — know the specific tool's strengths and quirks. Check `tool-specific/` when in doubt.
