@@ -224,13 +224,30 @@ prove_with_support h_candidate $candidate_support $helper_budget
 prove_with_support $target [linsert $candidate_support 0 h_candidate] $target_budget
 ```
 
+### Diagnostic and Refinement Evidence
+
+Extend [`../workflow.md` → **Minimal Task Record**](../workflow.md#minimal-task-record)
+only when diagnostics are used. Link evidence to its model, candidate version,
+project/session and source call; a `trace_id` alone is not a global identity.
 Report any diagnostic trace separately from proof results. A sound completion records:
 
 - target status before refinement (`undetermined`, bound, engine, time);
-- when SST was used: property status, `trace_id`, trace length, and `tag SST`;
+- when SST was used: native property status/validity/bounds, `trace_id`, trace length,
+  and `tag SST`; retain original metadata and distinguish new from attached old traces;
+- waveform and readback paths, actual queried signals/times, returned samples and
+  truncation; record missing readback as incomplete diagnosis, not completed analysis;
+- separately, the observed predecessor/failing values, corresponding RTL updates,
+  proposed missing relation and before/after candidate or support references;
 - every candidate result and its actual selected support;
 - status gates before sequential reuse, or obligations closed together in a batch;
-- final helper and target statuses, with `Infinite` bounds for full proof.
+- final helper and target statuses/validity, with ordinary-proof `Infinite` bounds
+  for full proof; apply workflow's **Proof Acceptance**, not a diagnostic bound alone.
+
+Record confirmed absence of a trace separately from unknown trace identity after
+an error/interruption. If no trace or useful relation is obtained, preserve the
+native result and inspection evidence, then use the entry decision's no-information
+branch. Keep archived traces tied to their original candidate/support even after
+`sst -check` or clearing; exclusion of an old trace does not establish new proof.
 
 If the first candidate succeeds, report `refinement_not_exercised`; do not run
 SST retrospectively to claim feedback caused its discovery. Distinguish

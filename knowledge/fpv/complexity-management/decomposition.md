@@ -139,6 +139,37 @@ engine portfolio and limit while changing its relation/support. Judge engine
 changes separately; a good control-lemma engine is not necessarily a good
 payload engine. See `sst-refinement.md` → **Refine, Prove, Then Reuse**.
 
+### Candidate and Support Record
+
+Extend [`../workflow.md` → **Minimal Task Record**](../workflow.md#minimal-task-record)
+for helper work; reference shared model, call, configuration and budget entries
+instead of duplicating them. Use `HELPER_DECISION` for the interpretation/next-action
+part, with the native evidence linked separately:
+
+```text
+Candidate: obligation name; expression/source version; originating check
+Support: requested and actual selection; each result's model/version/source
+  Sequential: before-call status/validity; joint: member set and closure results
+Change: before/after expression and support refs; meaning changed; evidence/reason
+HELPER_DECISION: latest result refs; selected route; next action and evidence
+  Remaining budget and diagnosis/revision/final reserves: reference task record
+```
+
+Version every candidate edit; count a semantic revision only when the intended
+relation or supporting facts change. Syntax fixes, renaming, equivalent split/join
+forms and engine-only retries are not semantic revisions. Distinguish adding a
+newly justified supporting relation from repairing selection of already-intended
+support. Label discovery, revision, selection repair, syntax repair and replay
+according to what happened; a changed file hash alone does not decide the label.
+
+For sequential reuse, require valid proof in the same legal model and evidence
+that support was actually selected. An unselected theorem can remain valid but
+does not establish its use in this call. For joint proof, retain the actual member
+set and each closed/open result; never convert pending members into assumed facts.
+If all required members close together, accept that joint result without inventing
+a sequential order. Report final target status separately and apply workflow's
+**Proof Acceptance**, including its discarded-candidate and propagated ROOT gates.
+
 For an existing assertion, resolve its exact name before using the same template:
 
 ```tcl
