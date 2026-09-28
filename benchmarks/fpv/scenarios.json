@@ -2,6 +2,43 @@
   "_comment": "Machine-readable companion to scenarios.md, consumed by benchmarks/run_scenarios.sh. Each scenario grades two token classes separately: 'concept' (general methodology a capable model may know on its own) and 'exact' (tool-specific JasperGold command/flag that the model usually cannot derive — this is where distillation loss actually bites). type: control = knowledge file covers it; loss-probe = targets content the pipeline dropped.",
   "scenarios": [
     {
+      "id": "fresh-diagnostic-support-chain",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "In a fresh JasperGold project I recreate h_leaf, h_summary and a stalled payload assertion. In the earlier project h_summary was proven only when h_leaf was explicitly selected. My diagnostic warmup loops over the helpers and proves each name alone, then intends to select both for an SST. The warmup stalls on h_summary. What exactly should change in the reusable script, dependency checks, and ordinary versus diagnostic engine settings? May I use the previous project status or omit the support to save time?",
+      "expect_concept": [
+        "dependency|dependencies",
+        "order|chain",
+        "fresh|same.*(session|task)",
+        "validity",
+        "budget|remaining",
+        "ordinary|portfolio"
+      ],
+      "expect_exact": [
+        "prove_with_support",
+        "-property",
+        "-engine_mode",
+        "get_property_info",
+        "set_proven_directive true"
+      ]
+    },
+    {
+      "id": "eda-poll-gap-accounting",
+      "type": "control",
+      "module": "workflow",
+      "prompt": "My EDA command runs asynchronously. The launch response waited 1 second, and two later polls waited 10 and 5 seconds; I spent 90 seconds editing and reading files between polls. The process has now exited. Can I charge 16 seconds against the cumulative EDA wall-time allowance? What should measure it, which failed or interrupted calls count, and what should I do if the previous process has a start record but no confirmed end?",
+      "expect_concept": [
+        "monotonic",
+        "poll|wait",
+        "launch|creation",
+        "exit|termination",
+        "unknown|unfinished",
+        "fail|retry",
+        "stop|reconcil"
+      ],
+      "expect_exact": []
+    },
+    {
       "id": "helper-structural-trial-feedback",
       "type": "control",
       "module": "complexity-management",

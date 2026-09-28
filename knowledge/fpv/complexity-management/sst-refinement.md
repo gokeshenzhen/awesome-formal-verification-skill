@@ -75,8 +75,11 @@ signal values so an agent can reason from the actual states:
 Carry the stalled ordinary proof's already-proven support into the diagnostic.
 Otherwise SST may merely violate a relation you already know. Verify each
 support in the same unchanged task and select it alongside the target; use an
-empty support list only when none is available. Record the selected names and
-other enabled helper/SST properties: SST also gives those properties prefix
+empty support list only when none is available. In a fresh session, rebuild the
+entire dependency chain using **Sequential Proven Support** in `decomposition.md`,
+including each support lemma's own selected dependencies and ordinary engine/limit
+record. Do not replace that rebuild with independent bare-helper proof calls.
+Record the selected names and other enabled helper/SST properties: SST also gives those properties prefix
 roles, so the explicit list alone is not an exclusive diagnostic constraint list.
 
 ```tcl
@@ -220,8 +223,8 @@ use `{}` only when none are selected:
 
 ```tcl
 assert -helper -name h_candidate {<candidate_invariant>}
-prove_with_support h_candidate $candidate_support $helper_budget
-prove_with_support $target [linsert $candidate_support 0 h_candidate] $target_budget
+prove_with_support h_candidate $candidate_support $helper_budget $ordinary_engines
+prove_with_support $target [linsert $candidate_support 0 h_candidate] $target_budget $ordinary_engines
 ```
 
 ### Diagnostic and Refinement Evidence

@@ -7,6 +7,51 @@ are a screening signal; manually review decisions and their conditions. They do
 not establish tool execution, autonomous discovery, proof closure, or skill A/B
 benefit. Keep prompts with expected answers out of blind participant workspaces.
 
+## Scenario: fresh-diagnostic-support-chain [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"In a fresh JasperGold project I recreate h_leaf, h_summary and a stalled payload assertion. In the earlier project h_summary was proven only when h_leaf was explicitly selected. My diagnostic warmup loops over the helpers and proves each name alone, then intends to select both for an SST. The warmup stalls on h_summary. What exactly should change in the reusable script, dependency checks, and ordinary versus diagnostic engine settings? May I use the previous project status or omit the support to save time?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Rebuild lower-level dependencies before higher-level helpers in the fresh session
+- [ ] Select each helper’s own proven support during warmup, not only in the final SST call
+- [ ] Check current status and validity; never import an old project’s proof status
+- [ ] Pass the recorded ordinary engine portfolio and limits explicitly; use B only for the diagnostic
+- [ ] Stop or report insufficient rebuild budget rather than silently dropping support
+
+## Scenario: eda-poll-gap-accounting [control]
+
+### Category
+
+workflow
+
+### User Prompt
+
+"My EDA command runs asynchronously. The launch response waited 1 second, and two later polls waited 10 and 5 seconds; I spent 90 seconds editing and reading files between polls. The process has now exited. Can I charge 16 seconds against the cumulative EDA wall-time allowance? What should measure it, which failed or interrupted calls count, and what should I do if the previous process has a start record but no confirmed end?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+
+- [ ] Reject the sum of polling durations; it omits process execution between polls
+- [ ] Measure launch through confirmed exit with a host monotonic clock
+- [ ] Charge startup, failed calls, retries, termination and cleanup to the same allowance
+- [ ] Keep incomplete timing unknown and reconcile it before another EDA call
+- [ ] Distinguish wrapper timeout enforcement from a strict OS-wide execution limit
+
 ## Scenario: helper-structural-trial-feedback [control]
 
 ### Category

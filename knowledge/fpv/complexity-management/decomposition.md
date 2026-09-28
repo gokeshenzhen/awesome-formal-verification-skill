@@ -73,7 +73,8 @@ and abstractions unchanged. Use the caller's engine settings and task budgets.
 Pass the support list to `prove`, not just to a Boolean test for `-with_helpers`:
 
 ```tcl
-proc prove_with_support {obligation support limit} {
+proc prove_with_support {obligation support limit engines} {
+  if {![llength $engines]} {error "pass the recorded ordinary-proof engine portfolio"}
   foreach h $support {
     lassign [get_property_info $h -list {status validity_status}] status validity
     puts "SUPPORT_BEFORE $h $status $validity"
@@ -84,7 +85,7 @@ proc prove_with_support {obligation support limit} {
   set selected [linsert $support 0 $obligation]
   puts "PROOF_SELECTED $selected"
   set_proven_directive true
-  set result [prove -property $selected -per_property_time_limit_factor 0 \
+  set result [prove -property $selected -engine_mode $engines -per_property_time_limit_factor 0 \
     -per_property_time_limit $limit -time_limit $limit]
   lassign [get_property_info $obligation \
     -list {status validity_status min_length max_length}] status validity lo hi
@@ -97,10 +98,26 @@ proc prove_with_support {obligation support limit} {
 
 assert -name h_local {<local_invariant>}
 assert -name h_summary {<higher_level_invariant>}
-prove_with_support h_local {} $helper_budget
-prove_with_support h_summary {h_local} $helper_budget
-prove_with_support $target {h_local h_summary} $target_budget
+set support_of(h_local) {}
+set support_of(h_summary) {h_local}
+set support_of($target) {h_local h_summary}
+# Set ordinary_engines from the recorded ordinary trial, not the SST engine.
+prove_with_support h_local $support_of(h_local) $helper_budget $ordinary_engines
+prove_with_support h_summary $support_of(h_summary) $helper_budget $ordinary_engines
+prove_with_support $target $support_of($target) $target_budget $ordinary_engines
 ```
+
+**Fresh-session trigger:** before a diagnostic or final script recreates these
+helpers, copy the dependency map, definitions, setup and ordinary engine/limit
+record together. Rebuild dependencies in order with the same calls above; select
+each helper's own dependencies while proving it. A loop that proves every helper
+alone loses the chain even if all names appear later in the diagnostic list.
+Check current-session status **and** validity after each call. Stop a dependent
+call when its support is unresolved; an old project's theorem is not current
+proof state. If the remaining budget cannot rebuild the chain, report that limit
+instead of silently shortening the proof or diagnosing without intended support.
+For SST, select the stalled obligation with its rebuilt support; reserve Engine B
+for the diagnostic call. Log deliberate engine/limit changes as separate trials.
 
 An inconclusive result stops sequential theorem reuse along that chain, not all
 further investigation. Classify the result using the triage and method decision
@@ -176,7 +193,7 @@ For an existing assertion, resolve its exact name before using the same template
 set matches [get_property_list -include {name *uniqueness_inv*}]
 if {[llength $matches] != 1} {error "resolve one exact helper name first"}
 set helper [lindex $matches 0]
-prove_with_support $helper $support $helper_budget
+prove_with_support $helper $support $helper_budget $ordinary_engines
 ```
 
 ### Classification, Evidence, and Selection
@@ -311,9 +328,9 @@ other word-level datapaths, first look for local algebraic identities:
 assert -name h_leaf {leaf.sum_in == leaf.sum_out}
 assert -name h_top {top_sum == rtl_sum}
 # Use prove_with_support from "Helper Assertions" above; budgets are task inputs.
-prove_with_support h_leaf {} $helper_budget
-prove_with_support h_top {h_leaf} $helper_budget
-prove_with_support target_prop {h_leaf h_top} $target_budget
+prove_with_support h_leaf {} $helper_budget $ordinary_engines
+prove_with_support h_top {h_leaf} $helper_budget $ordinary_engines
+prove_with_support target_prop {h_leaf h_top} $target_budget $ordinary_engines
 ```
 Escalate this helper chain into `proof_structure` under the method decision's
 dependency/scale/signoff conditions, not solely because one trial timed out.

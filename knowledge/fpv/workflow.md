@@ -286,6 +286,18 @@ or time limits. Distinguish the following accounting scopes:
 | Cumulative EDA calls | Sum the declared per-call metric, including failed/retried calls; specify whether wall or CPU time and how parallel calls are counted |
 | Whole investigation/session | Include agent analysis, readback and waiting; disclose active-time versus elapsed-time accounting across pauses and the enforcing host/controller, if any |
 
+Measure EDA process wall time with a host-side monotonic clock from immediately
+before process creation through confirmed exit. Retain command, process identity,
+start/end, exit status and elapsed time; charge failed starts and cleanup too.
+Do not sum `exec`/poll/wait response durations: the process continues running
+between polls while the agent thinks or reads files. Native solver time and the
+first/last console timestamps also omit parts of the process lifetime; label
+such values as lower bounds, never exact totals. An unfinished timing record is
+unknown, not zero. Reconcile it before launching another budgeted EDA call;
+if it cannot be reconciled, stop and disclose the incomplete accounting.
+[JG-specific] Do not use Jasper's `clock` command for Tcl wall-clock timestamps;
+it configures design clocks. Generate report filenames/timestamps on the host.
+
 Parallel call-time sums differ from elapsed wall time. Carry cumulative usage
 across renamed scripts, new projects and resumed sessions. If no budget is supplied,
 record unset and stay within authorized work; unset is not unlimited authorization.
