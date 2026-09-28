@@ -2,6 +2,11 @@
 
 This directory contains test scenarios for validating the FPV skill modules.
 
+These are concept/command questions with explicit diagnostic context. Token hits
+are a screening signal; manually review decisions and their conditions. They do
+not establish tool execution, autonomous discovery, proof closure, or skill A/B
+benefit. Keep prompts with expected answers out of blind participant workspaces.
+
 ## Scenario: helper-structural-trial-feedback [control]
 
 ### Category
@@ -42,8 +47,10 @@ complexity-management
 
 "In an unchanged JasperGold task, one local helper is validly proven while two
 invariant-like data helpers remain undetermined without a reset-reachable
-counterexample. I explicitly selected the proven helper for the original
-target, but that target trial also timed out. I have enough budget for a short
+counterexample. The proven helper was explicitly selected for each data helper and for the
+original target, but all these trials still timed out. Setup and obvious capacity
+causes are excluded, no untried compact structural strengthening is apparent,
+and a missing state relation remains plausible. I have enough budget for a short
 investigation and revision. Should I spend it replaying the same expressions
 and support with a shorter limit merely because I am preparing final.tcl?
 Give the next decision, exact diagnostic commands, and the proof gates needed
@@ -867,3 +874,313 @@ is available before launch, and which log records exist only after the run?"
 - Calling a timed-out partial scan a full-range rescan
 - Using `IHT002` as a pre-launch budget gate
 - Copying one example range, job count, or effort factor as a default
+
+<!-- Step 01–02 regression questions: synthetic review inputs, not blind participant tasks. -->
+
+## Scenario: helper-cex-before-support-repair [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"A proposed helper has a confirmed reset-reachable counterexample in the unchanged legal RTL
+model. A valid proven lemma was accidentally omitted from this helper call. The original target
+has no counterexample. Which issue determines the next action, what evidence must be read, and
+what can be concluded about the original target?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Identify the violated obligation and confirm model and trace identity.
+- [ ] A real helper CEX takes priority over omitted-support repair; a true theorem cannot eliminate a legal refuting execution.
+- [ ] Read concrete states and RTL updates and repair the candidate without excluding legal behavior.
+- [ ] Keep the original target unresolved unless it has its own valid proof or genuine CEX.
+
+## Scenario: mostly-proven-invariant-triage [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"Almost all assertions are proven in JasperGold. One invariant-like original target remains
+undetermined without a reset-reachable counterexample. Setup and obvious capacity problems are
+excluded, valid support is already selected, no compact candidate is apparent, and an unstated
+state relationship is plausible. There is budget for diagnosis. Does the high completion
+fraction justify going straight to another ordinary engine race? Give the next investigation and
+its evidence gates."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Apply outcome and method triage to the remaining obligation regardless of completion fraction.
+- [ ] Diagnose the original target under the stated eligibility conditions and read the actual transition.
+- [ ] Confirm SST identity without claiming reachability or target proof.
+- [ ] Prove any discovered support and the unchanged target before closure.
+
+## Scenario: helper-first-structural-priority [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"A local selected-entry data equality is undetermined in JasperGold, without a reachable CEX.
+Valid proven control support is explicitly selected; setup and obvious capacity problems are
+excluded. RTL load sources expose a compact relation joining storage and its registered handoff,
+and this structural strengthening has not been tried. A generic unknown-result checklist
+suggests diagnosis. What has priority now, and what changes if the structural trial also stalls?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Use one capped first structural-strengthening trial before generic diagnosis.
+- [ ] Reclassify its actual result rather than treating every new expression as a new first candidate.
+- [ ] On a supported structural stall with plausible missing state support, read diagnostic transitions before another split/join rewrite.
+- [ ] Accept direct success without retrospective SST and retain ordinary proof gates.
+
+## Scenario: capacity-before-relation-diagnosis [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"A stalled safety proof has no reachable counterexample. The proof cone contains a large memory
+and measurements identify it as an obvious capacity bottleneck. There is also a suspected
+unstated state relation. The reset and environment are sound. Which problem should be addressed
+first, what makes a reduction sound, and when should the relationship diagnosis be reconsidered?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/abstraction.md
+- knowledge/fpv/complexity-management/cone-reduction.md
+
+### Expected Key Points
+
+- [ ] Prioritize the evidenced capacity cause over speculative missing-relation diagnosis.
+- [ ] Inspect the relevant capacity evidence and choose a sound disclosed reduction.
+- [ ] Do not silently weaken the original design objective or trust an unvalidated abstraction contract.
+- [ ] Reapply triage to the resulting feedback; SST is not mandatory for every timeout.
+
+## Scenario: proof-model-result-reuse [control]
+
+### Category
+
+workflow
+
+### User Prompt
+
+"A report says a property is proven, but the environment and one candidate expression have since
+changed while property names stayed the same. No transfer or current validity evidence is
+available. In a separate variant only the engine and time limit changed and the tool confirms
+the old theorem remains valid in the unchanged model. Explain what can be reused in each case
+and how to distinguish an old result from a new proof."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+
+- [ ] Track model, candidate and invocation configuration separately; a name or hash is not proof validity.
+- [ ] Retain changed-model/candidate results as historical until affected obligations and dependencies are revalidated.
+- [ ] Permit valid reuse after only a configuration change without claiming a new proof.
+- [ ] Record the source call and reuse call and preserve unknown fields.
+
+## Scenario: proof-discarded-candidate-boundary [control]
+
+### Category
+
+workflow
+
+### User Prompt
+
+"The unchanged original target and all actually used support have valid unbounded proofs in the
+same legal model. An abandoned candidate remains undetermined, has been removed from the final
+obligation set, and is not a dependency of the accepted result. May the task finish? Contrast a
+variant where that candidate is merely called abandoned but the tool still lists it as a
+required open obligation."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+
+- [ ] Accept closure in the stated no-dependency and removed-obligation case while preserving candidate history.
+- [ ] Do not demand proof of every discarded exploratory candidate.
+- [ ] Reject closure in the still-required variant until discharge or explicit removal and revalidation.
+- [ ] Inspect native target validity and full-proof evidence rather than relying on the label abandoned.
+
+## Scenario: proof-joint-and-root-acceptance [control]
+
+### Category
+
+workflow
+
+### User Prompt
+
+"In an ordinary JasperGold proof, a target and its supporting relations all close jointly with
+valid unbounded results under the unchanged legal model. Must each relation have been proved
+alone first? In a separate proof_structure run all local nodes are proven but propagated ROOT is
+still undetermined. Compare the acceptance decisions and evidence required."
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+
+- [ ] Accept a tool-managed jointly closed obligation set without inventing a sequential order.
+- [ ] Audit the actual member set and native results under the legal model.
+- [ ] Require propagated ROOT and original-target coverage for the proof_structure variant.
+- [ ] Do not require a ROOT task for an ordinary helper proof.
+
+## Scenario: proof-budget-partial-stop [control]
+
+### Category
+
+workflow
+
+### User Prompt
+
+"At the cumulative EDA wall-clock limit, one original target is proven, another is undetermined,
+and a third is unprocessed. A single-solve limit is also configured but no process or session
+controller exists. An old accounting record shows two 30-second calls that fully overlapped.
+What must the final record say about target status, elapsed versus cumulative time, enforcement,
+and permission to launch another call?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+
+- [ ] Preserve each original target result including unprocessed obligations; do not claim full closure.
+- [ ] Stop new calls at the configured total limit and disclose any overrun.
+- [ ] Distinguish the hypothetical 60-second call-wall sum from 30 seconds elapsed.
+- [ ] A solver limit is not a hard process or session deadline; identify the actual enforcer or soft agreement.
+
+## Scenario: proof-interruption-recovery [control]
+
+### Category
+
+workflow
+
+### User Prompt
+
+"A proof session was interrupted after one target was proven. Cancellation was requested for
+another call, but termination was never confirmed and its report is partial. Additional elapsed
+usage is unknown. On resume the RTL or environment may have changed. What checks must precede
+another proof invocation, and which results and budget information can safely be retained?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+
+- [ ] Distinguish cancellation request from confirmed termination and reconcile the owned job before dispatch.
+- [ ] Check actual model, call and result identity and revalidate affected dependencies.
+- [ ] Retain verified partial results without treating a half-written report as success.
+- [ ] Carry budget consumption across resume; unknown usage is not zero or a fresh allowance.
+
+## Scenario: proof-revision-and-trace-identity [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"An agent fixes a syntax error in a candidate, renames its file, polls its status, and reruns the
+same expression with a different engine. A later diagnostic call still has an attached old trace
+identifier. Afterwards actual state readback and RTL updates motivate a new supporting relation.
+Which events are checks, file versions, or semantic refinement, and how should old versus new
+trace evidence be recorded?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Count invocations separately from candidate versions; polling is a readback.
+- [ ] Syntax repair, renaming and engine-only retries are not semantic refinement.
+- [ ] Distinguish old attached trace provenance from newly obtained feedback.
+- [ ] A feedback-justified change of relation or support is a candidate revision requiring ordinary proof; trace exclusion alone is insufficient.
+
+## Scenario: proof-native-result-acceptance [control]
+
+### Category
+
+workflow
+
+### User Prompt
+
+"Consider separate JasperGold outcomes: a zero process exit with target undetermined; a setup
+failure with no property result; a cover marked covered while the safety assertion remains
+unknown; and a proven status with missing model identity, validity and bounds. How should each
+be reported, and what raw facts are required before accepting a full safety proof?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/workflow.md
+
+### Expected Key Points
+
+- [ ] Keep execution status separate from native property status and preserve missing fields as unknown.
+- [ ] Do not invent cex or proven after a tool error.
+- [ ] A covered witness does not prove the safety assertion.
+- [ ] Require target/model correspondence, native valid full proof and closed support or joint obligations.
+
+## Scenario: diagnostic-no-information-exit [control]
+
+### Category
+
+complexity-management
+
+### User Prompt
+
+"A capped diagnostic for an unresolved invariant returns no trace. Its native result and trace
+metadata have been checked. There is no new candidate, support, or concrete configuration
+hypothesis that justifies repeating it. Some budget remains. What are sound next actions and
+stopping conclusions? How does the answer change if a specific bounded alternative becomes
+available?"
+
+### Modules That Should Be Consulted
+
+- knowledge/fpv/complexity-management.md
+- knowledge/fpv/complexity-management/decomposition.md
+- knowledge/fpv/complexity-management/sst-refinement.md
+
+### Expected Key Points
+
+- [ ] Record the actual absence of a trace without treating it as proof or unprovability.
+- [ ] Avoid repeating an uninformative diagnostic merely because the target remains unknown.
+- [ ] Stop with outstanding obligations and a concrete blocker when no justified action fits.
+- [ ] Allow a justified bounded alternative if new evidence and remaining budget support it.

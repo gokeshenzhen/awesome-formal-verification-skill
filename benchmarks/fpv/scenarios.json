@@ -13,7 +13,7 @@
       "id": "helper-selected-support-plateau",
       "type": "control",
       "module": "complexity-management",
-      "prompt": "In an unchanged JasperGold task, one local helper is validly proven while two invariant-like data helpers remain undetermined without a reset-reachable counterexample. I explicitly selected the proven helper for the original target, but that target trial also timed out. I have enough budget for a short investigation and revision. Should I spend it replaying the same expressions and support with a shorter limit merely because I am preparing final.tcl? Give the next decision, exact diagnostic commands, and the proof gates needed before claiming closure.",
+      "prompt": "In an unchanged JasperGold task, one local helper is validly proven while two invariant-like data helpers remain undetermined without a reset-reachable counterexample. The proven helper was explicitly selected for each data helper and for the original target, but all these trials still timed out. Setup and obvious capacity causes are excluded, no untried compact structural strengthening is apparent, and a missing state relation remains plausible. I have enough budget for a short investigation and revision. Should I spend it replaying the same expressions and support with a shorter limit merely because I am preparing final.tcl? Give the next decision, exact diagnostic commands, and the proof gates needed before claiming closure.",
       "expect_concept": ["remaining.*helper|unresolved.*relation|stalled.*helper", "same.*support|unchanged|shorter.*(replay|limit)", "diagnos|refin", "waveform|signal values", "proven|validity"],
       "expect_exact": ["get_property_info", "-sst", "tag SST"]
     },
@@ -224,6 +224,102 @@
       "prompt": "I want a JasperGold Bound Swarm over a broad depth range with several jobs and increasing per-attempt effort. Before launching it, how do I determine whether each job can reach the intended effort tier within the strategy time limit and whether the whole portfolio fits my remaining compute budget? Which evidence is available before launch, and which log records exist only after the run?",
       "expect_concept": ["per.?job|assigned cycles", "aggregate|slot.?second", "pre.?run|before.*launch|before.*run", "post.?run|after.*run", "partial|target.*tier|time.*limit"],
       "expect_exact": ["hunt -config", "hunt -show -strategy", "trace_attempt_time_limit", "trace_attempt_time_limit_factor", "IHT002", "IPF180"]
+    },
+    {
+      "id": "helper-cex-before-support-repair",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A proposed helper has a confirmed reset-reachable counterexample in the unchanged legal RTL model. A valid proven lemma was accidentally omitted from this helper call. The original target has no counterexample. Which issue determines the next action, what evidence must be read, and what can be concluded about the original target?",
+      "expect_concept": ["candidate|helper", "reachable|legal", "cannot|does not|will not", "repair|revise|replace|weaken", "original.*target|target.*(not|unresolved)"],
+      "expect_exact": ["get_property_info|validity_status"]
+    },
+    {
+      "id": "mostly-proven-invariant-triage",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "Almost all assertions are proven in JasperGold. One invariant-like original target remains undetermined without a reset-reachable counterexample. Setup and obvious capacity problems are excluded, valid support is already selected, no compact candidate is apparent, and an unstated state relationship is plausible. There is budget for diagnosis. Does the high completion fraction justify going straight to another ordinary engine race? Give the next investigation and its evidence gates.",
+      "expect_concept": ["remaining|unresolved", "diagnos|SST", "waveform|signal|transition", "budget|cap", "not.*(fraction|ratio|majority)|triage|classif"],
+      "expect_exact": ["-sst", "trace_id", "tag SST"]
+    },
+    {
+      "id": "helper-first-structural-priority",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A local selected-entry data equality is undetermined in JasperGold, without a reachable CEX. Valid proven control support is explicitly selected; setup and obvious capacity problems are excluded. RTL load sources expose a compact relation joining storage and its registered handoff, and this structural strengthening has not been tried. A generic unknown-result checklist suggests diagnosis. What has priority now, and what changes if the structural trial also stalls?",
+      "expect_concept": ["structural|conjunction", "first|before|priority", "budget|cap", "diagnos|SST", "transition|readback|signal"],
+      "expect_exact": ["prove -property", "get_property_info"]
+    },
+    {
+      "id": "capacity-before-relation-diagnosis",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A stalled safety proof has no reachable counterexample. The proof cone contains a large memory and measurements identify it as an obvious capacity bottleneck. There is also a suspected unstated state relation. The reset and environment are sound. Which problem should be addressed first, what makes a reduction sound, and when should the relationship diagnosis be reconsidered?",
+      "expect_concept": ["capacity|memory", "first|priority|before", "profil", "abstract|reduc", "reclassif|reassess|triage"],
+      "expect_exact": ["formal_profiler"]
+    },
+    {
+      "id": "proof-model-result-reuse",
+      "type": "control",
+      "module": "workflow",
+      "prompt": "A report says a property is proven, but the environment and one candidate expression have since changed while property names stayed the same. No transfer or current validity evidence is available. In a separate variant only the engine and time limit changed and the tool confirms the old theorem remains valid in the unchanged model. Explain what can be reused in each case and how to distinguish an old result from a new proof.",
+      "expect_concept": ["model|identity", "validity", "history|historical|provenance", "dependent|affected", "engine|configuration", "reus"],
+      "expect_exact": ["get_property_info", "validity_status"]
+    },
+    {
+      "id": "proof-discarded-candidate-boundary",
+      "type": "control",
+      "module": "workflow",
+      "prompt": "The unchanged original target and all actually used support have valid unbounded proofs in the same legal model. An abandoned candidate remains undetermined, has been removed from the final obligation set, and is not a dependency of the accepted result. May the task finish? Contrast a variant where that candidate is merely called abandoned but the tool still lists it as a required open obligation.",
+      "expect_concept": ["discard|abandon", "depend", "obligation", "accept|success|finish", "remov|revalid"],
+      "expect_exact": ["validity_status|status.*proven"]
+    },
+    {
+      "id": "proof-joint-and-root-acceptance",
+      "type": "control",
+      "module": "workflow",
+      "prompt": "In an ordinary JasperGold proof, a target and its supporting relations all close jointly with valid unbounded results under the unchanged legal model. Must each relation have been proved alone first? In a separate proof_structure run all local nodes are proven but propagated ROOT is still undetermined. Compare the acceptance decisions and evidence required.",
+      "expect_concept": ["joint|batch", "not.*(alone|separate|individ)|together", "member|obligation|depend", "propagat", "ROOT"],
+      "expect_exact": ["proof_structure", "validity_status|get_property_info"]
+    },
+    {
+      "id": "proof-budget-partial-stop",
+      "type": "control",
+      "module": "workflow",
+      "prompt": "At the cumulative EDA wall-clock limit, one original target is proven, another is undetermined, and a third is unprocessed. A single-solve limit is also configured but no process or session controller exists. An old accounting record shows two 30-second calls that fully overlapped. What must the final record say about target status, elapsed versus cumulative time, enforcement, and permission to launch another call?",
+      "expect_concept": ["partial|each.*target|per.target", "unprocessed", "cumulative|sum", "60", "30", "soft|cooperative", "stop|no.*(new|another)"],
+      "expect_exact": ["-time_limit"]
+    },
+    {
+      "id": "proof-interruption-recovery",
+      "type": "control",
+      "module": "workflow",
+      "prompt": "A proof session was interrupted after one target was proven. Cancellation was requested for another call, but termination was never confirmed and its report is partial. Additional elapsed usage is unknown. On resume the RTL or environment may have changed. What checks must precede another proof invocation, and which results and budget information can safely be retained?",
+      "expect_concept": ["cancel|terminat", "owned|ownership|process|job", "model|input", "validity|revalid", "budget", "unknown", "partial"],
+      "expect_exact": ["get_property_info|validity_status"]
+    },
+    {
+      "id": "proof-revision-and-trace-identity",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "An agent fixes a syntax error in a candidate, renames its file, polls its status, and reruns the same expression with a different engine. A later diagnostic call still has an attached old trace identifier. Afterwards actual state readback and RTL updates motivate a new supporting relation. Which events are checks, file versions, or semantic refinement, and how should old versus new trace evidence be recorded?",
+      "expect_concept": ["syntax", "semantic", "selection|support", "poll", "old|stale", "source|origin|provenance"],
+      "expect_exact": ["trace_id", "get_trace_info|sst -check"]
+    },
+    {
+      "id": "proof-native-result-acceptance",
+      "type": "control",
+      "module": "workflow",
+      "prompt": "Consider separate JasperGold outcomes: a zero process exit with target undetermined; a setup failure with no property result; a cover marked covered while the safety assertion remains unknown; and a proven status with missing model identity, validity and bounds. How should each be reported, and what raw facts are required before accepting a full safety proof?",
+      "expect_concept": ["exit", "unknown|missing", "cover", "validity", "bound", "model"],
+      "expect_exact": ["status", "validity_status", "min_length|max_length"]
+    },
+    {
+      "id": "diagnostic-no-information-exit",
+      "type": "control",
+      "module": "complexity-management",
+      "prompt": "A capped diagnostic for an unresolved invariant returns no trace. Its native result and trace metadata have been checked. There is no new candidate, support, or concrete configuration hypothesis that justifies repeating it. Some budget remains. What are sound next actions and stopping conclusions? How does the answer change if a specific bounded alternative becomes available?",
+      "expect_concept": ["no.*(trace|information)|uninformative", "unresolved|incomplete", "reason|justif|evidence", "alternative", "budget"],
+      "expect_exact": ["trace_id", "sst_max_length|get_property_info"]
     }
   ]
 }
