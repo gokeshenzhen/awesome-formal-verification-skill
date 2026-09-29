@@ -73,6 +73,15 @@ bash scripts/install.sh
 
 </details>
 
+## 可选搭配：TraceWeave
+
+[TraceWeave](https://github.com/gokeshenzhen/TraceWeave) 是一个 MCP 服务，让 AI Agent 能直接读取波形和调试产物。在本项目中，它是 Skill 在需要逐拍分析轨迹时推荐使用的**可选波形阅读工具**：
+
+- **SST 引导的 helper 精化**：helper 仍不收敛时，Skill 让 AI 用 `get_formal_paths`（发现 JasperGold 产物）、`search_signals`（解析信号路径）、`get_signals_by_cycle` / `get_signals_around_time`（读取最后满足状态和失败状态）阅读 SST/CEX 轨迹，再从 RTL 推导缺失的关系。
+- **可复现案例与盲测**：`test/cti-*` 案例和人工 A/B 基准用它做可审计的信号读取。
+
+TraceWeave **不是必需依赖**：运行 Tcl 流程不需要它；如果波形是 VCD 格式，任何 VCD 查看器都能读取同样的信号。但如果波形是 **FSDB 或 FST** 格式（二进制格式，无法像 VCD 一样按文本读取），就需要用 TraceWeave 让 AI 读取。
+
 ## 适用范围与局限
 
 - 目前只针对 **JasperGold FPV** 做了验证。VC Formal 等工具尚未覆盖。

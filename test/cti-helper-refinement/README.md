@@ -47,7 +47,7 @@ H0 在可达状态中可以为真，但自身并不单步归纳闭合；refineme
 
 **从干净 clone 运行**
 
-Python 路径只需要 Python 3 标准库，不需要 Jasper、TraceWeave 或任何预先生成的结果。
+Python 路径只需要 Python 3 标准库，不需要 Jasper、[TraceWeave](https://github.com/gokeshenzhen/TraceWeave) 或任何预先生成的结果。
 从仓库根目录执行：
 
 ```bash

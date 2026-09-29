@@ -77,7 +77,7 @@ IC3/PDR 引擎内部的 CTI 数据结构。容量上界获证后，上述超容�
 
 需要已安装并可用的 JasperGold（`jg` 在 PATH 中，许可证可用）；整理结果
 需要 Python 3.9+，仅使用标准库。命令按 JasperGold `2025.12p002` 验证。
-TraceWeave 是可选的波形阅读工具，不是运行 Tcl 的依赖。
+[TraceWeave](https://github.com/gokeshenzhen/TraceWeave) 是可选的波形阅读工具，不是运行 Tcl 的依赖。
 
 从仓库根目录执行；各次 Jasper 运行使用独立项目：
 

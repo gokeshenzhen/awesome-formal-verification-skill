@@ -73,6 +73,15 @@ The installer detects the AI agents on your machine and registers the skill with
 
 </details>
 
+## Optional Companion: TraceWeave
+
+[TraceWeave](https://github.com/gokeshenzhen/TraceWeave) is an MCP server that lets an AI agent read waveforms and debug artifacts directly. In this project it is the **optional waveform reader** the skill points to when a proof needs trace-level diagnosis:
+
+- **SST-guided helper refinement**: when a helper still doesn't converge, the skill has the AI read the JasperGold SST/CEX trace with `get_formal_paths` (artifact discovery), `search_signals` (resolve signal paths), and `get_signals_by_cycle` / `get_signals_around_time` (sample the last satisfying state and the failing state), then derive the missing relation from the RTL.
+- **Reproducible cases and blind A/B tests**: the `test/cti-*` cases and the manual A/B benchmarks use it for auditable signal readback.
+
+TraceWeave is **not a hard dependency**: running the Tcl flows doesn't need it, and for **VCD** waveforms any VCD viewer can read the same signals. For **FSDB or FST** waveforms (binary formats that can't be read as text like VCD), use TraceWeave so the AI can read them.
+
 ## Scope and Limitations
 
 - Validated only for **JasperGold FPV** so far. VC Formal and other tools are not covered yet.
