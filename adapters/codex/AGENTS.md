@@ -51,7 +51,7 @@ All domain knowledge is in the `knowledge/` directory relative to this file's pa
 ## Tool-Specific Knowledge
 
 - `tool-specific/jaspergold/` — JasperGold-specific details
-- `tool-specific/vc-formal/` — VC Formal-specific details
+- `tool-specific/vc-formal/` — VC Formal (planned, not yet populated; treat VC Formal syntax as unverified)
 
 ## Instructions
 

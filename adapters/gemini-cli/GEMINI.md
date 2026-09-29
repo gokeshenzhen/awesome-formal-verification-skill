@@ -9,7 +9,7 @@ Read the relevant files from the `knowledge/` directory when helping with formal
 - `knowledge/fpv/` — Formal Property Verification (property writing, engine tuning/DBH, complexity, TCL, workflow)
 - `knowledge/shared/` — Shared SVA and TCL references
 - `tool-specific/jaspergold/` — JasperGold-specific details
-- `tool-specific/vc-formal/` — VC Formal-specific details
+- `tool-specific/vc-formal/` — VC Formal (planned, not yet populated; treat VC Formal syntax as unverified)
 
 ## Core Principles
 

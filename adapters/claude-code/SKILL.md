@@ -3,7 +3,7 @@ name: formal-verification
 description: >
   Comprehensive formal verification skill covering property writing (SVA/assertions),
   proof engine tuning, complexity management, TCL scripting, and end-to-end FPV workflows.
-  Supports JasperGold and VC Formal (extensible). Use this skill whenever the user works on
+  Validated for JasperGold; VC Formal support is planned (extensible). Use this skill whenever the user works on
   formal property verification (FPV), writes SVA assertions or properties, configures proof
   engines, debugs complexity issues, writes JasperGold/VC Formal TCL scripts, runs formal
   verification batch jobs, or asks about any formal verification methodology. Also trigger
@@ -39,7 +39,7 @@ This skill uses a modular knowledge base. Load only the modules relevant to the 
 | Resource | Path | Use When |
 |----------|------|----------|
 | JasperGold Specifics | `tool-specific/jaspergold/` | JasperGold-specific commands, quirks, versions |
-| VC Formal Specifics | `tool-specific/vc-formal/` | VC Formal-specific details (when available) |
+| VC Formal Specifics | `tool-specific/vc-formal/` | Planned, not yet populated — treat VC Formal syntax as unverified |
 
 ## How to Use This Skill
 
@@ -74,5 +74,5 @@ discovery routes for additional reading; they do not override that triage.
 - "Set up a JasperGold FPV run" → Read `workflow.md` + `tcl-commands.md` + `jaspergold/`
 - "414 assertions, 412 undetermined, no CEX" → Read `workflow.md` + `complexity-management.md` + `complexity-management/decomposition.md`
 - "Prove no duplicates across many FIFOs" → Read `complexity-management.md` + `complexity-management/decomposition.md`
-- "Convert this JasperGold script to VC Formal" → Read `tcl-commands.md` + both tool-specific dirs
+- "Convert this JasperGold script to VC Formal" → Read `tcl-commands.md` + `tool-specific/jaspergold/`; the VC Formal layer is not yet populated, so flag every VC Formal command as unverified
 - "Run deep bug hunting / DBH beyond this stalled bound" → Read `engine-tuning.md`, then `engine-tuning/bug-hunting.md`

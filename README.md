@@ -4,31 +4,50 @@
   <strong>English</strong> · <a href="README.zh.md">简体中文</a>
 </p>
 
-An open-source, AI-agent-agnostic knowledge base for formal verification, designed to supercharge your EDA workflow with any AI coding assistant.
+**Teach your AI coding assistant to actually drive JasperGold formal verification.**
 
-> 🎯 **Current Focus**: JasperGold Formal Property Verification (FPV)
-> 🗺️ **Roadmap**: CDC/RDC, Superlint, Coverage, VC Formal support
+A formal-verification skill for Claude Code, Codex, and other AI agents. When a proof stalls, it tells the AI *which technique* to use, *when* to use it, and *the exact JasperGold command*. It also checks, against auditable acceptance criteria, whether a proof is really complete.
 
-## What Is This?
+> 🎯 **Supported today**: JasperGold Formal Property Verification (FPV)
+> 🗺️ **Planned**: VC Formal, CDC/RDC, Superlint, Coverage
 
-This project packages deep formal verification expertise into structured "skills" that AI coding agents can consume. Instead of repeatedly explaining FPV concepts, engine tuning tricks, or TCL scripting patterns to your AI assistant, you point it at this skill and it *knows*.
+## What Problem Does This Solve?
 
-**Key design principles:**
-- **Agent-agnostic**: Core knowledge lives in plain Markdown. Thin adapter layers make it work with Claude Code, Codex, Gemini CLI, Cursor, and more.
-- **Tool-aware**: JasperGold and VC Formal have different quirks. Shared verification knowledge is separated from tool-specific details.
-- **Community-driven**: Each module has a maturity badge. Battle-tested by real engineers, not just extracted from docs.
+**If you are new to formal verification**: chip designs (RTL) are usually verified by simulation, which means running many test cases and checking for failures. Formal verification works differently. It mathematically proves that a property (an assertion) holds for *every possible input and state*. It finds deep bugs that simulation rarely reaches, but the computation can explode, and proofs often fail to finish. Getting a proof to converge takes a lot of tool experience.
 
-## Skill Development Method
+**If you are a verification engineer**, you know the pain: properties stuck at `undetermined`, state-space explosion, and engine choices made by gut feel. A general-purpose AI assistant knows the methodology ("try abstraction or a helper lemma"), but it often:
 
-The methodology used to build this Skill comes from [liandan](https://github.com/gokeshenzhen/liandan), maintained by the author: distilling high-density formal verification materials into a traceable, portable, and verifiable Agent Skill.
+- doesn't know the exact commands and flags, such as `abstract -counter`, `assert -helper`, `prove -with_helpers`, or `proof_structure -init`;
+- doesn't know *which symptom* should trigger *which technique*, so it keeps adding time or switching engines on the raw proof;
+- can't tell "proven" from "proven under extra assumptions", and reports a conditional result as signoff.
 
-## Project Introduction
+This skill fills exactly those three gaps: **tool-specific commands, symptom-to-technique trigger timing, and proof-acceptance discipline**.
 
-- [微信公众号文章：Awesome Formal Verification Skill 项目介绍](https://mp.weixin.qq.com/s/utIrVrACSNOdHx_XbMbazQ)
+## Results
+
+We run manual blind A/B tests: same model, same task, with and without the skill. The difference is clearest on a weaker model (`gpt-5.4-mini` via Codex). Without the skill, both cases failed to reach a proof. With the skill, both closed in seconds.
+
+| Case | Without skill | With skill |
+|---|---|---|
+| Wide counter (`cnt_abs`) | ❌ Still no signoff after 16m46s: 4 proven / 2 CEX; never found counter abstraction | ✅ 10.8 s: 7 proven / 6 covered, via `abstract -counter` |
+| Twin-counter equivalence (`helper_counters`) | ❌ 0 proven / 2 undetermined; never thought of a helper lemma | ✅ 7 s: proved helper `counter1==counter2`, then proved the target `-with_helpers` |
+
+The full report, with the raw source of every number, is in [`test/weak_model_ab/COMPARISON.md`](test/weak_model_ab/COMPARISON.md).
+
+**Caveats**: each arm ran once (N=1), and the knowledge base contains a similar worked example for `cnt_abs`. On frontier models, most cases tie, because a strong model can re-derive the methodology on its own. The skill's value is concentrated in what a model *cannot* derive: exact tool commands and trigger timing. The weaker the model, or the more obscure the tool detail, the bigger the gain.
+
+## What It Helps With
+
+| Your situation | What the skill provides |
+|---|---|
+| Writing SVA assertions, assumptions, covers | Property patterns and anti-patterns; avoiding vacuous proofs |
+| Proof stuck at `undetermined` / state explosion | Technique by symptom: counter/memory abstraction, cutpoints, case splitting, helper lemmas, assume-guarantee, `proof_structure` |
+| Helpers added but still not converging | Use JasperGold SST traces to find the missing relation, strengthen the helper, and close the original target |
+| Unsure which engine or how deep to run | Engine selection and tuning; Deep Bug Hunting (`hunt`, swarm modes) for deep bugs |
+| Writing JasperGold Tcl scripts | Command reference and idioms, such as `-silent`, design/COI queries, and property enumeration |
+| Setting up FPV from scratch | End-to-end flow (analyze → elaborate → clock/reset → prove → report) plus result-acceptance criteria |
 
 ## Quick Start
-
-Clone the repo, then run the installer once:
 
 ```bash
 git clone https://github.com/gokeshenzhen/awesome-formal-verification-skill.git
@@ -36,103 +55,88 @@ cd awesome-formal-verification-skill
 bash scripts/install.sh
 ```
 
-That's it. The installer auto-detects the AI agents on your machine and registers
-the skill for each:
+The installer detects the AI agents on your machine and registers the skill with each one. Restart the agent, then ask questions in your RTL project; the skill triggers automatically. For example:
 
-- **Claude Code** and **Codex** — both use global skills directories. The
-  installer points them at this repo's canonical skill directory
-  (`adapters/claude-code/`) via directory symlinks:
-  `~/.claude/skills/`, `~/.agents/skills/` for current Codex, and
-  `~/.codex/skills/` for legacy Codex installs.
-  Restart the agent and the skill auto-triggers on any FPV task
-  (formal / property / assertion / prove / CEX / JasperGold / VC Formal / FPV).
-- **Cursor** and **Gemini CLI** — these use *project-level* rule/context files,
-  not a global skills directory. If detected, the installer prints exactly how to
-  wire them into a project.
+> The data-integrity assertion on this FIFO stays undetermined. Find out why and get it proven.
 
-Because each agent's skill entry is a directory symlink to this checkout,
-updating the repo (`git pull`) updates every agent instantly — no reinstall.
-`SKILL.md` itself stays a normal tracked file inside the repo, which avoids
-scanner issues with file-level `SKILL.md` symlinks. Re-run the installer after
-moving the repo; use `bash scripts/install.sh --uninstall` to remove the links.
+> Write handshake protocol assertions for this AXI slave and generate a JasperGold run script.
 
-> The per-agent wrapper files under `adapters/` are the source-of-truth manifests
-> the installer wires up — you normally don't touch them directly.
+**Prerequisite**: JasperGold is installed locally with a working license. The skill provides knowledge only and does not ship EDA tools.
 
-## Project Structure
+<details>
+<summary>Install details (supported agents, updating, uninstalling)</summary>
+
+- **Claude Code** and **Codex**: the installer symlinks this repo's `adapters/claude-code/` into the global skills directories (`~/.claude/skills/`, `~/.agents/skills/`, and `~/.codex/skills/` for legacy Codex).
+- **Cursor** and **Gemini CLI**: these use project-level rule files. If they are detected, the installer prints how to wire them into a project.
+- **Updating**: the entries are symlinks to this checkout, so `git pull` takes effect immediately; no reinstall is needed.
+- **Uninstalling**: `bash scripts/install.sh --uninstall`. Re-run the installer after moving the repo.
+
+</details>
+
+## Scope and Limitations
+
+- Validated only for **JasperGold FPV** so far. VC Formal and other tools are not covered yet.
+- The knowledge is distilled mainly from official documentation and application notes, backed by a small number of blind tests. Most modules still need real-project feedback (see Module Maturity below).
+- The skill requires the AI to disclose what a result depends on. A proof under abstraction, black-boxing, or extra assumptions is **not** raw-RTL signoff, and neither is a `hunt`/DBH run that finds no counterexample.
+
+## Reproducible Cases
+
+The repo ships JasperGold cases you can rerun directly to see what the skill teaches:
+
+- [`test/cti-fifo-refinement/`](test/cti-fifo-refinement/README.md): FIFO data-correctness proof. The direct proof doesn't converge and neither does the initial helper. An SST trace exposes the missing occupancy relation; adding it closes the original target.
+- [`test/cti-helper-refinement/`](test/cti-helper-refinement/README.md): introductory helper-strengthening example on a three-stage pipeline, with a Jasper-free exhaustive Python check.
+- [`test/weak_model_ab/`](test/weak_model_ab/): raw blind-test material behind the Results section.
+
+## How It Works
+
+Knowledge is decoupled from agents in three layers:
 
 ```
-awesome-formal-verification-skill/
-├── knowledge/                  # Core knowledge (agent-agnostic)
-│   ├── fpv/                    # Formal Property Verification
-│   │   ├── property-writing.md
-│   │   ├── engine-tuning.md             # index (engines + DBH routing)
-│   │   ├── engine-tuning/               # DBH sub-topic leaf
-│   │   ├── complexity-management.md     # index (progressive disclosure)
-│   │   ├── complexity-management/       # sub-topic leaves
-│   │   ├── tcl-commands.md
-│   │   └── workflow.md
-│   ├── shared/                 # Cross-app shared knowledge
-│   │   ├── sva-reference.md
-│   │   └── tcl-common.md
-│   ├── cdc/                    # 🔜 CDC verification
-│   └── lint/                   # 🔜 Superlint
-│
-├── adapters/                   # Agent-specific wrappers
-│   ├── claude-code/SKILL.md
-│   ├── codex/AGENTS.md
-│   ├── gemini-cli/GEMINI.md
-│   └── cursor/.cursorrules
-│
-├── tool-specific/              # EDA tool differences
-│   ├── jaspergold/
-│   └── vc-formal/              # 🔜
-│
-└── benchmarks/                 # Validation test cases
-    └── fpv/
+knowledge/        Single source of truth: plain Markdown any agent can read
+  fpv/            Five FPV modules; large modules split into index + sub-topics, loaded on demand
+  shared/         Common references (SVA, Tcl)
+adapters/         Thin per-agent routers (Claude Code / Codex / Gemini CLI / Cursor); no knowledge inside
+tool-specific/    EDA tool differences (JasperGold today; VC Formal planned)
+benchmarks/       Scenario evals and manual A/B experiment tooling
 ```
+
+The agent loads only the modules relevant to the current task, never the whole knowledge base at once.
 
 ## Module Maturity
 
-| Module | Status | Description |
-|--------|--------|-------------|
-| `fpv/property-writing` | 🔬 from-docs | SVA property patterns & best practices |
-| `fpv/engine-tuning` | 🔬 from-docs | Proof engine selection, tuning & Deep Bug Hunting |
-| `fpv/complexity-management` | 🔬 from-docs | Complexity reduction techniques |
-| `fpv/tcl-commands` | 🔬 from-docs | TCL command reference for FPV |
-| `fpv/workflow` | 🔬 from-docs | End-to-end FPV workflow |
+| Module | Status | Covers |
+|--------|--------|--------|
+| `fpv/complexity-management` | ⚠️ needs-validation | Abstraction, cutpoints, case splitting, helper lemmas and SST-guided refinement, assume-guarantee |
+| `fpv/engine-tuning` | 🔬 from-docs | Engine selection and tuning, Deep Bug Hunting |
+| `fpv/property-writing` | 🔬 from-docs | SVA property patterns and best practices |
+| `fpv/tcl-commands` | 🔬 from-docs | JasperGold Tcl commands and scripting idioms |
+| `fpv/workflow` | 🔬 from-docs | End-to-end flow, proof records, and acceptance criteria |
 
-**Maturity levels:**
-- ✅ `battle-tested` — Validated in real production projects
-- ⚠️ `needs-validation` — Structured and reviewed, awaiting real-world feedback
-- 🔬 `from-docs` — Extracted from official documentation, not yet field-tested
+- ✅ `battle-tested`: validated in real production projects
+- ⚠️ `needs-validation`: backed by blind-test evidence, awaiting real-project feedback
+- 🔬 `from-docs`: distilled from official documentation, not yet field-tested
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
-- Adding new knowledge modules
-- Reporting inaccuracies from real-world usage
-- Adding support for new AI agents
-- Adding support for new EDA tools
+**Feedback wanted**: if you've used it on a real project, good or bad, please open an issue. That is the only way a module moves up in maturity.
 
 ## Roadmap
 
-- [x] Project skeleton & adapter framework
-- [x] FPV property writing module
-- [x] FPV engine tuning module
-- [x] FPV complexity management module
-- [x] FPV TCL commands module
-- [x] FPV end-to-end workflow module
-- [x] Benchmark test cases for FPV
+- [x] Five JasperGold FPV modules
+- [x] SST-guided helper refinement and proof-acceptance criteria
+- [x] Scenario evals and weak-model blind tests
+- [ ] VC Formal tool layer
 - [ ] CDC/RDC verification modules
 - [ ] Superlint automation modules
-- [ ] VC Formal tool-specific layer
 - [ ] Coverage-driven verification modules
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add knowledge modules, report inaccuracies found in real use, and add support for new AI agents or EDA tools.
+
+## Further Reading
+
+- [WeChat article (Chinese): Awesome Formal Verification Skill introduction](https://mp.weixin.qq.com/s/utIrVrACSNOdHx_XbMbazQ)
+- How the skill is built: [liandan](https://github.com/gokeshenzhen/liandan), which distills dense formal-verification material into a traceable, portable, verifiable agent skill
 
 ## License
 
 [MIT](LICENSE)
-
-## Acknowledgments
-
-Built with insights from the chip verification community. Powered by AI, validated by engineers.
