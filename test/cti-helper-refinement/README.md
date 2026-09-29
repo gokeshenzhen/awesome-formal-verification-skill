@@ -1,21 +1,28 @@
-**CTI 反哺 Helper Refinement：快递接力教学例子**
+<p align="right">
+  <strong>English</strong> · <a href="README.zh.md">简体中文</a>
+</p>
 
-需要演示“原证明卡住，经 refinement 后收敛”时，使用
-[FIFO 收敛案例](../cti-fifo-refinement/README.md)。本目录保留为归纳概念入门例子。
+**Feeding a CTI back into helper refinement: a parcel-relay teaching example**
+
+To demonstrate "the original proof stalls, then converges after refinement", use
+the [FIFO convergence case](../cti-fifo-refinement/README.md). This directory is
+kept as an introductory example of the induction concept.
 
 ```text
-输入 → A：收件台 → B：暂存台 → C：出库台
+input → A: intake desk → B: staging desk → C: dispatch desk
 ```
 
-每个台面保存包裹编号 `data_*`，验证参考 `ref_*` 保存对应的期望编号。
-`valid[0]`、`valid[1]`、`valid[2]` 分别表示 A、B、C 有没有有效包裹。
-`step=1` 时整个流水线前进一步，`step=0` 时一起暂停。
+Each desk holds a parcel number `data_*`, and the verification reference `ref_*`
+holds the expected number. `valid[0]`, `valid[1]`, `valid[2]` say whether A, B, C
+hold a valid parcel. When `step=1` the whole pipeline advances one stage; when
+`step=0` everything pauses together.
 
-原目标 `P`：C 有包裹时，`data_c == ref_c`。
-只给归纳检查这个条件，任意初态中的 B 仍可存在数据不一致，下一拍传到 C。
-因此提出 `H0`：B 有包裹时，`data_b == ref_b`。
-再检查 H0 的单步归纳，A 的不一致仍可能传到 B；于是将同一个 helper
-加强成 `H1`：A、B 各自有包裹时，数据都与参考一致。
+The original target `P`: when C holds a parcel, `data_c == ref_c`. If induction only
+checks this condition, B in an arbitrary initial state may still hold inconsistent
+data, which moves to C on the next cycle. So propose `H0`: when B holds a parcel,
+`data_b == ref_b`. Checking one-step induction of H0 shows that an inconsistency at
+A can still move into B; so the same helper is strengthened into `H1`: whenever A
+and B each hold a parcel, their data match the reference.
 
 ```tcl
 assert -helper -name h_ab {
@@ -24,45 +31,52 @@ assert -helper -name h_ab {
 }
 ```
 
-复位建立 H1，暂停保持 H1；前进时同一输入建立 A 的关系，A 的旧关系保持
-B 的新关系。证明 H1 后，显式选择它支持原目标 P。
-H0 在可达状态中可以为真，但自身并不单步归纳闭合；refinement 补上的是
-它依赖的上游关系。空拍时 data 可能保留旧值，因此不能省略 `valid` 条件。
+Reset establishes H1, and pause preserves H1. When advancing, the same input
+establishes A's relation, and A's old relation preserves B's new one. After H1 is
+proven, explicitly select it to support the original target P. H0 can be true in
+reachable states but is not one-step inductive on its own; refinement adds the
+upstream relation it depends on. On idle cycles data may keep an old value, so the
+`valid` conditions cannot be dropped.
 
-这是人工设计的教学演示。普通 Jasper 也能直接证明这个小电路；
-诊断在独立的新会话中显式请求，用于展开归纳加强过程，不作为性能加速基准。
-工具导出的正式名称是 **SST trace**，必须核对 `tag SST`，
-不能将它当作复位可达的设计反例或内部 IC3/PDR 引擎的 CTI 数据结构。
+This is a hand-built teaching demo. Plain Jasper can also prove this small circuit
+directly; the diagnosis is requested explicitly in a separate fresh session to
+unfold the induction strengthening, not as a performance-speedup benchmark. The
+tool's official name for the export is **SST trace**; check `tag SST`, and do not
+treat it as a reset-reachable design counterexample or the internal CTI data
+structure of the IC3/PDR engine.
 
-| 文件 | 用途 |
+| File | Purpose |
 |---|---|
-| [parcel_pipe.sv](parcel_pipe.sv) | 设计、数据参考和原始断言 |
-| [setup.tcl](setup.tcl) | 公共模型设置、状态输出和 SST 导出 |
-| [baseline.tcl](baseline.tcl) | 无 helper 的正常证明及出库/空拍 cover |
-| [diagnose_target.tcl](diagnose_target.tcl) | 第一轮：原目标的 SST |
-| [diagnose_helper.tcl](diagnose_helper.tcl) | 第二轮：初版 helper 的 SST |
-| [prove_refined.tcl](prove_refined.tcl) | 先证明加强后的 helper，再支持原目标 |
-| [induction_check.py](induction_check.py) | 穷举数学模型，区分可达性与单步归纳 |
-| [collect_evidence.py](collect_evidence.py) | 从本次运行日志提取结果、出处和哈希 |
+| [parcel_pipe.sv](parcel_pipe.sv) | Design, data reference, and original assertion |
+| [setup.tcl](setup.tcl) | Common model setup, status output, and SST export |
+| [baseline.tcl](baseline.tcl) | Ordinary proof without helpers, plus dispatch/idle covers |
+| [diagnose_target.tcl](diagnose_target.tcl) | Round 1: SST of the original target |
+| [diagnose_helper.tcl](diagnose_helper.tcl) | Round 2: SST of the initial helper |
+| [prove_refined.tcl](prove_refined.tcl) | Prove the strengthened helper first, then support the original target |
+| [induction_check.py](induction_check.py) | Exhaustive mathematical model separating reachability from one-step induction |
+| [collect_evidence.py](collect_evidence.py) | Extract results, provenance, and hashes from this run's logs |
 
-**从干净 clone 运行**
+**Run from a clean clone**
 
-Python 路径只需要 Python 3 标准库，不需要 Jasper、[TraceWeave](https://github.com/gokeshenzhen/TraceWeave) 或任何预先生成的结果。
-从仓库根目录执行：
+The Python path needs only the Python 3 standard library; it needs no Jasper,
+[TraceWeave](https://github.com/gokeshenzhen/TraceWeave), or pre-generated results.
+Run from the repository root:
 
 ```bash
 cd test/cti-helper-refinement
 python3 induction_check.py
 ```
 
-脚本自动创建 `evidence/induction.json`。预期所有关系在复位可达状态中成立；
-`P`、`H0_B`、`P_and_H0` 的 `one_step_inductive` 为 `false`，
-`H1_AB`、`P_and_H1` 为 `true`。它枚举全部编码状态与输入，并完整遍历可达状态，
-不使用随机测试。它不解析 RTL，不能代替 RTL 的 Jasper 证明。
+The script creates `evidence/induction.json` automatically. Expected: all relations
+hold in reset-reachable states; `one_step_inductive` is `false` for `P`, `H0_B`,
+`P_and_H0`, and `true` for `H1_AB`, `P_and_H1`. It enumerates all encoded states
+and inputs and fully traverses the reachable states, with no random testing. It does
+not parse the RTL and cannot replace the Jasper proof on the RTL.
 
-要运行 RTL 证明，先确保已安装 JasperGold、`jg` 在 `PATH` 中，且许可证可用。
-脚本按 JasperGold `2025.12p002` 的命令语义验证；其他版本先核对
-`help prove`、`help sst`。继续在 `test/cti-helper-refinement/` 目录中执行：
+To run the RTL proofs, make sure JasperGold is installed, `jg` is on `PATH`, and the
+license is available. The scripts are verified against the command semantics of
+JasperGold `2025.12p002`; on other versions, check `help prove` and `help sst`
+first. Continue in the `test/cti-helper-refinement/` directory:
 
 ```bash
 jg -no_gui -proj runs/baseline -tcl baseline.tcl
@@ -72,48 +86,56 @@ jg -no_gui -proj runs/refined -tcl prove_refined.tcl
 python3 collect_evidence.py
 ```
 
-顶层 Tcl 按当前工作目录定位 `setup.tcl`，因此需在上述目录启动。
-每条 Jasper 命令使用独立项目；脚本自动创建输出目录并退出。
-在未运行 Jasper 时，不需要执行 `collect_evidence.py`。
+The top-level Tcl locates `setup.tcl` relative to the current working directory, so
+launch from the directory above. Each Jasper command uses its own project; the
+scripts create the output directories and exit automatically. If Jasper was not
+run, there is no need to run `collect_evidence.py`.
 
-| 运行 | 预期结果 | 运行后生成的文件 |
+| Run | Expected result | Files generated after the run |
 |---|---|---|
-| `baseline` | 原目标 `proven`；出库、空拍数据不一致两个 cover 均 `covered` | `evidence/baseline.txt` |
-| `target_sst` | 原目标 `undetermined`；附带 `tag SST` 的轨迹 | `evidence/target_sst.txt`、`target_sst.vcd` |
-| `helper_sst` | H0 为 `undetermined`；附带 `tag SST` 的轨迹 | `evidence/helper_sst.txt`、`helper_sst.vcd` |
-| `refined` | H1 与原目标均 `proven`，有效性为 `proven`，bound 为 `Infinite` | `evidence/refined.txt` |
-| `collect_evidence.py` | 提取上述各运行的原始结果行及日志位置 | `evidence/proof-results.txt` |
+| `baseline` | Original target `proven`; both the dispatch and idle-data-mismatch covers `covered` | `evidence/baseline.txt` |
+| `target_sst` | Original target `undetermined`; a trace with `tag SST` attached | `evidence/target_sst.txt`, `target_sst.vcd` |
+| `helper_sst` | H0 `undetermined`; a trace with `tag SST` attached | `evidence/helper_sst.txt`, `helper_sst.vcd` |
+| `refined` | H1 and the original target both `proven`, validity `proven`, bound `Infinite` | `evidence/refined.txt` |
+| `collect_evidence.py` | Extracts the raw result lines and log locations of the runs above | `evidence/proof-results.txt` |
 
-完整日志在 `runs/<运行名>/sessionLogs/session_*/jg_session_*.log`。
-`prove_refined.tcl` 在复用 helper 之前检查其状态和有效性，未证明则退出；
-仅标记 `-helper` 并不等于证明或无条件假设。
-SST 即使某个 bound 字段显示 `infinite`，也不能据此宣布完整证明。
+Full logs are in `runs/<run name>/sessionLogs/session_*/jg_session_*.log`.
+`prove_refined.tcl` checks the status and validity of a helper before reusing it and
+exits if it is unproven; merely marking `-helper` is not a proof or an unconditional
+assumption. Even when a bound field of an SST shows `infinite`, it must not be used
+to declare a complete proof.
 
-**可选的波形分析**
+**Optional waveform analysis**
 
-用波形查看器检查导出的 VCD。若已配置 TraceWeave，依次调用
-`get_formal_paths`、`search_signals`、`get_signals_around_time`，
-读取当前状态和下一状态的 `valid`、`data_*`、`ref_*`、`step` 等信号。
-从 VCD 的实际时间刻度选择采样时间；它不是芯片的性能参数。
-具体反例编号可以随版本或求解选择变化，关注不相等关系和实际更新分支。
+Inspect the exported VCD with a waveform viewer. If TraceWeave is configured, call
+`get_formal_paths`, `search_signals`, `get_signals_around_time` in order to read
+`valid`, `data_*`, `ref_*`, `step`, and other signals of the current and next state.
+Choose sample times from the VCD's actual time scale; it is not a chip performance
+parameter. The specific counterexample numbering may vary with version or solver
+choices; focus on the unequal relation and the branch that actually updates.
 
-如自行保存了两份 TraceWeave 采样，可额外回放其状态投影：
+If you saved two TraceWeave samplings yourself, you can additionally replay their
+state projection:
 
 ```bash
 python3 induction_check.py --replay-samples /path/to/local/samples
 ```
 
-该目录须包含 `target_sst_samples.json` 与 `helper_sst_samples.json`。
-每个文件的 `samples` 数组包含两个按时间排列的
-`get_signals_around_time(return_mode="values_only")` JSON 结果对象。
-至少保留 `parcel_pipe.rst_n`、`step`、`in_valid`、`in_data`、`valid`、
-`data_a`、`data_b`、`ref_a`、`ref_b` 的完整路径；原目标的采样还包含 `data_c`、`ref_c`。
-选择复位已释放且有相邻状态转移的样本。回放仅检查保存的信号投影，不能代替证明。
-未指定该选项时不读取采样文件，报告明确标记 `sst_transition_replay: not requested`。
+The directory must contain `target_sst_samples.json` and `helper_sst_samples.json`.
+The `samples` array of each file contains two time-ordered JSON result objects from
+`get_signals_around_time(return_mode="values_only")`. Keep at least the full paths
+of `parcel_pipe.rst_n`, `step`, `in_valid`, `in_data`, `valid`, `data_a`, `data_b`,
+`ref_a`, `ref_b`; the original target's samples also include `data_c`, `ref_c`.
+Choose samples where reset is released and there is an adjacent state transition.
+The replay only checks the saved signal projection and cannot replace a proof.
+Without this option, sample files are not read and the report explicitly marks
+`sst_transition_replay: not requested`.
 
-仓库仅包含源码和复跑说明。`runs/`、`evidence/` 都在本地生成并被 Git 忽略，
-不需要下载任何历史结果。公众号讲稿与配图不属于这个可运行例子的依赖。
+The repository contains only source and rerun notes. `runs/` and `evidence/` are
+generated locally and ignored by Git; no historical results need to be downloaded.
+The WeChat article draft and figures are not dependencies of this runnable example.
 
-脚本没有输入假设、cutpoint 或黑盒。`ref_*` 是验证用的数据参考，
-`valid` 与 DUT 共用；证明范围是有效数据的对应关系，
-不包含独立的无丢包、无重排或反压协议验证。
+The scripts contain no input assumptions, cutpoints, or black boxes. `ref_*` is a
+verification data reference, and `valid` is shared with the DUT; the proof scope is
+the correspondence of valid data, and does not include independent verification of
+no-drop, no-reorder, or backpressure protocols.

@@ -92,8 +92,8 @@ TraceWeave **不是必需依赖**：运行 Tcl 流程不需要它；如果波形
 
 仓库附带可以直接复跑的 JasperGold 案例，适合了解 Skill 教的是什么：
 
-- [`test/cti-fifo-refinement/`](test/cti-fifo-refinement/README.md)：FIFO 数据正确性证明。直接证明不收敛，初始 helper 也不收敛；SST 轨迹暴露缺失的容量关系，补上后关闭原目标。
-- [`test/cti-helper-refinement/`](test/cti-helper-refinement/README.md)：三级流水线上的 helper 归纳加强入门示例，附不依赖 Jasper 的 Python 穷举检查。
+- [`test/cti-fifo-refinement/`](test/cti-fifo-refinement/README.zh.md)：FIFO 数据正确性证明。直接证明不收敛，初始 helper 也不收敛；SST 轨迹暴露缺失的容量关系，补上后关闭原目标。
+- [`test/cti-helper-refinement/`](test/cti-helper-refinement/README.zh.md)：三级流水线上的 helper 归纳加强入门示例，附不依赖 Jasper 的 Python 穷举检查。
 - [`test/weak_model_ab/`](test/weak_model_ab/)：上面“效果”一节的盲测原始材料。
 
 ## 工作原理
