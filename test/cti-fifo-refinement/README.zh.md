@@ -10,7 +10,7 @@
 
 它验证 **refinement 的作用**。要进一步声称“无 skill 的模型失败、有 skill 的
 模型自主读取 CTI 并成功”，还需要两个独立会话；当前没有这项新盲测结果。
-[BLIND_AB.md](BLIND_AB.md) 提供隔离材料和验收条件。运行已经写好的脚本
+[BLIND_AB.zh.md](BLIND_AB.zh.md) 提供隔离材料和验收条件。运行已经写好的脚本
 不能充当模型自主发现 helper 的证据。
 
 **设计与目标**

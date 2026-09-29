@@ -1,12 +1,21 @@
-**手工 skill / no-skill 对照：待执行协议**
+<p align="right">
+  <strong>English</strong> · <a href="BLIND_AB.zh.md">简体中文</a>
+</p>
 
-这里的复跑脚本验证“缺失不变量 → 诊断 → 补强 → 收敛”。它们已经包含答案，
-不能拿脚本执行结果充当独立模型发现答案的证据。仓库约定 skill A/B 由用户开启
-两个独立会话执行；本文提供材料和验收条件，不启动自动双盲 harness。
+**Manual skill / no-skill comparison: protocol pending execution**
 
-参与者的基础材料是 `neutral/` 内的五个文件：`sfifo.v`、`tb.sv`、
-`setup.tcl`、`baseline.tcl`、`TASK.md`。可另附两侧相同的运行配置和纯工具环境说明，
-不得包含解题路线或案例答案。复制到仓库以外的两个新目录，例如：
+The rerun scripts here verify "missing invariant → diagnosis → strengthening →
+convergence". They already contain the answer, so their execution results cannot
+serve as evidence that an independent model discovered the answer. The repository
+convention is that the skill A/B is run by the user in two independent sessions;
+this document provides the materials and acceptance conditions and does not start
+an automatic double-blind harness.
+
+The participants' base materials are the five files in `neutral/`: `sfifo.v`,
+`tb.sv`, `setup.tcl`, `baseline.tcl`, `TASK.md`. Identical run configuration and a
+plain tool-environment description may be attached for both sides, but they must
+not contain a solution route or the case answer. Copy them into two new directories
+outside the repository, for example:
 
 ```bash
 mkdir -p /tmp/fifo-arm-a /tmp/fifo-arm-b
@@ -14,49 +23,76 @@ cp neutral/sfifo.v neutral/tb.sv neutral/setup.tcl neutral/baseline.tcl neutral/
 cp neutral/sfifo.v neutral/tb.sv neutral/setup.tcl neutral/baseline.tcl neutral/TASK.md /tmp/fifo-arm-b/
 ```
 
-目录应是新建的；若已有上次运行，改用新路径。不要复制本目录的 README、
-helpers、诊断/收敛脚本或历史报告。参与者工作区不要位于本仓库之内，以免继承
-仓库路由与答案。只复制文件不等于操作系统隔离；需同时限制会话的可读范围，
-并检查实际工具记录是否越界。
+The directories must be freshly created; if a previous run exists, use new paths.
+Do not copy this directory's README, helpers, diagnosis/convergence scripts, or
+historical reports. The participants' workspaces must not be inside this repository,
+so they do not inherit its routing and answers. Copying files is not operating-system
+isolation; also restrict what the sessions can read, and check the actual tool
+records for out-of-bounds access.
 
-两边使用同一模型版本、reasoning 设置、会话预算、Jasper/许可证环境和 TraceWeave。
-共同保留 EDA 环境配置说明；唯一知识差异是 B 可读 `formal-verification` skill
-及其路由到的知识文件，A 不可读。必须检查工具实际读取记录，不能只靠提示
-“不用 skill”，同时仍把 skill 自动注入 A 的上下文。建议先选较弱模型，
-但必须在看到结果前固定模型和预算。
+Both sides use the same model version, reasoning setting, session budget,
+Jasper/license environment, and TraceWeave. Keep the EDA environment configuration
+notes common to both; the only knowledge difference is that B can read the
+`formal-verification` skill and the knowledge files it routes to, while A cannot.
+The actual tool read records must be checked; it is not enough to prompt "do not use
+the skill" while the skill is still auto-injected into A's context. Start with a
+weaker model, but fix the model and budget before seeing any result.
 
-以本次确认的配置为预算来源，同步参与者 TASK 和启动说明；`neutral/TASK.md` 的现有预算是
-这个模板的设置，不是所有实验必须沿用的额度。明确 baseline、启动失败及重试的计账口径，
-在运行前固定每侧独立尝试次数、停止及环境失败重跑规则。保存全部尝试，不只保留成功结果；
-变更条件后另记新实验。单次对照只支持该条件下的案例观察。
+Take the configuration confirmed for this run as the source of the budget, and
+synchronize the participants' TASK and startup notes with it; the existing budget in
+`neutral/TASK.md` is this template's setting, not a quota every experiment must
+reuse. Define how the baseline, launch failures, and retries are accounted for, and
+fix the number of independent attempts per side, the stopping rule, and the
+environment-failure rerun rule before running. Keep all attempts, not only the
+successful ones; if conditions change, record a new experiment. A single comparison
+supports only a case observation under that condition.
 
-固定 B 实际可读的 skill 内容，解引用安装目录中的知识符号链接并记录哈希，避免运行中跟随
-开发工作树变化。静态检查文件和配置不等于运行隔离已验证；用户启动时还须核实实际注入的技能、
-父目录/全局指令、历史上下文及所有文件读取工具的访问范围。不能证明隔离时不把结果当作有效对照。
+Fix the skill content B can actually read: dereference the knowledge symlinks in the
+install directory and record hashes, so it does not follow changes in the
+development worktree during the run. Statically checking files and configuration is
+not the same as verified run isolation; at launch the user must also verify the
+skills actually injected, parent-directory/global instructions, historical context,
+and the access scope of every file-reading tool. If isolation cannot be shown, do
+not treat the result as a valid comparison.
 
-分别开启全新会话，给两边完全相同的提示：
+Open a brand-new session for each side and give both exactly the same prompt:
 
-> 请完成当前工作目录 TASK.md 中的验证任务，遵守其中的预算、文件范围和交付要求。
+> Please complete the verification task in TASK.md in the current working directory, following its budget, file scope, and deliverable requirements.
 
-禁止在提示中添加“CTI”“SST”“helper”“容量上界”等解题提示。
-两边不要看对方的过程或结果。完整保留事件记录，另外记录模型版本、设置、
-skill 内容哈希、工具版本、工作区源码哈希、预算、所有 Jasper 调用及耗时。
+Do not add solution hints such as "CTI", "SST", "helper", or "capacity bound" to the
+prompt. Neither side should see the other's process or results. Keep the complete
+event record, and also record the model version, settings, skill content hashes,
+tool versions, workspace source hashes, budget, and every Jasper invocation with its
+duration.
 
-**什么结果才支持用户希望的表述**
+**What results support the statement the user wants to make**
 
-- A 在预先固定的预算内未关闭原目标；不得将它写成“无 skill 永远无法证明”。
-- B 自主定位未闭合义务，生成或获取诊断轨迹，实际读取信号值，解释缺失的关系，
-  据此修改 helper；全过程能在事件记录里找到先后顺序。
-- B 对未改动的原目标及最终所需支撑取得有效无界证明，读 cover 可达。允许有效的顺序复用或
-  工具管理的联合关闭，保留实际义务与选择证据；已退出最终义务且结果不依赖的废弃候选仅保留历史。
-  使用 proof_structure 时还须验收 propagated ROOT。额外假设、黑盒、cutpoint、
-  `marked_proven` 或更弱目标不能冒充原设计完整证明。
-- 收到两份报告后，在互不共享缓存的新 Jasper 项目中独立复跑各自 `final.tcl`，
-  核对源码、环境、依赖和结果。若两边都证明，或 B 没有使用轨迹反馈，照实报告，
-  不能称为“CTI skill 导致胜出”。
+- A does not close the original target within the pre-fixed budget; this must not be
+  written as "without the skill it can never be proven".
+- B independently locates the unclosed obligation, generates or obtains a diagnostic
+  trace, actually reads signal values, explains the missing relation, and modifies
+  the helper accordingly; the order of these steps can be found in the event record.
+- B obtains a valid unbounded proof of the unmodified original target and of the
+  final required support, and the read cover is reachable. Valid sequential reuse or
+  tool-managed joint closure is allowed; keep the actual obligations and selection
+  evidence. Abandoned candidates that left the final obligations and on which the
+  result does not depend are kept as history only. When proof_structure is used, the
+  propagated ROOT must also be accepted. Extra assumptions, black boxes, cutpoints,
+  `marked_proven`, or a weaker target cannot pass as a complete proof of the
+  original design.
+- After receiving the two reports, independently rerun each side's `final.tcl` in
+  fresh Jasper projects that share no cache, and check the source, environment,
+  dependencies, and results. If both sides prove it, or B did not use trace
+  feedback, report that as it is; do not call it "the CTI skill caused the win".
 
-行为正确性、证明闭合、资源消耗/对照及上述严格展示分别报告。直接证明或首候选成功仍是
-有效成功；正确报告未完成可以通过相应行为检查，但没有证明闭合。no-skill / 当前 skill 的
-差异衡量整套知识的效果；若要归因到某次修改，另需固定条件的旧版 / 新版证据，不默认扩成三组。
+Behavioral correctness, proof closure, resource consumption/comparison, and the
+strict demonstration above are reported separately. A direct proof or a first-
+candidate success is still a valid success; correctly reporting non-completion can
+pass the corresponding behavior checks, but there is no proof closure. The
+no-skill / current-skill difference measures the effect of the whole body of
+knowledge; attributing it to a specific change would additionally require old- vs.
+new-version evidence under fixed conditions, and this is not expanded into three
+groups by default.
 
-两份报告尚未产生前，本目录的证据结论仅为 **refinement 收敛案例**。
+Until the two reports exist, the evidence conclusion of this directory is only a
+**refinement convergence case**.
